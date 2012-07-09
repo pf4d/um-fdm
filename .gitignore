@@ -1,7 +1,5 @@
-<<<<<<< HEAD
 *.swp
 *~
-=======
 *.py[co]
 
 # Packages
@@ -29,4 +27,3 @@ pip-log.txt
 
 #Mr Developer
 .mr.developer.cfg
->>>>>>> 3bff966da3e54e9dc6cc64f7de57ec628c21b6ff
