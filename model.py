@@ -58,7 +58,7 @@ dz    = (zs - zb)/n            # initial z-spacing .............. m
 l     = dz*ones(n+1)           # height vector .................. m
 dt    = 0.025*spy              # time-step ...................... s
 t0    = 0.0                    # begin time ..................... s
-tf    = 220*spy                # end-time ....................... s
+tf    = 200*spy                # end-time ....................... s
 
 #==============================================================================
 # create mesh and define function space :
