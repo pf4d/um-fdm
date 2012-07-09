@@ -1,4 +1,4 @@
 um-fdm
 ======
 
-UM Firn Densification Model
+University Of Montana Firn Densification Model
