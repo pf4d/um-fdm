@@ -1,5 +1,5 @@
 """
-model.py
+objModel.py
 Evan Cummings
 05.23.12
 
@@ -9,20 +9,9 @@ FEniCS solution to firn temperature profile.
 
 from numpy import *
 from dolfin import *
-import matplotlib.pyplot as plt
-from matplotlib.ticker import ScalarFormatter, FormatStrFormatter
 from scipy.interpolate import interp1d
+from plot import *
 
-class FixedOrderFormatter(ScalarFormatter):
-  """Formats axis ticks using scientific notation with a constant order of 
-  magnitude"""
-  def __init__(self, order_of_mag=0, useOffset=True, useMathText=False):
-    self._order_of_mag = order_of_mag
-    ScalarFormatter.__init__(self, useOffset=useOffset, 
-                             useMathText=useMathText)
-  def _set_orderOfMagnitude(self, range):
-    """Over-riding this to avoid having orderOfMagnitude reset elsewhere"""
-    self.orderOfMagnitude = self._order_of_mag
 
 #==============================================================================
 # constants :
@@ -32,7 +21,6 @@ R     = 8.3144621              # gas constant ................... J/(mol K)
 spy   = 31556926.0             # seconds per year ............... s/a
 rhoi  = 917.                   # density of ice ................. kg/m^3
 rhosi = 300.                   # initial density at surface ..... kg/m^3
-rhoin = rhoi                   # initial density ................ kg/m^3
 rhow  = 1000.                  # density of water ............... kg/m^3
 rhom  = 550.                   # density at 15 m ................ kg/m^3
 acc   = 250. / spy             # surface accumulation ........... kg/(m^2 s)
@@ -58,7 +46,8 @@ dz    = (zs - zb)/n            # initial z-spacing .............. m
 l     = dz*ones(n+1)           # height vector .................. m
 dt    = 0.025*spy              # time-step ...................... s
 t0    = 0.0                    # begin time ..................... s
-tf    = 200*spy                # end-time ....................... s
+tf    = 20*spy                 # end-time ....................... s
+
 
 #==============================================================================
 # create mesh and define function space :
@@ -80,6 +69,7 @@ numNew = len(z) - len(l)                            # number of split nodes
 l      = l[:-numNew]                                # remove split heights
 l      = append(l, dz/2 * ones(numNew * 2))         # append new split heights
 index  = argsort(z)                                 # index of updated mesh
+rhoin  = rhoi*ones(len(l))                           # initial density
 
 # create function spaces :
 V      = FunctionSpace(mesh, 'Lagrange', 1)         # function space for rho, T
@@ -110,6 +100,7 @@ Tbc  = DirichletBC(MV.sub(0), Ts, surface)    # temperature surface
 Tbc2 = DirichletBC(MV.sub(0), Tb, base)       # temperature base 
 Dbc  = DirichletBC(MV.sub(1), rhoS, surface)  # density surface
 
+
 #==============================================================================
 # Define variational problem :
 T_i        = interpolate(Constant(Tavg), V)  # initial temperature vector
@@ -127,6 +118,7 @@ psi, phi   = split(j)                        # test functions for T, rho
 h_0 = project(as_vector([T_i,rho_i]), MV)    # project inital values on space
 h.vector().set_local(h_0.vector().array())   # initalize T, rho in solution
 h_1.vector().set_local(h_0.vector().array()) # initalize T, rho in prev. sol
+
 
 #==============================================================================
 # Define equations to be solved :
@@ -196,111 +188,40 @@ f_rho     = ((rho-rho_0)/dt - \
 f         = f_T + f_rho
 df        = derivative(f, h, dh)  # jacobian 
 
+
 #==============================================================================
-# animation parameters :
-Tmin   = -20                                 # T x-coord min
-Tmax   = 0                                   # T x-coord max
-Th     = Tmin + 0.1*(Tmax - Tmin) / 2        # T height x-coord
+# initialize plot :
 
-rhoMin = 300                                 # rho x-coord min
-rhoMax = 1000                                # rho x-coord max
-rhoh   = rhoMin + 0.1*(rhoMax - rhoMin) / 2  # rho height x-coord
+# load initialization data :
+def set_initial():
+  rhoin   = genfromtxt("rho.txt")
+  z       = genfromtxt("z.txt")
+  l       = genfromtxt("l.txt")
+  rho_i.vector().set_local(rhoin)
 
-wMin   = -22.0e-6
-wMax   = -7.5e-6
-wh     = wMin + 0.1*(wMax - wMin) / 2
+  h_0 = project(as_vector([T_i,rho_i]), MV)    # project inital values on space
+  h.vector().set_local(h_0.vector().array())   # initalize T, rho in solution
+  h_1.vector().set_local(h_0.vector().array()) # initalize T, rho in prev. sol
 
-kMin   = 0.0
-kMax   = 2.2
-kh     = kMin + 0.1*(kMax - kMin) / 2
+set_initial()
 
-zmax   = zs + 20                             # max z-coord
-zmin   = zb                                  # min z-coord
+# find vector of T, rho :
+tplot   = project(T, V).vector().array()
+rhoplot = project(rho, V).vector().array()
+
+# calculate other data :
+wplot   = -acc / rhoplot * 1e3
+kplot1  = 2.1e-2 + 4.2e-4*rhoplot + 2.2e-9*rhoplot**3
+kplot2  = 2.1*(rhoplot / rhoi)**2
+kplot3  = (2*ki*rhoplot) / (3*rhoi - rhoplot)
 
 plt.ion()
+plot = plot(tplot, rhoplot, wplot, kplot1, 
+            kplot2, kplot3, z, index, zb, zs)
 
-fig   = plt.figure(figsize=(16,6))
-Tax   = fig.add_subplot(141)
-rhoax = fig.add_subplot(142)
-wax   = fig.add_subplot(143)
-kax   = fig.add_subplot(144)
-
-# format : [xmin, xmax, ymin, ymax]
-Tax.axis([Tmin, Tmax, zmin, zmax])
-Tax.grid()
-rhoax.axis([rhoMin, rhoMax, zmin, zmax])
-rhoax.grid()
-rhoax.xaxis.set_major_formatter(FixedOrderFormatter(2))
-wax.axis([wMin, wMax, zmin, zmax])
-wax.grid()
-wax.xaxis.set_major_formatter(FixedOrderFormatter(-6))
-kax.axis([kMin, kMax, zmin, zmax])
-kax.grid()
-
-# x-values :
-tplot    = project(T, V).vector().array()[index]
-rhoplot  = project(rho, V).vector().array()[index]
-wplot    = - spy * acc / rhoplot
-kplot1   = 2.1e-2 + 4.2e-4*rhoplot + 2.2e-9*rhoplot**3 # Van Dusen (lower limit)
-kplot2   = 2.1*(rhoplot / rhoi)**2             # Arthern et all 1998
-kplot3   = (2*ki*rhoplot) / (3*rhoi - rhoplot) # Schwerdtfeger (upper limit)
-
-# y-value :
-z = z[index]
-
-# original surface height :
-origZ    = zs
-
-# plots :
-phT,     = Tax.plot(tplot - 273.15, z, 'r-')                  # temp plot
-phTs,    = Tax.plot([Tmin, Tmax], [zs, zs], 'k-', lw=2)       # surface
-phTs_0,  = Tax.plot(Th, origZ, 'ko')                          # original surface
-phTsp,   = Tax.plot(Th*ones(len(z)), z, 'r+')                 # height of nodes
-
-phrho,   = rhoax.plot(rhoplot, z, 'g-')                       # dens plot
-phrhoS,  = rhoax.plot([rhoMin, rhoMax], [zs, zs], 'k-', lw=2) # surface
-phrhoS_0,= rhoax.plot(rhoh, origZ, 'ko')                      # orininal surface
-phrhoSp, = rhoax.plot(rhoh*ones(len(z)), z, 'r+')             # height of nodes
-
-phw,     = wax.plot(wplot, z, 'b-')                           # velocity plot
-phws,    = wax.plot([wMin, wMax], [zs, zs], 'k-', lw=2)       # surface
-phws_0,  = wax.plot(wh, origZ, 'ko')                          # orininal surface
-phwsp,   = wax.plot(wh*ones(len(z)), z, 'r+')                 # height of nodes
-
-phk1,    = kax.plot(kplot1, z, label='Van Dusen')             # k1 plot
-phk2,    = kax.plot(kplot2, z, label='Arthern')               # k2 plot
-phk3,    = kax.plot(kplot3, z, label='Schwerdtfeger' )        # k3 plot
-phks,    = kax.plot([kMin, kMax], [zs, zs], 'k-', lw=2)       # surface
-phks_0,  = kax.plot(kh, origZ, 'ko')                          # orininal surface
-phksp,   = kax.plot(kh*ones(len(z)), z, 'r+')                 # height of nodes
-
-# formatting :
-fig_text = plt.figtext(.85,.95,'Time = 0.0 yr')
-
-Tax.set_title('Temperature')
-Tax.set_xlabel(r'$T$ $[\degree C]$')
-Tax.set_ylabel(r'Depth $[m]$')
-
-rhoax.set_title('Density')
-rhoax.set_xlabel(r'$\rho$ $\left [\frac{kg}{m^3}\right ]$')
-#rhoax.set_ylabel(r'Depth $[m]$')
-
-wax.set_title('Velocity')
-wax.set_xlabel(r'$w$ $\left [\frac{mm}{s}\right ]$')
-#wax.set_ylabel(r'Depth $[m]$')
-
-kax.set_title('Thermal Conductivity')
-kax.set_xlabel(r'$k$ $\left [\frac{J}{m K s} \right ]$')
-#kax.set_ylabel(r'Depth $[m]$')
-# Legend formatting:
-leg = kax.legend(loc='lower center')
-ltext  = leg.get_texts()
-frame  = leg.get_frame()
-plt.setp(ltext, fontsize='small')
-frame.set_alpha(0)
 
 #==============================================================================
-# Compute solution
+# Compute solution :
 t      = dt
 ht     = []
 origHt = []
@@ -313,13 +234,13 @@ while t <= tf:
   rhoplot = project(rho, V).vector().array()
  
   # calculate other data :
-  wplot   = -acc / rhoplot * 1e3
+  wplot   = -acc / rhoplot * 1e3  # mm s^-1
   kplot1  = 2.1e-2 + 4.2e-4*rhoplot + 2.2e-9*rhoplot**3
   kplot2  = 2.1*(rhoplot / rhoi)**2
   kplot3  = (2*ki*rhoplot) / (3*rhoi - rhoplot)
-  
+ 
   # calculate height of each interval (conservation of mass) :
-  lnew    = l*rhoin / rhoplot[index]
+  lnew    = l*rhoin[index] / rhoplot[index]
   zSum    = zb
   for i in range(len(z)):
     z[i]  = zSum + lnew[i]
@@ -328,39 +249,13 @@ while t <= tf:
   # correct original height with initial surface conditions :
   if t == dt:
     origZ = z[-1]
-
-  # update plots :
-  fig_text.set_text('Time = %.2f yr' % (t / spy) )
-  phT.set_xdata(tplot[index] - 273.15)
-  phT.set_ydata(z)
-  phTs.set_ydata(z[-1])
-  phTs_0.set_ydata(origZ)
-  phTsp.set_ydata(z)
   
-  phrho.set_xdata(rhoplot[index])
-  phrho.set_ydata(z)
-  phrhoS.set_ydata(z[-1])
-  phrhoS_0.set_ydata(origZ)
-  phrhoSp.set_ydata(z)
- 
-  phw.set_xdata(wplot[index])
-  phw.set_ydata(z)
-  phws.set_ydata(z[-1])
-  phws_0.set_ydata(origZ)
-  phwsp.set_ydata(z)
+  # update the plotting parameters :
+  plot.update_plot(tplot, rhoplot, wplot, kplot1, 
+                   kplot2, kplot3, z, origZ, t/spy)
   
-  phk1.set_xdata(kplot1[index])
-  phk2.set_xdata(kplot2[index])
-  phk3.set_xdata(kplot3[index])
-  phk1.set_ydata(z)
-  phk2.set_ydata(z)
-  phk3.set_ydata(z)
-  phks.set_ydata(z[-1])
-  phks_0.set_ydata(origZ)
-  phksp.set_ydata(z)
+  plt.draw()  # update the graph
   
-  plt.draw()
-
   # track the current height and original surface height of the firn :
   ht.append(z[-1])
   origHt.append(origZ)
@@ -376,10 +271,10 @@ while t <= tf:
     origZ  = 0.0
 
   # update kc term in drhodt :
-  # if rho >  550, kc = kcHigh
+  # if rho >  54, kc = kcHigh
   # if rho <= 550, kc = kcLow
   rhoCoefNew             = ones(len(rhoplot))
-  rhoHigh                = where(rhoplot > 550)
+  rhoHigh                = where(rhoplot >  550)
   rhoLow                 = where(rhoplot <= 550)
   rhoCoefNew[rhoHigh[0]] = kcHh
   rhoCoefNew[rhoLow[0]]  = kcLw
@@ -394,21 +289,8 @@ while t <= tf:
 plt.ioff()
 plt.show()
 
-# plot the surface height information :
+# plot the surface height trend :
 x = linspace(0, t/spy, len(ht))
-plt.plot(x, ht,     label='Surface Height')
-plt.plot(x, origHt, label='Original Surface')
-plt.xlabel(r'time $[a]$')
-plt.ylabel(r'height $[m]$')
-plt.title('Surface Height Changes')
-plt.grid()
-# Legend formatting:
-leg = plt.legend(loc='upperr right')
-ltext  = leg.get_texts()
-frame  = leg.get_frame()
-plt.setp(ltext, fontsize='small')
-frame.set_alpha(0)
-plt.show()
-
+plot_height(x, ht, origHt)
 
 
