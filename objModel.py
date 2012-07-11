@@ -70,7 +70,7 @@ numNew = len(z) - len(l)                            # number of split nodes
 l      = l[:-numNew]                                # remove split heights
 l      = append(l, dz/2 * ones(numNew * 2))         # append new split heights
 index  = argsort(z)                                 # index of updated mesh
-rhoin  = rhoi*ones(len(l))                           # initial density
+rhoin  = rhoi*ones(len(l))                          # initial density
 
 # create function spaces :
 V      = FunctionSpace(mesh, 'Lagrange', 1)         # function space for rho, T
@@ -86,7 +86,7 @@ Tb    = Constant(Tavg)
 # variable surface density by S.R.M. Ligtenberg et all 2011 :
 code  = '-151.94 + 1.4266*(73.6 + 1.06*Ts + 0.0669*A + 4.77*Va)'
 rhoS  = Expression(code, Ts=Tavg, A=A, Va=Va)
-#code  = '300 + 700*( (Ts - Tmin) / (Tmax - Tmin) )'   # evan experiment
+#code  = '300 + 700*( (Ts - Tmin) / (Tmax - Tmin) )'   # density match temp 
 #rhoS  = Expression(code, Tmax=Tavg + 9.9, Tmin=Tavg - 9.9, Ts=Tavg)
 #rhoS  = Constant(300)
 
@@ -198,7 +198,7 @@ def set_initial():
   rhoin   = genfromtxt("rho.txt")
   z       = genfromtxt("z.txt")
   l       = genfromtxt("l.txt")
-  rho_i.vector().set_local(rhoin[index])
+  rho_i.vector().set_local(rhoin)
 
   h_0 = project(as_vector([T_i,rho_i]), MV)    # project inital values on space
   h.vector().set_local(h_0.vector().array())   # initalize T, rho in solution
