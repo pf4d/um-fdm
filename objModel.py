@@ -291,6 +291,6 @@ plt.show()
 
 # plot the surface height trend :
 x = linspace(0, t/spy, len(ht))
-plot_height(x, ht, origHt)
+plot.plot_height(x, ht, origHt)
 
 

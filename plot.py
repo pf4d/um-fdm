@@ -171,7 +171,7 @@ class plot():
     self.phksp.set_ydata(z)
 
 
-  def plot_height(x, ht, origHt):
+  def plot_height(self, x, ht, origHt):
 
     # plot the surface height information :
     plt.plot(x, ht,     label='Surface Height')
