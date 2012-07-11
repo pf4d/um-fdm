@@ -1,9 +1,9 @@
 """
-model.py
+plot.py
 Evan Cummings
-05.23.12
+07.09.12
 
-FEniCS solution to firn temperature profile.
+Plotting for Firn Densification Model.
 
 """
 
@@ -171,7 +171,7 @@ class plot():
     self.phksp.set_ydata(z)
 
 
-  def plot_height(x, ht, origHt):
+  def plot_height(self, x, ht, origHt):
 
     # plot the surface height information :
     plt.plot(x, ht,     label='Surface Height')
@@ -182,7 +182,7 @@ class plot():
     plt.grid()
   
     # Legend formatting:
-    leg = plt.legend(loc='upper right')
+    leg = plt.legend(loc='lower left')
     ltext  = leg.get_texts()
     frame  = leg.get_frame()
     plt.setp(ltext, fontsize='small')

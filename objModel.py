@@ -8,6 +8,7 @@ FEniCS solution to firn temperature profile.
 """
 
 from numpy import *
+import numpy as np
 from dolfin import *
 from scipy.interpolate import interp1d
 from plot import *
@@ -46,7 +47,7 @@ dz    = (zs - zb)/n            # initial z-spacing .............. m
 l     = dz*ones(n+1)           # height vector .................. m
 dt    = 0.025*spy              # time-step ...................... s
 t0    = 0.0                    # begin time ..................... s
-tf    = 20*spy                 # end-time ....................... s
+tf    = 200*spy                 # end-time ....................... s
 
 
 #==============================================================================
@@ -143,51 +144,51 @@ dK        = 8.36*-2.061*T**(-1.061)                   # derivative K(T)
 # thermal conductivity Arthern et all 1998 :
 k         = 2.1*(rho / rhoi)**2
 dkdrho    = 4.2*(rho / rhoi**2)
-#dkdT      = 9.828*-5.7e-3*exp(-5.7e-3 * T)    # Patterson pg. 205
-drhodT    = ( (dK*acc)*(-K*acc/rhoi - 1/dt) - 
-              (w*grad(rho) - rho_0/dt - K*acc)*(-dK*acc/rhoi) ) / \
-            (-K*acc/rhoi - 1/dt)**2
+drhodT    = 9.828*-5.7e-3*exp(-5.7e-3 * T)    # Patterson pg. 205
+#drhodT    = ( (dK*acc)*(-K*acc/rhoi - 1/dt) - 
+#              (w*grad(rho) - rho_0/dt - K*acc)*(-dK*acc/rhoi) ) / \
+#            (-K*acc/rhoi - 1/dt)**2
 dkdT      = 4.2*(drhodT / rhoi**2)
 dkdz      = dkdrho*grad(rho) + dkdT*grad(T)
 
-km1       = 2.1*(rho_0 / rhoi)**2
-dkdrhom1  = 4.2*(rho_0 / rhoi**2)
-#dkdTm1    = 9.828*-5.7e-3*exp(-5.7e-3 * T_0)  # Patterson pg. 205
-dkdTm1    = ( (dK*acc)*(-K*acc/rhoi - 1/dt) - 
-              (w*grad(rho) - rho_0/dt - K*acc)*(-K*acc/rhoi) ) / \
-            (-K*acc/rhoi - 1/dt)**2
-dkdzm1    = dkdrho*grad(rho_0) + dkdT*grad(T_0)
-
-# theta scheme (1=Backwards-Euler, 0.5=Crank-Nicolson, 0=Forward-Euler) :
-theta     = 1.0
 f_T       = (rho*cp*(T-T_0)*psi/dt + \
-            theta*k*inner(grad(T),grad(psi)))*dx # + \
-#            theta*rho*cp*w*grad(T)*psi + \
-#            theta*dkdz*grad(T)*psi + \
-#            (1-theta)*km1*inner(grad(T_0),grad(psi)) + \
-#            (1-theta)*rho_0*cp*wm1*grad(T_0)*psi+ \
-#            (1-theta)*dkdzm1*grad(T_0)*psi)*dx
-
-# total derivative d rho / dt :
-#drhodt = K*acc*(rhoi - rho)/rhoi                      # Zwally and Li, 2002
-#drhodt   = (rhoi - rho)*(acc*rhoi/rhow)*beta*K        # Reeh ZL correction
-#drho_0dt = (rhoi - rho_0)*(acc*rhoi/rhow)*beta*K      # Reeh ZL correction
+            k*inner(grad(T),grad(psi)) + \
+            rho*cp*w*grad(T)*psi + \
+            dkdz*grad(T)*psi)*dx
 
 # total derivative drhodt from Arthern 2010 :
 rhoCoef  = interpolate(Constant(kcHh), V)
-drhodt   = (acc*g*rhoCoef/kg)*exp( -Ec/(R*T) + Eg/(R*Tavg) )*(rhoi - rho)
-drho_0dt = (acc*g*rhoCoef/kg)*exp( -Ec/(R*T_0) + Eg/(R*Tavg) )*(rhoi - rho_0)
+drhodtA  = (acc*g*rhoCoef/kg)*exp( -Ec/(R*T) + Eg/(R*Tavg) )*(rhoi - rho)
+# Herron and Langway 1980 :
+hlCoef   = interpolate(Constant(11*(acc/rhow)*exp(-10160.0/(R*Tavg))), V)
+#class HLCoef(Expression):
+#  def eval(self, v, x):
+#    v[0] = 11*(acc/rhow)*exp(-10160.0/(R*T))
+#    if x[0] < 20:
+#      v[0] = 575*sqrt(acc/rhow)*exp(-21400.0/(R*T))
 
-# theta scheme (1=Backwards-Euler, 0.5=Crank-Nicolson, 0=Forward-Euler) :
-theta     = 1.0
-f_rho     = ((rho-rho_0)/dt - \
-            theta*(drhodt - w*grad(rho)) - \
-            (1-theta)*(drho_0dt - wm1*grad(rho_0)))*phi*dx
+#hlCoef = HLCoef()
+drhodtHL = hlCoef*(rhoi - rho)
+#drhodtHL = 11*(acc/rhow)*exp(-10160.0/(R*T))*(rhoi - rho)
+# Li and Zwally 2002 with Reeh correction :
+drhodtZL = (rhoi - rho)*(acc*rhoi/rhow)*beta*K
+# Helsen et al. 2008 :
+drhodtH  = (acc/rhoi)*(76.138 - 0.28965*Tavg)*K*(rhoi - rho)
+
+fA_rho   = ((rho-rho_0)/dt - (drhodtA  - w*grad(rho)))*phi*dx
+fZL_rho  = ((rho-rho_0)/dt - (drhodtZL - w*grad(rho)))*phi*dx
+fH_rho   = ((rho-rho_0)/dt - (drhodtH  - w*grad(rho)))*phi*dx
+fHL_rho  = ((rho-rho_0)/dt - (drhodtHL - w*grad(rho)))*phi*dx
 
 # equation to be minimzed :
-f         = f_T + f_rho
-df        = derivative(f, h, dh)  # jacobian 
+fA       = f_T + fA_rho
+dfA      = derivative(fA, h, dh)  # jacobian 
 
+fZL      = f_T + fZL_rho
+dfZL     = derivative(fZL, h, dh)
+
+fHL      = f_T + fHL_rho
+dfHL     = derivative(fHL, h, dh)
 
 #==============================================================================
 # initialize plot :
@@ -197,7 +198,7 @@ def set_initial():
   rhoin   = genfromtxt("rho.txt")
   z       = genfromtxt("z.txt")
   l       = genfromtxt("l.txt")
-  rho_i.vector().set_local(rhoin)
+  rho_i.vector().set_local(rhoin[index])
 
   h_0 = project(as_vector([T_i,rho_i]), MV)    # project inital values on space
   h.vector().set_local(h_0.vector().array())   # initalize T, rho in solution
@@ -227,7 +228,9 @@ ht     = []
 origHt = []
 while t <= tf:
   # newton's iterative method :
-  solve(f == 0, h, [Tbc, Dbc], J=df)
+  #solve(fA == 0, h, [Tbc, Dbc], J=dfA)
+  #solve(fZL == 0, h, [Tbc, Dbc], J=dfZL)
+  solve(fHL == 0, h, [Tbc, Dbc], J=dfHL)
   
   # find vector of T, rho :
   tplot   = project(T, V).vector().array()
@@ -274,11 +277,15 @@ while t <= tf:
   # if rho >  54, kc = kcHigh
   # if rho <= 550, kc = kcLow
   rhoCoefNew             = ones(len(rhoplot))
+  hlCoefNew              = ones(len(rhoplot))
   rhoHigh                = where(rhoplot >  550)
   rhoLow                 = where(rhoplot <= 550)
   rhoCoefNew[rhoHigh[0]] = kcHh
   rhoCoefNew[rhoLow[0]]  = kcLw
+  hlCoefNew[rhoHigh[0]]  = 575*sqrt(acc/rhow)*np.exp(-21400.0/(R*tplot[rhoHigh[0]]))
+  hlCoefNew[rhoLow[0]]   = 11*(acc/rhow)*np.exp(-10160.0/(R*tplot[rhoLow[0]]))
   rhoCoef.vector().set_local(rhoCoefNew)
+  hlCoef.vector().set_local(hlCoefNew)
 
   # update boundary conditions, time, and previous solution :
   Ts.t      = t
@@ -291,6 +298,6 @@ plt.show()
 
 # plot the surface height trend :
 x = linspace(0, t/spy, len(ht))
-plot_height(x, ht, origHt)
+plot.plot_height(x, ht, origHt)
 
 
