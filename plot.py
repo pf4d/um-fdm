@@ -130,6 +130,59 @@ class plot():
     frame.set_alpha(0)
 
 
+  def plot_all(self, Ts, rhos, zs, index, titles, colors, zb, zs):
+    
+    Tmin   = -20                                 # T x-coord min
+    Tmax   = 0                                   # T x-coord max
+    Th     = Tmin + 0.1*(Tmax - Tmin) / 2        # T height x-coord
+
+    rhoMin = 300                                 # rho x-coord min
+    rhoMax = 1000                                # rho x-coord max
+    rhoh   = rhoMin + 0.1*(rhoMax - rhoMin) / 2  # rho height x-coord
+
+    zmax   = zs + 20                             # max z-coord
+    zmin   = zb                                  # min z-coord
+
+    fig    = plt.figure(figsize=(16,6))
+    Tax    = fig.add_subplot(121)
+    rhoax  = fig.add_subplot(122)
+
+    # format : [xmin, xmax, ymin, ymax]
+    Tax.axis([Tmin, Tmax, zmin, zmax])
+    Tax.grid()
+    rhoax.axis([rhoMin, rhoMax, zmin, zmax])
+    rhoax.grid()
+    rhoax.xaxis.set_major_formatter(FixedOrderFormatter(2))
+
+    # plots :
+    for T, rho, z, title, color in zip(Ts, rhos, zs, titles, colors):
+      Tax.plot(T[index] - 273.15, z, color, label=title)
+      Tax.plot([Tmin, Tmax], [origZ, origZ], color)
+
+      rhoax.plot(rho[index], z, color)
+      rhoax.plot([rhoMin, rhoMax], [origZ, origZ], color)
+
+    # formatting :
+    fig_text = plt.figtext(.85,.95,'Time = 0.0 yr')
+
+    Tax.set_title('Temperature')
+    Tax.set_xlabel(r'$T$ $[\degree C]$')
+    Tax.set_ylabel(r'Depth $[m]$')
+
+    rhoax.set_title('Density')
+    rhoax.set_xlabel(r'$\rho$ $\left [\frac{kg}{m^3}\right ]$')
+    #rhoax.set_ylabel(r'Depth $[m]$')
+
+    # Legend formatting:
+    leg    = Tax.legend(loc='upper right')
+    ltext  = leg.get_texts()
+    frame  = leg.get_frame()
+    plt.setp(ltext, fontsize='small')
+    frame.set_alpha(0)
+
+    plt.show()
+
+
   def update_plot(self, T, rho, w, k1, k2, k3, z, origZ, t):
     
     self.T     = T
@@ -189,6 +242,33 @@ class plot():
     frame.set_alpha(0)
     plt.show()
 
+
+  def plot_all_height(self, xs, hts, origHts, titles, colors):
+
+    fig = plt.figure(figsize=(16,6))
+    ax  = fig.add_subplot(111)
+
+    # format : [xmin, xmax, ymin, ymax]
+    ax.axis([Tmin, Tmax, zmin, zmax])
+    ax.grid()
+    
+    # plot the surface height information :
+    for x, ht, origHt, title, color in zip(xs, hts, origHts, titles, colors):
+      ax.plot(x, ht,     color, label=title + 'Surface Height')
+      ax.plot(x, origHt, color, label=title + 'Original Surface')
+    
+    ax.xlabel(r'time $[a]$')
+    ax.ylabel(r'height $[m]$')
+    ax.title('Surface Height Changes')
+    ax.grid()
+  
+    # Legend formatting:
+    leg    = ax.legend(loc='lower left')
+    ltext  = leg.get_texts()
+    frame  = leg.get_frame()
+    plt.setp(ltext, fontsize='small')
+    frame.set_alpha(0)
+    plt.show()
 
 
 

@@ -198,9 +198,9 @@ dfHL     = derivative(fHL, h, dh)
 
 # load initialization data :
 def set_initial(model):
-  rhoin   = genfromtxt("rho" + model + ".txt")
-  z       = genfromtxt("z" + model + ".txt")
-  l       = genfromtxt("l" + model + ".txt")
+  rhoin   = genfromtxt("data/rho" + model + ".txt")
+  z       = genfromtxt("data/z" + model + ".txt")
+  l       = genfromtxt("data/l" + model + ".txt")
   rho_i.vector().set_local(rhoin)
 
   h_0 = project(as_vector([T_i,rho_i]), MV)    # project inital values on space
