@@ -48,8 +48,9 @@ dz    = (zs - zb)/n            # initial z-spacing .............. m
 l     = dz*ones(n+1)           # height vector .................. m
 dt    = 0.025*spy              # time-step ...................... s
 t0    = 0.0                    # begin time ..................... s
-tf    = 200*spy                 # end-time ....................... s
-model = sys.argv[1]
+tf    = sys.argv[2]            # end-time ....................... string
+tf    = float(tf)*spy          # end-time ....................... s
+model = sys.argv[1]            # model choice ................... {hl, zl, a}
 
 
 #==============================================================================
@@ -206,7 +207,7 @@ def set_initial(model):
   h.vector().set_local(h_0.vector().array())   # initalize T, rho in solution
   h_1.vector().set_local(h_0.vector().array()) # initalize T, rho in prev. sol
 
-#set_initial(model)
+set_initial(model)
 
 # find vector of T, rho :
 tplot   = project(T, V).vector().array()
