@@ -12,6 +12,7 @@ import numpy as np
 from dolfin import *
 from scipy.interpolate import interp1d
 from plot import *
+import sys
 
 
 #==============================================================================
@@ -48,6 +49,7 @@ l     = dz*ones(n+1)           # height vector .................. m
 dt    = 0.025*spy              # time-step ...................... s
 t0    = 0.0                    # begin time ..................... s
 tf    = 200*spy                 # end-time ....................... s
+model = sys.argv[1]
 
 
 #==============================================================================
@@ -194,17 +196,17 @@ dfHL     = derivative(fHL, h, dh)
 # initialize plot :
 
 # load initialization data :
-def set_initial():
-  rhoin   = genfromtxt("rho.txt")
-  z       = genfromtxt("z.txt")
-  l       = genfromtxt("l.txt")
+def set_initial(model):
+  rhoin   = genfromtxt("rho" + model + ".txt")
+  z       = genfromtxt("z" + model + ".txt")
+  l       = genfromtxt("l" + model + ".txt")
   rho_i.vector().set_local(rhoin)
 
   h_0 = project(as_vector([T_i,rho_i]), MV)    # project inital values on space
   h.vector().set_local(h_0.vector().array())   # initalize T, rho in solution
   h_1.vector().set_local(h_0.vector().array()) # initalize T, rho in prev. sol
 
-set_initial()
+#set_initial(model)
 
 # find vector of T, rho :
 tplot   = project(T, V).vector().array()
@@ -228,9 +230,13 @@ ht     = []
 origHt = []
 while t <= tf:
   # newton's iterative method :
-  #solve(fA == 0, h, [Tbc, Dbc], J=dfA)
-  #solve(fZL == 0, h, [Tbc, Dbc], J=dfZL)
-  solve(fHL == 0, h, [Tbc, Dbc], J=dfHL)
+  print model
+  if model == 'a':
+    solve(fA == 0, h, [Tbc, Dbc], J=dfA)
+  if model == 'hl':
+    solve(fHL == 0, h, [Tbc, Dbc], J=dfHL)
+  elif model == 'zl':
+    solve(fZL == 0, h, [Tbc, Dbc], J=dfZL)
   
   # find vector of T, rho :
   tplot   = project(T, V).vector().array()
@@ -276,14 +282,14 @@ while t <= tf:
   # update kc term in drhodt :
   # if rho >  54, kc = kcHigh
   # if rho <= 550, kc = kcLow
-  rhoCoefNew             = ones(len(rhoplot))
-  hlCoefNew              = ones(len(rhoplot))
-  rhoHigh                = where(rhoplot >  550)
-  rhoLow                 = where(rhoplot <= 550)
-  rhoCoefNew[rhoHigh[0]] = kcHh
-  rhoCoefNew[rhoLow[0]]  = kcLw
-  hlCoefNew[rhoHigh[0]]  = 575*sqrt(acc/rhow)*np.exp(-21400.0/(R*tplot[rhoHigh[0]]))
-  hlCoefNew[rhoLow[0]]   = 11*(acc/rhow)*np.exp(-10160.0/(R*tplot[rhoLow[0]]))
+  rhoCoefNew          = ones(len(rhoplot))
+  hlCoefNew           = ones(len(rhoplot))
+  rhoHigh             = where(rhoplot >  550)[0]
+  rhoLow              = where(rhoplot <= 550)[0]
+  rhoCoefNew[rhoHigh] = kcHh
+  rhoCoefNew[rhoLow]  = kcLw
+  hlCoefNew[rhoHigh]  = 575*sqrt(acc/rhow)*np.exp(-21400.0/(R*tplot[rhoHigh]))
+  hlCoefNew[rhoLow]   = 11*(acc/rhow)*np.exp(-10160.0/(R*tplot[rhoLow]))
   rhoCoef.vector().set_local(rhoCoefNew)
   hlCoef.vector().set_local(hlCoefNew)
 
