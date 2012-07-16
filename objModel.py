@@ -224,36 +224,38 @@ def set_initial_converge(model):
   rhoin   = genfromtxt("data/rho" + model + ".txt")
   z       = genfromtxt("data/z"   + model + ".txt")
   l       = genfromtxt("data/l"   + model + ".txt")
-  rho_i.vector().set_local(rhoin)
 
+  rho_i.vector().set_local(rhoin)
   h_0 = project(as_vector([T_i,rho_i]), MV)    # project inital values on space
   h.vector().set_local(h_0.vector().array())   # initalize T, rho in solution
   h_1.vector().set_local(h_0.vector().array()) # initalize T, rho in prev. sol
 
-# load initialization data :
+# load initialization from Joel's data :
+# FIXME : make this work for densities not starting on the surface,
+#         clean up the code so reversing arrays are in density function.
 def set_initial_data(model):
-  s, d = give_density()
+  s, d   = give_density()
   
-  znew  = d[0][:,0] + d[0][:,0]/(d[0][:,1] - d[0][:,0]) # midpoint of data
-  znew  = zs - znew / 100.0                             # put on top of firn
-  rhoin = d[0][:,3]                                     # density values
-
-  f     = interp1d(znew, rhoin, bounds_error=False, fill_value=max(rhoin))
-  ynew  = f(z)
-  rhoin = ynew
+  znew   = d[0][:,0] + d[0][:,0]/(d[0][:,1] - d[0][:,0]) # midpoint of depth 
+  znew   = zs - znew / 100.0                             # put on top of firn
+  rhonew = d[0][:,3]                                     # density values
+ 
+  # the [::-1] reverses the array to work with the density function
+  interp = interp1d(znew[::-1], 
+                    rhonew[::-1], 
+                    bounds_error=False, fill_value=max(rhonew))
+  ynew   = interp(z[::-1])
+  rhoin  = ynew[::-1]
 
   rho_i.vector().set_local(rhoin)
-
   h_0 = project(as_vector([T_i,rho_i]), MV)    # project inital values on space
   h.vector().set_local(h_0.vector().array())   # initalize T, rho in solution
   h_1.vector().set_local(h_0.vector().array()) # initalize T, rho in prev. sol
-  
-  return znew
 
 if init == 'i':
   set_initial_converge(model)
 elif init == 'd':
-  z = set_initial_data(model)  
+  set_initial_data(model)  
 
 # find vector of T, rho :
 tplot   = project(T, V).vector().array()

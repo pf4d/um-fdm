@@ -38,8 +38,8 @@ def give_density():
 #
 #plot(x, y)
 #
-#f     = interp1d(x, y)
-#xnew  = arange(min(x), max(x)-1, 0.01)
+#f     = interp1d(x, y, bounds_error=False, fill_value=max(y))
+#xnew  = arange(min(x), max(x)+1, 0.01)
 #ynew  = f(xnew)
 #
 #plot(xnew, ynew, 'rx')
