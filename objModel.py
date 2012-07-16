@@ -14,8 +14,9 @@ where model is:
 
 end time is time to run the model in years, and
 
-initialize is either 'i' or any other character:
+initialize is either 'i', 'd', or any other character:
   'i' initializes the temperature and density profile to a 180-year converge.
+  'd' initializes the density with Joel Harper's data.
    
 """
 
