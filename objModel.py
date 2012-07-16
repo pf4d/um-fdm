@@ -21,6 +21,7 @@ initialize is either 'i' or any other character:
 
 from numpy import *
 import numpy as np
+from density import *
 from dolfin import *
 from scipy.interpolate import interp1d
 from plot import *
@@ -87,6 +88,7 @@ l      = l[:-numNew]                                # remove split heights
 l      = append(l, dz/2 * ones(numNew * 2))         # append new split heights
 index  = argsort(z)                                 # index of updated mesh
 rhoin  = rhoi*ones(len(l))                          # initial density
+z      = z[index]
 
 # create function spaces :
 V      = FunctionSpace(mesh, 'Lagrange', 1)         # function space for rho, T
@@ -228,8 +230,31 @@ def set_initial(model):
   h.vector().set_local(h_0.vector().array())   # initalize T, rho in solution
   h_1.vector().set_local(h_0.vector().array()) # initalize T, rho in prev. sol
 
+# load initialization data :
+def set_initial2(model):
+  s, d = give_density()
+  
+  znew  = d[0][:,0] + d[0][:,0]/(d[0][:,1] - d[0][:,0])
+  znew  = zs - znew/100.0
+  rhoin = d[0][:,3]
+
+  f     = interp1d(znew, rhoin, bounds_error=False, fill_value=max(rhoin))
+  ynew  = f(z)
+  rhoin = ynew
+
+  rho_i.vector().set_local(rhoin)
+
+  h_0 = project(as_vector([T_i,rho_i]), MV)    # project inital values on space
+  h.vector().set_local(h_0.vector().array())   # initalize T, rho in solution
+  h_1.vector().set_local(h_0.vector().array()) # initalize T, rho in prev. sol
+  
+  return znew
+
+
 if init == 'i':
   set_initial(model)
+elif init == 'd':
+  z = set_initial2(model)  
 
 # find vector of T, rho :
 tplot   = project(T, V).vector().array()
@@ -295,7 +320,7 @@ while t <= tf:
   if firn.origZ > firn.z[0]:
     interp      = interp1d(firn.z, firn.w[index])
     zint        = array([firn.origZ])
-    wOrigZ      = interp(array([firn.origZ]))
+    wOrigZ      = interp(zint)
     firn.origZ += wOrigZ[0] / 1e3 * dt
   else:
     firn.origZ  = 0.0
