@@ -3,14 +3,30 @@ objModel.py
 Evan Cummings
 05.23.12
 
-FEniCS solution to firn temperature profile.
+FEniCS solution to firn temperature/density profile.
 
+run with "python objModel.py <model> <end time> <initialize>
+
+where model is:
+  zl ... Li and Zwally 2002 model with Reeh correction.
+  hl ... Herron and Langway 1980 [unworking]
+  a .... Arthern 2008
+
+end time is time to run the model in years, and
+
+initialize is either 'i', 'd', or any other character:
+  'i' initializes the temperature and density profile to a 180-year converge.
+  'd' initializes the density with Joel Harper's data.
+   
 """
 
 from numpy import *
+import numpy as np
+from density import *
 from dolfin import *
 from scipy.interpolate import interp1d
 from plot import *
+import sys
 
 
 #==============================================================================
@@ -38,15 +54,18 @@ Eg    = 42.4e3                 # act. energy for grain growth ... J/mol
 # model variables :
 n     = 80                     # num of z-positions
 beta  = 1.5                    # drhodt smoothing
+init  = sys.argv[3]            # initialize or not .............. {i, None}
 omega = 2*pi/spy               # frequency of earth rotations ... rad / s
 Tavg  = Tw - 10.0              # average temperature ............ degrees K
-zs    = 40.                    # surface start .................. m
+zs    = 50.                    # surface start .................. m
 zb    = 0.                     # depth .......................... m
 dz    = (zs - zb)/n            # initial z-spacing .............. m
 l     = dz*ones(n+1)           # height vector .................. m
 dt    = 0.025*spy              # time-step ...................... s
 t0    = 0.0                    # begin time ..................... s
-tf    = 20*spy                 # end-time ....................... s
+tf    = sys.argv[2]            # end-time ....................... string
+tf    = float(tf)*spy          # end-time ....................... s
+model = sys.argv[1]            # model choice ................... {hl, zl, a}
 
 
 #==============================================================================
@@ -69,7 +88,8 @@ numNew = len(z) - len(l)                            # number of split nodes
 l      = l[:-numNew]                                # remove split heights
 l      = append(l, dz/2 * ones(numNew * 2))         # append new split heights
 index  = argsort(z)                                 # index of updated mesh
-rhoin  = rhoi*ones(len(l))                           # initial density
+rhoin  = rhoi*ones(len(l))                          # initial density
+z      = z[index]
 
 # create function spaces :
 V      = FunctionSpace(mesh, 'Lagrange', 1)         # function space for rho, T
@@ -85,7 +105,7 @@ Tb    = Constant(Tavg)
 # variable surface density by S.R.M. Ligtenberg et all 2011 :
 code  = '-151.94 + 1.4266*(73.6 + 1.06*Ts + 0.0669*A + 4.77*Va)'
 rhoS  = Expression(code, Ts=Tavg, A=A, Va=Va)
-#code  = '300 + 700*( (Ts - Tmin) / (Tmax - Tmin) )'   # evan experiment
+#code  = '300 + 700*( (Ts - Tmin) / (Tmax - Tmin) )'   # density match temp 
 #rhoS  = Expression(code, Tmax=Tavg + 9.9, Tmin=Tavg - 9.9, Ts=Tavg)
 #rhoS  = Constant(300)
 
@@ -141,69 +161,102 @@ dK        = 8.36*-2.061*T**(-1.061)                   # derivative K(T)
 #k = (2*ki*rho) / (3*rhoi - rho)
 
 # thermal conductivity Arthern et all 1998 :
+#  dk    pk pr   pk pT
+#  -- =  -- -- + -- --  (chain rule)
+#  dz    pr pz   pT pz
 k         = 2.1*(rho / rhoi)**2
 dkdrho    = 4.2*(rho / rhoi**2)
-#dkdT      = 9.828*-5.7e-3*exp(-5.7e-3 * T)    # Patterson pg. 205
-drhodT    = ( (dK*acc)*(-K*acc/rhoi - 1/dt) - 
-              (w*grad(rho) - rho_0/dt - K*acc)*(-dK*acc/rhoi) ) / \
-            (-K*acc/rhoi - 1/dt)**2
+drhodT    = 9.828*-5.7e-3*exp(-5.7e-3 * T)    # Patterson pg. 205
+#drhodT    = ( (dK*acc)*(-K*acc/rhoi - 1/dt) - 
+#              (w*grad(rho) - rho_0/dt - K*acc)*(-dK*acc/rhoi) ) / \
+#            (-K*acc/rhoi - 1/dt)**2
 dkdT      = 4.2*(drhodT / rhoi**2)
 dkdz      = dkdrho*grad(rho) + dkdT*grad(T)
 
-km1       = 2.1*(rho_0 / rhoi)**2
-dkdrhom1  = 4.2*(rho_0 / rhoi**2)
-#dkdTm1    = 9.828*-5.7e-3*exp(-5.7e-3 * T_0)  # Patterson pg. 205
-dkdTm1    = ( (dK*acc)*(-K*acc/rhoi - 1/dt) - 
-              (w*grad(rho) - rho_0/dt - K*acc)*(-K*acc/rhoi) ) / \
-            (-K*acc/rhoi - 1/dt)**2
-dkdzm1    = dkdrho*grad(rho_0) + dkdT*grad(T_0)
-
-# theta scheme (1=Backwards-Euler, 0.5=Crank-Nicolson, 0=Forward-Euler) :
-theta     = 1.0
 f_T       = (rho*cp*(T-T_0)*psi/dt + \
-            theta*k*inner(grad(T),grad(psi)))*dx # + \
-#            theta*rho*cp*w*grad(T)*psi + \
-#            theta*dkdz*grad(T)*psi + \
-#            (1-theta)*km1*inner(grad(T_0),grad(psi)) + \
-#            (1-theta)*rho_0*cp*wm1*grad(T_0)*psi+ \
-#            (1-theta)*dkdzm1*grad(T_0)*psi)*dx
-
-# total derivative d rho / dt :
-#drhodt = K*acc*(rhoi - rho)/rhoi                      # Zwally and Li, 2002
-#drhodt   = (rhoi - rho)*(acc*rhoi/rhow)*beta*K        # Reeh ZL correction
-#drho_0dt = (rhoi - rho_0)*(acc*rhoi/rhow)*beta*K      # Reeh ZL correction
+            k*inner(grad(T),grad(psi)) + \
+            rho*cp*w*grad(T)*psi + \
+            dkdz*grad(T)*psi)*dx
 
 # total derivative drhodt from Arthern 2010 :
 rhoCoef  = interpolate(Constant(kcHh), V)
-drhodt   = (acc*g*rhoCoef/kg)*exp( -Ec/(R*T) + Eg/(R*Tavg) )*(rhoi - rho)
-drho_0dt = (acc*g*rhoCoef/kg)*exp( -Ec/(R*T_0) + Eg/(R*Tavg) )*(rhoi - rho_0)
+drhodtA  = (acc*g*rhoCoef/kg)*exp( -Ec/(R*T) + Eg/(R*Tavg) )*(rhoi - rho)
+# Herron and Langway 1980 :
+hlCoef   = interpolate(Constant(11*(acc/rhow)*exp(-10160.0/(R*Tavg))), V)
+#class HLCoef(Expression):
+#  def eval(self, v, x):
+#    v[0] = 11*(acc/rhow)*exp(-10160.0/(R*T))
+#    if x[0] < 20:
+#      v[0] = 575*sqrt(acc/rhow)*exp(-21400.0/(R*T))
 
-# theta scheme (1=Backwards-Euler, 0.5=Crank-Nicolson, 0=Forward-Euler) :
-theta     = 1.0
-f_rho     = ((rho-rho_0)/dt - \
-            theta*(drhodt - w*grad(rho)) - \
-            (1-theta)*(drho_0dt - wm1*grad(rho_0)))*phi*dx
+#hlCoef = HLCoef()
+drhodtHL = hlCoef*(rhoi - rho)
+#drhodtHL = 11*(acc/rhow)*exp(-10160.0/(R*T))*(rhoi - rho)
+# Li and Zwally 2002 with Reeh correction :
+drhodtZL = (rhoi - rho)*(acc*rhoi/rhow)*beta*K
+# Helsen et al. 2008 :
+drhodtH  = (acc/rhoi)*(76.138 - 0.28965*Tavg)*K*(rhoi - rho)
+
+# material derivative :        backwards-difference :
+#  dr   pr     pr               pr   r_{k} - r_{k-1}
+#  -- = -- + w --               -- = ---------------
+#  dt   pt     pz               pt         dt
+fA_rho   = ((rho-rho_0)/dt - (drhodtA  - w*grad(rho)))*phi*dx
+fZL_rho  = ((rho-rho_0)/dt - (drhodtZL - w*grad(rho)))*phi*dx
+fH_rho   = ((rho-rho_0)/dt - (drhodtH  - w*grad(rho)))*phi*dx
+fHL_rho  = ((rho-rho_0)/dt - (drhodtHL - w*grad(rho)))*phi*dx
 
 # equation to be minimzed :
-f         = f_T + f_rho
-df        = derivative(f, h, dh)  # jacobian 
+if model == 'a':
+  f  = f_T + fA_rho
+elif model == 'zl':
+  f  = f_T + fZL_rho
+elif model == 'hl':
+  f  = f_T + fHL_rho
+
+df = derivative(f, h, dh) # jacobian
 
 
 #==============================================================================
 # initialize plot :
 
 # load initialization data :
-def set_initial():
-  rhoin   = genfromtxt("rho.txt")
-  z       = genfromtxt("z.txt")
-  l       = genfromtxt("l.txt")
-  rho_i.vector().set_local(rhoin)
+def set_initial_converge(model):
+  rhoin   = genfromtxt("data/rho" + model + ".txt")
+  z       = genfromtxt("data/z"   + model + ".txt")
+  l       = genfromtxt("data/l"   + model + ".txt")
 
+  rho_i.vector().set_local(rhoin)
   h_0 = project(as_vector([T_i,rho_i]), MV)    # project inital values on space
   h.vector().set_local(h_0.vector().array())   # initalize T, rho in solution
   h_1.vector().set_local(h_0.vector().array()) # initalize T, rho in prev. sol
 
-set_initial()
+# load initialization from Joel's data :
+# FIXME : make this work for densities not starting on the surface,
+#         clean up the code so reversing arrays are in density function.
+def set_initial_data(model):
+  s, d   = give_density()
+  
+  znew   = d[0][:,0] + d[0][:,0]/(d[0][:,1] - d[0][:,0]) # midpoint of depth 
+  znew   = zs - znew / 100.0                             # put on top of firn
+  rhonew = d[0][:,3]                                     # density values
+ 
+  # the [::-1] reverses the array to work with the density function
+  interp = interp1d(znew[::-1], 
+                    rhonew[::-1], 
+                    bounds_error=False, fill_value=max(rhonew))
+  ynew   = interp(z[::-1])
+  rhoin  = ynew[::-1]
+
+  rho_i.vector().set_local(rhoin)
+  h_0 = project(as_vector([T_i,rho_i]), MV)    # project inital values on space
+  h.vector().set_local(h_0.vector().array())   # initalize T, rho in solution
+  h_1.vector().set_local(h_0.vector().array()) # initalize T, rho in prev. sol
+
+if init == 'i':
+  set_initial_converge(model)
+elif init == 'd':
+  set_initial_data(model)  
 
 # find vector of T, rho :
 tplot   = project(T, V).vector().array()
@@ -216,73 +269,79 @@ kplot2  = 2.1*(rhoplot / rhoi)**2
 kplot3  = (2*ki*rhoplot) / (3*rhoi - rhoplot)
 
 plt.ion()
-plot = plot(tplot, rhoplot, wplot, kplot1, 
+firn = firn(tplot, rhoplot, wplot, kplot1, 
             kplot2, kplot3, z, index, zb, zs)
+plot = plot(firn)
 
 
 #==============================================================================
 # Compute solution :
-t      = dt
+t      = 0.0
 ht     = []
 origHt = []
 while t <= tf:
+  # update boundary conditions :
+  Ts.t     = t
+  rhoS.Ts  = firn.T[index][-1]
+
   # newton's iterative method :
   solve(f == 0, h, [Tbc, Dbc], J=df)
   
   # find vector of T, rho :
-  tplot   = project(T, V).vector().array()
-  rhoplot = project(rho, V).vector().array()
+  firn.T   = project(T, V).vector().array()
+  firn.rho = project(rho, V).vector().array()
  
   # calculate other data :
-  wplot   = -acc / rhoplot * 1e3  # mm s^-1
-  kplot1  = 2.1e-2 + 4.2e-4*rhoplot + 2.2e-9*rhoplot**3
-  kplot2  = 2.1*(rhoplot / rhoi)**2
-  kplot3  = (2*ki*rhoplot) / (3*rhoi - rhoplot)
+  firn.w   = -acc / firn.rho # m s^-1
+  firn.k1  = 2.1e-2 + 4.2e-4*firn.rho + 2.2e-9*firn.rho**3
+  firn.k2  = 2.1*(firn.rho / rhoi)**2
+  firn.k3  = (2*ki*firn.rho) / (3*rhoi - firn.rho)
  
   # calculate height of each interval (conservation of mass) :
-  lnew    = l*rhoin[index] / rhoplot[index]
-  zSum    = zb
+  lnew     = l*rhoin[index] / firn.rho[index]
+  zSum     = zb
   for i in range(len(z)):
-    z[i]  = zSum + lnew[i]
-    zSum += lnew[i]
+    firn.z[i]  = zSum + lnew[i]
+    zSum      += lnew[i]
   
   # correct original height with initial surface conditions :
-  if t == dt:
-    origZ = z[-1]
+  if t == 0.0:
+    firn.origZ = firn.z[-1]
   
   # update the plotting parameters :
-  plot.update_plot(tplot, rhoplot, wplot, kplot1, 
-                   kplot2, kplot3, z, origZ, t/spy)
+  plot.update_plot(t/spy)
   
   plt.draw()  # update the graph
   
   # track the current height and original surface height of the firn :
-  ht.append(z[-1])
-  origHt.append(origZ)
+  ht.append(firn.z[-1])
+  origHt.append(firn.origZ)
   
   # calculate the new height of original surface
   # by interpolating vertical speed from w :
-  if origZ > z[0]:
-    interp = interp1d(z, wplot[index])
-    zint   = array([origZ])
-    wOrigZ = interp(array([origZ]))
-    origZ += wOrigZ[0] / 1e3 * dt
+  if firn.origZ > firn.z[0]:
+    interp      = interp1d(firn.z, firn.w[index])
+    zint        = array([firn.origZ])
+    wOrigZ      = interp(zint)
+    firn.origZ += wOrigZ[0] * dt
   else:
-    origZ  = 0.0
+    firn.origZ  = 0.0
 
   # update kc term in drhodt :
   # if rho >  54, kc = kcHigh
   # if rho <= 550, kc = kcLow
-  rhoCoefNew             = ones(len(rhoplot))
-  rhoHigh                = where(rhoplot >  550)
-  rhoLow                 = where(rhoplot <= 550)
-  rhoCoefNew[rhoHigh[0]] = kcHh
-  rhoCoefNew[rhoLow[0]]  = kcLw
+  rhoCoefNew          = ones(len(firn.rho))
+  hlCoefNew           = ones(len(firn.rho))
+  rhoHigh             = where(firn.rho >  550)[0]
+  rhoLow              = where(firn.rho <= 550)[0]
+  rhoCoefNew[rhoHigh] = kcHh
+  rhoCoefNew[rhoLow]  = kcLw
+  hlCoefNew[rhoHigh]  = 575*sqrt(acc/rhow)*np.exp(-21400.0/(R*firn.T[rhoHigh]))
+  hlCoefNew[rhoLow]   = 11*(acc/rhow)*np.exp(-10160.0/(R*firn.T[rhoLow]))
   rhoCoef.vector().set_local(rhoCoefNew)
+  hlCoef.vector().set_local(hlCoefNew)
 
-  # update boundary conditions, time, and previous solution :
-  Ts.t      = t
-  rhoS.Ts   = tplot[index][-1]
+  # update time and previous solution :
   t        += dt
   h_1.assign(h)
   
