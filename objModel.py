@@ -56,7 +56,7 @@ beta  = 1.5                    # drhodt smoothing
 init  = sys.argv[3]            # initialize or not .............. {i, None}
 omega = 2*pi/spy               # frequency of earth rotations ... rad / s
 Tavg  = Tw - 10.0              # average temperature ............ degrees K
-zs    = 40.                    # surface start .................. m
+zs    = 50.                    # surface start .................. m
 zb    = 0.                     # depth .......................... m
 dz    = (zs - zb)/n            # initial z-spacing .............. m
 l     = dz*ones(n+1)           # height vector .................. m
@@ -220,7 +220,7 @@ df = derivative(f, h, dh) # jacobian
 # initialize plot :
 
 # load initialization data :
-def set_initial(model):
+def set_initial_converge(model):
   rhoin   = genfromtxt("data/rho" + model + ".txt")
   z       = genfromtxt("data/z"   + model + ".txt")
   l       = genfromtxt("data/l"   + model + ".txt")
@@ -231,12 +231,12 @@ def set_initial(model):
   h_1.vector().set_local(h_0.vector().array()) # initalize T, rho in prev. sol
 
 # load initialization data :
-def set_initial2(model):
+def set_initial_data(model):
   s, d = give_density()
   
-  znew  = d[0][:,0] + d[0][:,0]/(d[0][:,1] - d[0][:,0])
-  znew  = zs - znew/100.0
-  rhoin = d[0][:,3]
+  znew  = d[0][:,0] + d[0][:,0]/(d[0][:,1] - d[0][:,0]) # midpoint of data
+  znew  = zs - znew / 100.0                             # put on top of firn
+  rhoin = d[0][:,3]                                     # density values
 
   f     = interp1d(znew, rhoin, bounds_error=False, fill_value=max(rhoin))
   ynew  = f(z)
@@ -250,11 +250,10 @@ def set_initial2(model):
   
   return znew
 
-
 if init == 'i':
-  set_initial(model)
+  set_initial_converge(model)
 elif init == 'd':
-  z = set_initial2(model)  
+  z = set_initial_data(model)  
 
 # find vector of T, rho :
 tplot   = project(T, V).vector().array()
@@ -290,7 +289,7 @@ while t <= tf:
   firn.rho = project(rho, V).vector().array()
  
   # calculate other data :
-  firn.w   = -acc / firn.rho * 1e3  # mm s^-1
+  firn.w   = -acc / firn.rho # m s^-1
   firn.k1  = 2.1e-2 + 4.2e-4*firn.rho + 2.2e-9*firn.rho**3
   firn.k2  = 2.1*(firn.rho / rhoi)**2
   firn.k3  = (2*ki*firn.rho) / (3*rhoi - firn.rho)
@@ -321,7 +320,7 @@ while t <= tf:
     interp      = interp1d(firn.z, firn.w[index])
     zint        = array([firn.origZ])
     wOrigZ      = interp(zint)
-    firn.origZ += wOrigZ[0] / 1e3 * dt
+    firn.origZ += wOrigZ[0] * dt
   else:
     firn.origZ  = 0.0
 

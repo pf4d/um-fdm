@@ -49,12 +49,14 @@ class plot():
   def __init__(self, firn):
     """
     Initialize plots with firn object as input.
-    """    
+    """   
+    self.spy  = 31556926.0
+     
     # x-values :
     self.firn = firn
     T         = firn.T
     rho       = firn.rho
-    w         = firn.w
+    w         = firn.w * self.spy * 1e2 # cm a^-1 
     k1        = firn.k1
     k2        = firn.k2
     k3        = firn.k3
@@ -76,8 +78,8 @@ class plot():
     rhoMax = 1000                                # rho x-coord max
     rhoh   = rhoMin + 0.1*(rhoMax - rhoMin) / 2  # rho height x-coord
 
-    wMin   = -22.0e-6
-    wMax   = -7.5e-6
+    wMin   = -63
+    wMax   = -24
     wh     = wMin + 0.1*(wMax - wMin) / 2
 
     kMin   = 0.0
@@ -101,7 +103,7 @@ class plot():
     self.rhoax.xaxis.set_major_formatter(FixedOrderFormatter(2))
     self.wax.axis([wMin, wMax, zmin, zmax])
     self.wax.grid()
-    self.wax.xaxis.set_major_formatter(FixedOrderFormatter(-6))
+    #self.wax.xaxis.set_major_formatter(FixedOrderFormatter(-2))
     self.kax.axis([kMin, kMax, zmin, zmax])
     self.kax.grid()
 
@@ -140,7 +142,7 @@ class plot():
     #self.rhoax.set_ylabel(r'Depth $[m]$')
 
     self.wax.set_title('Velocity')
-    self.wax.set_xlabel(r'$w$ $\left [\frac{mm}{s}\right ]$')
+    self.wax.set_xlabel(r'$w$ $\left [\frac{cm}{a}\right ]$')
     #self.wax.set_ylabel(r'Depth $[m]$')
 
     self.kax.set_title('Thermal Conductivity')
@@ -161,7 +163,7 @@ class plot():
     """    
     T     = self.firn.T
     rho   = self.firn.rho
-    w     = self.firn.w
+    w     = self.firn.w * self.spy * 1e2  # cm a^-1
     k1    = self.firn.k1
     k2    = self.firn.k2
     k3    = self.firn.k3
