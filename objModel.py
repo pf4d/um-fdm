@@ -300,7 +300,7 @@ while t <= tf:
   # calculate height of each interval (conservation of mass) :
   lnew     = l*rhoin[index] / firn.rho[index]
   zSum     = zb
-  for i in range(len(z)):
+  for i in range(len(z))[1:]:
     firn.z[i]  = zSum + lnew[i]
     zSum      += lnew[i]
   

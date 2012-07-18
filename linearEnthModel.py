@@ -135,10 +135,6 @@ p  = Expression('rhoi * g * x[0]', rhoi=rhoi, g=g)
 Kcoef = interpolate(Constant(ki/cp),  V)
 Gcoef = interpolate(Constant(0.0), V)
 
-f  = - rhoi * (H - H_1)/dt * phi * dx + \
-     Kcoef * inner(grad(H), grad(phi)) * dx + \
-     Gcoef * phi * dx
-
 a  = rhoi*H*phi*dx - dt*Kcoef*inner(grad(H), grad(phi))*dx 
 L  = rhoi*H_1*phi*dx
 
@@ -152,9 +148,10 @@ H  = Function(V)
 hplot   = H.vector().array()
 tplot   = hplot / cp
 
+plt.ion()
 firn = firn(hplot, tplot, rhoin, w, k, z, index, zb, zs)
 plot = plot(firn)
-plt.ion()
+
 
 #==============================================================================
 # Compute solution :
@@ -182,7 +179,7 @@ while t <= tf:
   # calculate height of each interval (conservation of mass) :
   lnew     = l*rhoin[index] / firn.rho[index]
   zSum     = zb
-  for i in range(len(z)):
+  for i in range(len(z))[1:]: 
     firn.z[i]  = zSum + lnew[i]
     zSum      += lnew[i]
   
