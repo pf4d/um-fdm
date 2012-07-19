@@ -61,7 +61,6 @@ tf    = sys.argv[1]            # end-time ....................... string
 tf    = float(tf)*spy          # end-time ....................... s
 
 # enthalpy-specific :
-K0    = ki/(10*cp)             # ................................ kg/(m s)
 T0    = 0.0                    # reference temperature .......... K
 beta  = 7.9e-8                 # clausius-Clapeyron ............. K/Pa
 Lf    = 3.34e5                 # latent heat of fusion .......... J/kg
@@ -155,14 +154,14 @@ drhodT    = 9.828*-5.7e-3*exp(-5.7e-3 * T)    # Patterson pg. 205
 dkdT      = 4.2*(drhodT / rhoi**2)
 dkdz      = dkdrho*grad(rho) + dkdT*grad(T)
 
-Kcoef     = interpolate(Constant(ki/cp),  V)
+Kcoef     = interpolate(Constant(1/cp),  V)
 
 #f_T       = (rho*cp*(T-T_0)*psi/dt + \
 #            k*inner(grad(T),grad(psi)) + \
 #            rho*cp*w*grad(T)*psi + \
 #            dkdz*grad(T)*psi)*dx
 
-f_H       = rho*(H - H_0)/dt*psi*dx + Kcoef*inner(grad(H), grad(psi))*dx
+f_H       = rho*(H - H_0)/dt*psi*dx + k*Kcoef*inner(grad(H), grad(psi))*dx
 
 # total derivative drhodt from Arthern 2010 :
 rhoCoef   = interpolate(Constant(kcHh), V)
@@ -265,8 +264,8 @@ while t <= tf:
   Tnew[Hlow]           = firn.T[Hlow]
   Hnew[Hhigh]          = Hsp + omega[Hhigh]*Lf
   Hnew[Hlow]           = firn.H[Hlow]
-  KcoefNew[Hhigh]      = K0
-  KcoefNew[Hlow]       = ki/cp
+  KcoefNew[Hhigh]      = 1/(cp*10)
+  KcoefNew[Hlow]       = 1/cp
   firn.omega           = omegaNew
   firn.T               = Tnew
   Kcoef.vector().set_local(KcoefNew)
