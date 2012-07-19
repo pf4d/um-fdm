@@ -52,7 +52,6 @@ tf    = sys.argv[1]            # end-time ....................... string
 tf    = float(tf)*spy          # end-time ....................... s
 
 # enthalpy-specific :
-K0    = ki/(10*cp)             # ................................ kg/(m s)
 T0    = 0.0                    # reference temperature .......... K
 beta  = 7.9e-8                 # clausius-Clapeyron ............. K/Pa
 Lf    = 3.34e5                 # latent heat of fusion .......... J/kg
@@ -217,7 +216,7 @@ while t <= tf:
   Tnew[Hlow]           = firn.T[Hlow]
   Hnew[Hhigh]          = Hsp + omega[Hhigh]*Lf
   Hnew[Hlow]           = firn.H[Hlow]
-  KcoefNew[Hhigh]      = K0
+  KcoefNew[Hhigh]      = ki/(cp*10)
   KcoefNew[Hlow]       = ki/cp
   firn.omega           = omegaNew
   firn.T               = Tnew

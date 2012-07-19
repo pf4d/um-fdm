@@ -1,18 +1,9 @@
 """
 enthModel.py
 Evan Cummings
-05.23.12
+07.19.12
 
-FEniCS solution to firn temperature/density profile.
-
-run with "python objModel.py <model> <end time> <initialize>
-
-model -  :
-  zl ... Li and Zwally 2002 model with Reeh correction.
-  hl ... Herron and Langway 1980 [unworking]
-  a .... Arthern 2008
-
-end time -  time to run the model in years
+FEniCS solution to firn enthalpy / density profile.
 
 """
 
@@ -50,7 +41,7 @@ Eg    = 42.4e3                 # act. energy for grain growth ... J/mol
 # model variables :
 n     = 80                     # num of z-positions
 freq  = 2*pi/spy               # frequency of earth rotations ... rad / s
-Tavg  = Tw - 5.0               # average temperature ............ degrees K
+Tavg  = Tw + 0.0               # average temperature ............ degrees K
 zs    = 50.                    # surface start .................. m
 zb    = 0.                     # depth .......................... m
 dz    = (zs - zb)/n            # initial z-spacing .............. m
@@ -143,25 +134,25 @@ h_1.vector().set_local(h_0.vector().array()) # initalize H, rho in prev. sol
 # expression for vertical velocity of firn :
 w         = - acc / rho
 T         = H / cp
+c         = 146.3 + 7.253*T
+k         = 9.828*exp(-0.0057*T)   # Aschwanden 2012
+k         = 2.1*(rho / rhoi)**2    # Arthern 2008
 
 # thermal conductivity Arthern et all 1998 :
 #  dk    pk pr   pk pT
 #  -- =  -- -- + -- --  (chain rule)
 #  dz    pr pz   pT pz
-k         = 2.1*(rho / rhoi)**2
-dkdrho    = 4.2*(rho / rhoi**2)
-drhodT    = 9.828*-5.7e-3*exp(-5.7e-3 * T)    # Patterson pg. 205
-dkdT      = 4.2*(drhodT / rhoi**2)
-dkdz      = dkdrho*grad(rho) + dkdT*grad(T)
+#dkdrho    = 4.2*(rho / rhoi**2)
+#drhodT    = 9.828*-5.7e-3*exp(-5.7e-3 * T)    # Patterson pg. 205
+#dkdT      = 4.2*(drhodT / rhoi**2)
+#dkdz      = dkdrho*grad(rho) + dkdT*grad(T)
 
-Kcoef     = interpolate(Constant(1/cp),  V)
+Kcoef     = interpolate(Constant(1.0),  V)
 
-#f_T       = (rho*cp*(T-T_0)*psi/dt + \
-#            k*inner(grad(T),grad(psi)) + \
-#            rho*cp*w*grad(T)*psi + \
-#            dkdz*grad(T)*psi)*dx
-
-f_H       = rho*(H - H_0)/dt*psi*dx + k*Kcoef*inner(grad(H), grad(psi))*dx
+f_H       = rho*(H - H_0)/dt*psi*dx + \
+            k/c*Kcoef*inner(grad(H), grad(psi))*dx - \
+            div(rho*H*w)*psi*dx + \
+            w*grad(H)*psi*dx
 
 # total derivative drhodt from Arthern 2010 :
 rhoCoef   = interpolate(Constant(kcHh), V)
@@ -182,12 +173,12 @@ df        = derivative(f, h, dh) # jacobian
 # initialize data structures :
 # find vector of T, rho :
 hplot   = project(H, V).vector().array()
-tplot   = hplot / cp
+tplot   = project(T, V).vector().array()
 rhoplot = project(rho, V).vector().array()
 
 # calculate other data :
-wplot   = -acc / rhoplot * 1e3
-kplot   = 2.1*(rhoplot / rhoi)**2
+wplot   = project(w, V).vector().array()
+kplot   = project(k, V).vector().array()
 
 plt.ion()
 firn = firn(hplot, tplot, rhoplot, omega, wplot, kplot, z, index, zb, zs)
@@ -209,13 +200,13 @@ while t <= tf:
   
   # find vector of T, rho :
   firn.H   = project(H, V).vector().array()
-  firn.T   = firn.H / cp
+  firn.T   = project(T, V).vector().array()
   firn.rho = project(rho, V).vector().array()
  
   # calculate other data :
-  firn.w   = -acc / firn.rho # m s^-1
-  firn.k   = 2.1*(firn.rho / rhoi)**2
- 
+  firn.w   = project(w, V).vector().array()  # m s^-1
+  firn.k   = project(k, V).vector().array()  # Arthern 2008
+
   # calculate height of each interval (conservation of mass) :
   lnew     = l*rhoin[index] / firn.rho[index]
   zSum     = zb
@@ -252,23 +243,22 @@ while t <= tf:
   rhoCoef.vector().set_local(rhoCoefNew)
   
   # update coefficients and stuff :
-  Hhigh                = where(firn.H >= Hsp)[0]
-  Hlow                 = where(firn.H <  Hsp)[0]
-  omegaNew             = zeros(len(firn.T))
-  Hnew                 = zeros(len(firn.H))
-  Tnew                 = zeros(len(firn.T))
-  KcoefNew             = zeros(len(firn.T))
-  omegaNew[Hhigh]      = (firn.H[Hhigh] - Hsp) / Lf
-  omegaNew[Hlow]       = 0.0
-  Tnew[Hhigh]          = Tw
-  Tnew[Hlow]           = firn.T[Hlow]
-  Hnew[Hhigh]          = Hsp + omega[Hhigh]*Lf
-  Hnew[Hlow]           = firn.H[Hlow]
-  KcoefNew[Hhigh]      = 1/(cp*10)
-  KcoefNew[Hlow]       = 1/cp
-  firn.omega           = omegaNew
-  firn.T               = Tnew
-  Kcoef.vector().set_local(KcoefNew)
+  Hhigh               = where(firn.H >= Hsp)[0]
+  Hlow                = where(firn.H <  Hsp)[0]
+  omegaNew            = zeros(len(firn.T))
+  Hnew                = zeros(len(firn.H))
+  Tnew                = zeros(len(firn.T))
+  KcoefNew            = ones(len(firn.T))
+  omegaNew[Hhigh]     = (firn.H[Hhigh] - Hsp) / Lf
+  Tnew[Hhigh]         = Tw
+  Tnew[Hlow]          = firn.T[Hlow]
+  Hnew[Hhigh]         = Hsp + omega[Hhigh]*Lf
+  Hnew[Hlow]          = firn.H[Hlow]
+  KcoefNew[Hhigh]     = 1/10.0
+  firn.omega          = omegaNew
+  firn.T              = Tnew
+  T.vector().set_local(Tnew)
+  #Kcoef.vector().set_local(KcoefNew)
   rho_i.vector().set_local(firn.rho)
   H_i.vector().set_local(Hnew)
   h_0 = project(as_vector([H_i, rho_i]), MV)
