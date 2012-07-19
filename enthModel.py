@@ -21,7 +21,7 @@ import numpy as np
 from density import *
 from dolfin import *
 from scipy.interpolate import interp1d
-from plot import *
+from enthPlot import *
 import sys
 
 
@@ -49,8 +49,8 @@ Eg    = 42.4e3                 # act. energy for grain growth ... J/mol
 
 # model variables :
 n     = 80                     # num of z-positions
-omega = 2*pi/spy               # frequency of earth rotations ... rad / s
-Tavg  = Tw - 10.0              # average temperature ............ degrees K
+freq  = 2*pi/spy               # frequency of earth rotations ... rad / s
+Tavg  = Tw - 5.0               # average temperature ............ degrees K
 zs    = 50.                    # surface start .................. m
 zb    = 0.                     # depth .......................... m
 dz    = (zs - zb)/n            # initial z-spacing .............. m
@@ -59,6 +59,14 @@ dt    = 0.025*spy              # time-step ...................... s
 t0    = 0.0                    # begin time ..................... s
 tf    = sys.argv[1]            # end-time ....................... string
 tf    = float(tf)*spy          # end-time ....................... s
+
+# enthalpy-specific :
+K0    = ki/(10*cp)             # ................................ kg/(m s)
+T0    = 0.0                    # reference temperature .......... K
+beta  = 7.9e-8                 # clausius-Clapeyron ............. K/Pa
+Lf    = 3.34e5                 # latent heat of fusion .......... J/kg
+Hsp   = cp*(Tw - T0)           # Enthalpy of ice at Tw .......... J/kg
+omega = zeros(n+1)
 
 
 #==============================================================================
@@ -82,15 +90,16 @@ l      = l[:-numNew]                                # remove split heights
 l      = append(l, dz/2 * ones(numNew * 2))         # append new split heights
 index  = argsort(z)                                 # index of updated mesh
 rhoin  = rhoi*ones(len(l))                          # initial density
+omega  = zeros(len(l))
 z      = z[index]
 
 # create function spaces :
 V      = FunctionSpace(mesh, 'Lagrange', 1)         # function space for rho, T
 MV     = V*V                                        # mixed function space
 
-# cyclical surface temperature :
-code  = 'Tavg + 9.9*sin(omega*t)'
-Ts    = Expression(code, Tavg=Tavg, omega=omega, t=0.0)
+# enthalpy surface condition with cyclical 2-meter air temperature :
+code   = 'ci*( (Tavg + 9.9*sin(omega*t))  - T0)'
+Hs     = Expression(code, ci=cp, Tavg=Tavg, omega=freq, t=0.0, T0=T0)
 
 # temperature of base of firn :
 Tb    = Constant(Tavg)
@@ -106,45 +115,35 @@ def surface(x, on_boundary):
 def base(x, on_boundary):
   return on_boundary and x[0] == zb
 
-Tbc  = DirichletBC(MV.sub(0), Ts, surface)    # temperature surface
-Tbc2 = DirichletBC(MV.sub(0), Tb, base)       # temperature base 
+Hbc  = DirichletBC(MV.sub(0), Hs, surface)    # enthalpy surface
+Hbc2 = DirichletBC(MV.sub(0), Tb, base)       # enthalpy base 
 Dbc  = DirichletBC(MV.sub(1), rhoS, surface)  # density surface
 
 
 #==============================================================================
 # Define variational problem :
-T_i        = interpolate(Constant(Tavg), V)  # initial temperature vector
+H_i        = interpolate(Constant(cp*(Tavg - T0)), V) # initial enthalpy vector
 rho_i      = interpolate(Constant(rhoi), V)  # initial density vector
 h          = Function(MV)                    # solution
-T,rho      = split(h)                        # solutions for T, rho
+H,rho      = split(h)                        # solutions for H, rho
 h_1        = Function(MV)                    # previous solution
-T_0, rho_0 = split(h_1)                      # initial value functions
+H_0, rho_0 = split(h_1)                      # initial value functions
 
 dh         = TrialFunction(MV)               # trial function for solution
-dT, drho   = split(dh)                       # trial functions for T, rho
+dH, drho   = split(dh)                       # trial functions for H, rho
 j          = TestFunction(MV)                # test function in mixed space
-psi, phi   = split(j)                        # test functions for T, rho
+psi, phi   = split(j)                        # test functions for H, rho
 
-h_0 = project(as_vector([T_i,rho_i]), MV)    # project inital values on space
-h.vector().set_local(h_0.vector().array())   # initalize T, rho in solution
-h_1.vector().set_local(h_0.vector().array()) # initalize T, rho in prev. sol
+h_0 = project(as_vector([H_i,rho_i]), MV)    # project inital values on space
+h.vector().set_local(h_0.vector().array())   # initalize H, rho in solution
+h_1.vector().set_local(h_0.vector().array()) # initalize H, rho in prev. sol
 
 
 #==============================================================================
 # Define equations to be solved :
 # expression for vertical velocity of firn :
 w         = - acc / rho
-wm1       = - acc / rho_0
-
-# expression for variable rate constant KT :
-K         = 8.36*T**(-2.061)                          # Reeh ZL correction
-dK        = 8.36*-2.061*T**(-1.061)                   # derivative K(T)
-
-# thermal conductivity Van Dusen formula (lower limit) :
-#k = 2.1e-2 + 4.2e-4*rho + 2.2e-9*rho**3
-
-# thermal conductivity Schwerdtfeger forumla (upper limit) :
-#k = (2*ki*rho) / (3*rhoi - rho)
+T         = H / cp
 
 # thermal conductivity Arthern et all 1998 :
 #  dk    pk pr   pk pT
@@ -156,41 +155,43 @@ drhodT    = 9.828*-5.7e-3*exp(-5.7e-3 * T)    # Patterson pg. 205
 dkdT      = 4.2*(drhodT / rhoi**2)
 dkdz      = dkdrho*grad(rho) + dkdT*grad(T)
 
-f_T       = (rho*cp*(T-T_0)*psi/dt + \
-            k*inner(grad(T),grad(psi)) + \
-            rho*cp*w*grad(T)*psi + \
-            dkdz*grad(T)*psi)*dx
+Kcoef     = interpolate(Constant(ki/cp),  V)
+
+#f_T       = (rho*cp*(T-T_0)*psi/dt + \
+#            k*inner(grad(T),grad(psi)) + \
+#            rho*cp*w*grad(T)*psi + \
+#            dkdz*grad(T)*psi)*dx
+
+f_H       = rho*(H - H_0)/dt*psi*dx + Kcoef*inner(grad(H), grad(psi))*dx
 
 # total derivative drhodt from Arthern 2010 :
-rhoCoef  = interpolate(Constant(kcHh), V)
-drhodt   = (acc*g*rhoCoef/kg)*exp( -Ec/(R*T) + Eg/(R*Tavg) )*(rhoi - rho)
+rhoCoef   = interpolate(Constant(kcHh), V)
+drhodt    = (acc*g*rhoCoef/kg)*exp( -Ec/(R*T) + Eg/(R*Tavg) )*(rhoi - rho)
 
 # material derivative :        backwards-difference :
 #  dr   pr     pr               pr   r_{k} - r_{k-1}
 #  -- = -- + w --               -- = ---------------
 #  dt   pt     pz               pt         dt
-f_rho    = ((rho-rho_0)/dt - (drhodt - w*grad(rho)))*phi*dx
+f_rho     = ((rho-rho_0)/dt - (drhodt - w*grad(rho)))*phi*dx
 
 # equation to be minimzed :
-f  = f_T + f_rho
-df = derivative(f, h, dh) # jacobian
+f         = f_H + f_rho
+df        = derivative(f, h, dh) # jacobian
 
 
 #==============================================================================
 # initialize data structures :
 # find vector of T, rho :
-tplot   = project(T, V).vector().array()
+hplot   = project(H, V).vector().array()
+tplot   = hplot / cp
 rhoplot = project(rho, V).vector().array()
 
 # calculate other data :
 wplot   = -acc / rhoplot * 1e3
-kplot1  = 2.1e-2 + 4.2e-4*rhoplot + 2.2e-9*rhoplot**3
-kplot2  = 2.1*(rhoplot / rhoi)**2
-kplot3  = (2*ki*rhoplot) / (3*rhoi - rhoplot)
+kplot   = 2.1*(rhoplot / rhoi)**2
 
 plt.ion()
-firn = firn(tplot, rhoplot, wplot, kplot1, 
-            kplot2, kplot3, z, index, zb, zs)
+firn = firn(hplot, tplot, rhoplot, omega, wplot, kplot, z, index, zb, zs)
 plot = plot(firn)
 
 
@@ -201,37 +202,31 @@ ht     = []
 origHt = []
 while t <= tf:
   # update boundary conditions :
-  Ts.t     = t
+  Hs.t     = t
   rhoS.Ts  = firn.T[index][-1]
 
   # newton's iterative method :
-  solve(f == 0, h, [Tbc, Dbc], J=df)
+  solve(f == 0, h, [Hbc, Dbc], J=df)
   
   # find vector of T, rho :
-  firn.T   = project(T, V).vector().array()
+  firn.H   = project(H, V).vector().array()
+  firn.T   = firn.H / cp
   firn.rho = project(rho, V).vector().array()
  
   # calculate other data :
   firn.w   = -acc / firn.rho # m s^-1
-  firn.k1  = 2.1e-2 + 4.2e-4*firn.rho + 2.2e-9*firn.rho**3
-  firn.k2  = 2.1*(firn.rho / rhoi)**2
-  firn.k3  = (2*ki*firn.rho) / (3*rhoi - firn.rho)
+  firn.k   = 2.1*(firn.rho / rhoi)**2
  
   # calculate height of each interval (conservation of mass) :
   lnew     = l*rhoin[index] / firn.rho[index]
   zSum     = zb
-  for i in range(len(z)):
+  for i in range(len(z))[1:]:
     firn.z[i]  = zSum + lnew[i]
     zSum      += lnew[i]
   
   # correct original height with initial surface conditions :
   if t == 0.0:
     firn.origZ = firn.z[-1]
-  
-  # update the plotting parameters :
-  plot.update_plot(t/spy)
-  
-  plt.draw()  # update the graph
   
   # track the current height and original surface height of the firn :
   ht.append(firn.z[-1])
@@ -256,9 +251,37 @@ while t <= tf:
   rhoCoefNew[rhoHigh] = kcHh
   rhoCoefNew[rhoLow]  = kcLw
   rhoCoef.vector().set_local(rhoCoefNew)
+  
+  # update coefficients and stuff :
+  Hhigh                = where(firn.H >= Hsp)[0]
+  Hlow                 = where(firn.H <  Hsp)[0]
+  omegaNew             = zeros(len(firn.T))
+  Hnew                 = zeros(len(firn.H))
+  Tnew                 = zeros(len(firn.T))
+  KcoefNew             = zeros(len(firn.T))
+  omegaNew[Hhigh]      = (firn.H[Hhigh] - Hsp) / Lf
+  omegaNew[Hlow]       = 0.0
+  Tnew[Hhigh]          = Tw
+  Tnew[Hlow]           = firn.T[Hlow]
+  Hnew[Hhigh]          = Hsp + omega[Hhigh]*Lf
+  Hnew[Hlow]           = firn.H[Hlow]
+  KcoefNew[Hhigh]      = K0
+  KcoefNew[Hlow]       = ki/cp
+  firn.omega           = omegaNew
+  firn.T               = Tnew
+  Kcoef.vector().set_local(KcoefNew)
+  rho_i.vector().set_local(rhoplot)
+  H_i.vector().set_local(Hnew)
+  h_0 = project(as_vector([H_i, rho_i]), MV)
+  h.vector().set_local(h_0.vector().array())
+
+  # update the plotting parameters :
+  plot.update_plot(t/spy)
+  
+  plt.draw()  # update the graph
 
   # update time and previous solution :
-  t        += dt
+  t += dt
   h_1.assign(h)
   
 plt.ioff()

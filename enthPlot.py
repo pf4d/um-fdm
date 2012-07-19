@@ -31,11 +31,12 @@ class firn():
   """
   Data structure to hold firn model state data.
   """
-  def __init__(self, H, T, rho, w, k, z, index, zb, zs):
+  def __init__(self, H, T, rho, omega, w, k, z, index, zb, zs):
 
     self.H     = H
     self.T     = T 
     self.rho   = rho
+    self.omega = omega
     self.w     = w
     self.k     = k
     self.z     = z
@@ -59,6 +60,7 @@ class plot():
     self.firn = firn
     H         = firn.H
     T         = firn.T
+    omega     = firn.omega
     rho       = firn.rho
     w         = firn.w * self.spy * 1e2 # cm a^-1 
     k         = firn.k
@@ -73,8 +75,12 @@ class plot():
     origZ     = firn.origZ
 
     Tmin   = -20                                 # T x-coord min
-    Tmax   = 0                                   # T x-coord max
+    Tmax   = 5                                   # T x-coord max
     Th     = Tmin + 0.1*(Tmax - Tmin) / 2        # T height x-coord
+
+    omMax  = 0.05
+    omMin  = -0.01
+    omh    = omMin + 0.1*(omMax - omMin) / 2
 
     rhoMin = 300                                 # rho x-coord min
     rhoMax = 1000                                # rho x-coord max
@@ -91,15 +97,18 @@ class plot():
     zmax   = zs + 20                            # max z-coord
     zmin   = zb                                 # min z-coord
 
-    self.fig   = plt.figure(figsize=(16,6))
-    self.Tax   = self.fig.add_subplot(141)
-    self.rhoax = self.fig.add_subplot(142)
-    self.wax   = self.fig.add_subplot(143)
-    self.kax   = self.fig.add_subplot(144)
+    self.fig   = plt.figure(figsize=(18,6))
+    self.Tax   = self.fig.add_subplot(151)
+    self.omax  = self.fig.add_subplot(152)
+    self.rhoax = self.fig.add_subplot(153)
+    self.wax   = self.fig.add_subplot(154)
+    self.kax   = self.fig.add_subplot(155)
 
     # format : [xmin, xmax, ymin, ymax]
     self.Tax.axis([Tmin, Tmax, zmin, zmax])
     self.Tax.grid()
+    self.omax.axis([omMin, omMax, zmin, zmax])
+    self.omax.grid()
     self.rhoax.axis([rhoMin, rhoMax, zmin, zmax])
     self.rhoax.grid()
     self.rhoax.xaxis.set_major_formatter(FixedOrderFormatter(2))
@@ -114,6 +123,11 @@ class plot():
     self.phTs_0,  = self.Tax.plot(Th, origZ, 'ko')
     self.phTsp,   = self.Tax.plot(Th*np.ones(len(z)), z, 'r+')
 
+    self.phom,    = self.omax.plot(omega, z, 'm-')
+    self.phoms,   = self.omax.plot([omMin, omMax], [zs, zs], 'k-', lw=2)
+    self.phoms_0, = self.omax.plot(omh, origZ, 'ko')
+    self.phomsp,  = self.omax.plot(omh*np.ones(len(z)), z, 'r+')
+    
     self.phrho,   = self.rhoax.plot(rho, z, 'g-')
     self.phrhoS,  = self.rhoax.plot([rhoMin, rhoMax], [zs, zs], 'k-', lw=2)
     self.phrhoS_0,= self.rhoax.plot(rhoh, origZ, 'ko')
@@ -136,6 +150,10 @@ class plot():
     self.Tax.set_xlabel(r'$T$ $[\degree C]$')
     self.Tax.set_ylabel(r'Depth $[m]$')
 
+    self.omax.set_title('Water Content')
+    self.omax.set_xlabel(r'%')
+    #self.omax.set_ylabel(r'Depth $[m]$')
+
     self.rhoax.set_title('Density')
     self.rhoax.set_xlabel(r'$\rho$ $\left [\frac{kg}{m^3}\right ]$')
     #self.rhoax.set_ylabel(r'Depth $[m]$')
@@ -154,6 +172,7 @@ class plot():
     Update the plot for each time step at time t.
     """    
     T     = self.firn.T
+    omega = self.firn.omega
     rho   = self.firn.rho
     w     = self.firn.w * self.spy * 1e2  # cm a^-1
     k     = self.firn.k
@@ -168,6 +187,12 @@ class plot():
     self.phTs_0.set_ydata(origZ)
     self.phTsp.set_ydata(z)
     
+    self.phom.set_xdata(omega[index])
+    self.phom.set_ydata(z)
+    self.phoms.set_ydata(z[-1])
+    self.phoms_0.set_ydata(origZ)
+    self.phomsp.set_ydata(z)
+
     self.phrho.set_xdata(rho[index])
     self.phrho.set_ydata(z)
     self.phrhoS.set_ydata(z[-1])

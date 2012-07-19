@@ -38,16 +38,10 @@ kg    = 1.3e-7                 # grain growth coefficient ....... m^2/s
 Ec    = 60e3                   # act. energy for water in ice ... J/mol
 Eg    = 42.4e3                 # act. energy for grain growth ... J/mol
 
-# enthalpy-specific :
-K0    = 1.045e-4               # ................................ kg/(m s)
-T0    = 0.0                    # reference temperature .......... K
-beta  = 7.9e-8                 # clausius-Clapeyron ............. K/Pa
-L     = 3.34e5                 # latent heat of fusion .......... J/kg
-
 # model variables :
 n     = 80                     # num of z-positions
-omega = 2*pi/spy               # frequency of earth rotations ... rad / s
-Tavg  = Tw - 10.0              # average temperature ............ degrees K
+freq  = 2*pi/spy               # frequency of earth rotations ... rad / s
+Tavg  = Tw - 5.0               # average temperature ............ degrees K
 zs    = 50.                    # surface start .................. m
 zb    = 0.                     # depth .......................... m
 dz    = (zs - zb)/n            # initial z-spacing .............. m
@@ -56,6 +50,14 @@ dt    = 0.025*spy              # time-step ...................... s
 t0    = 0.0                    # begin time ..................... s
 tf    = sys.argv[1]            # end-time ....................... string
 tf    = float(tf)*spy          # end-time ....................... s
+
+# enthalpy-specific :
+K0    = ki/(10*cp)             # ................................ kg/(m s)
+T0    = 0.0                    # reference temperature .......... K
+beta  = 7.9e-8                 # clausius-Clapeyron ............. K/Pa
+Lf    = 3.34e5                 # latent heat of fusion .......... J/kg
+Hsp   = cp*(Tw - T0)           # Enthalpy of ice at Tw .......... J/kg
+omega = zeros(n+1)
 
 
 #==============================================================================
@@ -79,14 +81,15 @@ l      = l[:-numNew]                                # remove split heights
 l      = append(l, dz/2 * ones(numNew * 2))         # append new split heights
 index  = argsort(z)                                 # index of updated mesh
 rhoin  = rhoi*ones(len(l))                          # initial density
+omega  = zeros(len(l))
 z      = z[index]
 
 # create function spaces :
 V      = FunctionSpace(mesh, 'Lagrange', 1)  
 
 # enthalpy surface condition with cyclical 2-meter air temperature :
-code  = 'ci*( (Tavg + 9.9*sin(omega*t))  - T0)'
-Hs    = Expression(code, ci=cp, Tavg=Tavg, omega=omega, t=0.0, T0=T0)
+code   = 'ci*( (Tavg + 9.9*sin(omega*t))  - T0)'
+Hs     = Expression(code, ci=cp, Tavg=Tavg, omega=freq, t=0.0, T0=T0)
 
 # define the Dirichlet boundarys :
 def surface(x, on_boundary):
@@ -95,7 +98,7 @@ def surface(x, on_boundary):
 def base(x, on_boundary):
   return on_boundary and x[0] == zb
 
-Hbc  = DirichletBC(V, Hs, surface)    # temperature surface
+Hbc    = DirichletBC(V, Hs, surface)    # temperature surface
 
 
 #==============================================================================
@@ -133,14 +136,14 @@ w  = -acc / rhoin
 p  = Expression('rhoi * g * x[0]', rhoi=rhoi, g=g)
 
 Kcoef = interpolate(Constant(ki/cp),  V)
-Gcoef = interpolate(Constant(0.0), V)
 
-a  = rhoi*H*phi*dx - dt*Kcoef*inner(grad(H), grad(phi))*dx 
+a  = rhoi*H*phi*dx + dt*Kcoef*inner(grad(H), grad(phi))*dx 
 L  = rhoi*H_1*phi*dx
 
 A  = assemble(a)
 b  = None
 H  = Function(V)
+
 
 #==============================================================================
 # initialize data structures :
@@ -149,7 +152,7 @@ hplot   = H.vector().array()
 tplot   = hplot / cp
 
 plt.ion()
-firn = firn(hplot, tplot, rhoin, w, k, z, index, zb, zs)
+firn = firn(hplot, tplot, rhoin, omega, w, k, z, index, zb, zs)
 plot = plot(firn)
 
 
@@ -187,11 +190,6 @@ while t <= tf:
   if t == 0.0:
     firn.origZ = firn.z[-1]
   
-  # update the plotting parameters :
-  plot.update_plot(t/spy)
-  
-  plt.draw()  # update the graph
-  
   # track the current height and original surface height of the firn :
   ht.append(firn.z[-1])
   origHt.append(firn.origZ)
@@ -206,15 +204,30 @@ while t <= tf:
   #else:
   #  firn.origZ  = 0.0
 
-  # update kc term in drhodt :
-  # if rho >  54, kc = kcHigh
-  # if rho <= 550, kc = kcLow
-  #KcoefNew            = ones(len(firn.T))
-  #rhoHigh             = where(firn.rho >  550)[0]
-  #rhoLow              = where(firn.rho <= 550)[0]
-  #rhoCoefNew[rhoHigh] = kcHh
-  #rhoCoefNew[rhoLow]  = kcLw
-  #rhoCoef.vector().set_local(rhoCoefNew)
+  # update coefficients and stuff :
+  Hhigh                = where(firn.H >= Hsp)[0]
+  Hlow                 = where(firn.H <  Hsp)[0]
+  omegaNew             = zeros(len(firn.T))
+  Hnew                 = zeros(len(firn.H))
+  Tnew                 = zeros(len(firn.T))
+  KcoefNew             = zeros(len(firn.T))
+  omegaNew[Hhigh]      = (firn.H[Hhigh] - Hsp) / Lf
+  omegaNew[Hlow]       = 0.0
+  Tnew[Hhigh]          = Tw
+  Tnew[Hlow]           = firn.T[Hlow]
+  Hnew[Hhigh]          = Hsp + omega[Hhigh]*Lf
+  Hnew[Hlow]           = firn.H[Hlow]
+  KcoefNew[Hhigh]      = K0
+  KcoefNew[Hlow]       = ki/cp
+  firn.omega           = omegaNew
+  firn.T               = Tnew
+  Kcoef.vector().set_local(KcoefNew)
+  H.vector().set_local(Hnew)
+  
+  # update the plotting parameters :
+  plot.update_plot(t/spy)
+  
+  plt.draw()  # update the graph
 
   # update time and previous solution :
   t += dt
