@@ -16,7 +16,7 @@ from enthPlot import *
 import sys
 
 
-#==============================================================================
+#===============================================================================
 # constants :
 pi    = 3.141592653589793      # pi
 g     = 9.81                   # gravitational acceleration ..... m/s^2
@@ -29,7 +29,6 @@ rhom  = 550.                   # density at 15 m ................ kg/m^3
 acc   = 250. / spy             # surface accumulation ........... kg/(m^2 s)
 A     = spy*acc/rhosi          # surface accumulation ........... m/a
 Va    = 10.                    # mean annual wind speed ......... m/s
-cp    = 2009.                  # heat capacity of ice ........... J/(kg K)
 ki    = 2.1                    # thermal conductivity of ice .... W/(m K)
 Tw    = 273.15                 # triple point water ............. degrees K
 kcHh  = 3.7e-9                 # creep coefficient high ......... (m^3 s)/kg
@@ -42,6 +41,7 @@ Eg    = 42.4e3                 # act. energy for grain growth ... J/mol
 n     = 80                     # num of z-positions
 freq  = 2*pi/spy               # frequency of earth rotations ... rad / s
 Tavg  = Tw + 0.0               # average temperature ............ degrees K
+cp    = 146.3 + 7.253*Tavg     # heat capacity of ice ........... J/(kg K)
 zs    = 50.                    # surface start .................. m
 zb    = 0.                     # depth .......................... m
 dz    = (zs - zb)/n            # initial z-spacing .............. m
@@ -59,7 +59,7 @@ Hsp   = cp*(Tw - T0)           # Enthalpy of ice at Tw .......... J/kg
 omega = zeros(n+1)
 
 
-#==============================================================================
+#===============================================================================
 # create mesh and define function space :
 mesh  = Interval(n, zb, zs)
 
@@ -79,8 +79,9 @@ numNew = len(z) - len(l)                            # number of split nodes
 l      = l[:-numNew]                                # remove split heights
 l      = append(l, dz/2 * ones(numNew * 2))         # append new split heights
 index  = argsort(z)                                 # index of updated mesh
-rhoin  = rhoi*ones(len(l))                          # initial density
-omega  = zeros(len(l))
+n      = len(l)                                     # new number of nodes
+rhoin  = rhoi*ones(n)                               # initial density
+omega  = zeros(n)
 z      = z[index]
 
 # create function spaces :
@@ -88,8 +89,8 @@ V      = FunctionSpace(mesh, 'Lagrange', 1)         # function space for rho, T
 MV     = V*V                                        # mixed function space
 
 # enthalpy surface condition with cyclical 2-meter air temperature :
-code   = 'ci*( (Tavg + 9.9*sin(omega*t))  - T0)'
-Hs     = Expression(code, ci=cp, Tavg=Tavg, omega=freq, t=0.0, T0=T0)
+code   = 'c*( (Tavg + 9.9*sin(omega*t))  - T0)'
+Hs     = Expression(code, c=cp, Tavg=Tavg, omega=freq, t=0.0, T0=T0)
 
 # temperature of base of firn :
 Tb    = Constant(Tavg)
@@ -110,7 +111,7 @@ Hbc2 = DirichletBC(MV.sub(0), Tb, base)       # enthalpy base
 Dbc  = DirichletBC(MV.sub(1), rhoS, surface)  # density surface
 
 
-#==============================================================================
+#===============================================================================
 # Define variational problem :
 H_i        = interpolate(Constant(cp*(Tavg - T0)), V) # initial enthalpy vector
 rho_i      = interpolate(Constant(rhoi), V)  # initial density vector
@@ -129,14 +130,16 @@ h.vector().set_local(h_0.vector().array())   # initalize H, rho in solution
 h_1.vector().set_local(h_0.vector().array()) # initalize H, rho in prev. sol
 
 
-#==============================================================================
+#===============================================================================
 # Define equations to be solved :
 # expression for vertical velocity of firn :
 w         = - acc / rho
-T         = H / cp
-c         = 146.3 + 7.253*T
-k         = 9.828*exp(-0.0057*T)   # Aschwanden 2012
+#c         = 146.3 + 7.253*T
+c         = (146.3 + sqrt(146.3**2 + 4*7.253*H)) / 2
+#k         = 9.828*exp(-0.0057*T)   # Aschwanden 2012
 k         = 2.1*(rho / rhoi)**2    # Arthern 2008
+Tcoef     = interpolate(Constant(1.0), V)
+T         = Tcoef * H / c
 
 # thermal conductivity Arthern et all 1998 :
 #  dk    pk pr   pk pT
@@ -169,7 +172,7 @@ f         = f_H + f_rho
 df        = derivative(f, h, dh) # jacobian
 
 
-#==============================================================================
+#===============================================================================
 # initialize data structures :
 # find vector of T, rho :
 hplot   = project(H, V).vector().array()
@@ -179,13 +182,14 @@ rhoplot = project(rho, V).vector().array()
 # calculate other data :
 wplot   = project(w, V).vector().array()
 kplot   = project(k, V).vector().array()
+cplot   = project(c, V).vector().array()
 
 plt.ion()
-firn = firn(hplot, tplot, rhoplot, omega, wplot, kplot, z, index, zb, zs)
+firn = firn(hplot, tplot, rhoplot, omega, wplot, kplot, cplot, z, index, zb, zs)
 plot = plot(firn)
 
 
-#==============================================================================
+#===============================================================================
 # Compute solution :
 t      = 0.0
 ht     = []
@@ -193,6 +197,7 @@ origHt = []
 while t <= tf:
   # update boundary conditions :
   Hs.t     = t
+  Hs.c     = firn.c[index][-1]
   rhoS.Ts  = firn.T[index][-1]
 
   # newton's iterative method :
@@ -206,11 +211,12 @@ while t <= tf:
   # calculate other data :
   firn.w   = project(w, V).vector().array()  # m s^-1
   firn.k   = project(k, V).vector().array()  # Arthern 2008
+  firn.c   = project(c, V).vector().array()
 
   # calculate height of each interval (conservation of mass) :
   lnew     = l*rhoin[index] / firn.rho[index]
   zSum     = zb
-  for i in range(len(z))[1:]:
+  for i in range(n)[1:]:
     firn.z[i]  = zSum + lnew[i]
     zSum      += lnew[i]
   
@@ -235,7 +241,7 @@ while t <= tf:
   # update kc term in drhodt :
   # if rho >  54, kc = kcHigh
   # if rho <= 550, kc = kcLow
-  rhoCoefNew          = ones(len(firn.rho))
+  rhoCoefNew          = ones(n)
   rhoHigh             = where(firn.rho >  550)[0]
   rhoLow              = where(firn.rho <= 550)[0]
   rhoCoefNew[rhoHigh] = kcHh
@@ -245,19 +251,20 @@ while t <= tf:
   # update coefficients and stuff :
   Hhigh               = where(firn.H >= Hsp)[0]
   Hlow                = where(firn.H <  Hsp)[0]
-  omegaNew            = zeros(len(firn.T))
-  Hnew                = zeros(len(firn.H))
-  Tnew                = zeros(len(firn.T))
-  KcoefNew            = ones(len(firn.T))
-  omegaNew[Hhigh]     = (firn.H[Hhigh] - Hsp) / Lf
-  Tnew[Hhigh]         = Tw
-  Tnew[Hlow]          = firn.T[Hlow]
-  Hnew[Hhigh]         = Hsp + omega[Hhigh]*Lf
+  omegaNew            = zeros(n)
+  Hnew                = zeros(n)
+  Tnew                = zeros(n)
+  TcoefNew            = ones(n)
+  KcoefNew            = ones(n)
+  omegaNew[Hhigh]     = (firn.H[Hhigh] - firn.c[Hhigh]*(Tw - T0)) / Lf
+  Hnew[Hhigh]         = firn.c[Hhigh]*(Tw - T0) + omega[Hhigh]*Lf
   Hnew[Hlow]          = firn.H[Hlow]
   KcoefNew[Hhigh]     = 1/10.0
   firn.omega          = omegaNew
-  firn.T              = Tnew
-  T.vector().set_local(Tnew)
+  Tnew[Hhigh]         = Tw
+  Tnew[Hlow]          = firn.T[Hlow]
+  TcoefNew[Hhigh]     = firn.c[Hhigh] / firn.H[Hhigh] * Tw
+  Tcoef.vector().set_local(TcoefNew)
   #Kcoef.vector().set_local(KcoefNew)
   rho_i.vector().set_local(firn.rho)
   H_i.vector().set_local(Hnew)

@@ -31,7 +31,7 @@ class firn():
   """
   Data structure to hold firn model state data.
   """
-  def __init__(self, H, T, rho, omega, w, k, z, index, zb, zs):
+  def __init__(self, H, T, rho, omega, w, k, c, z, index, zb, zs):
 
     self.H     = H
     self.T     = T 
@@ -39,6 +39,7 @@ class firn():
     self.omega = omega
     self.w     = w
     self.k     = k
+    self.c     = c
     self.z     = z
     self.index = index
     self.zb    = zb
@@ -64,6 +65,7 @@ class plot():
     rho       = firn.rho
     w         = firn.w * self.spy * 1e2 # cm a^-1 
     k         = firn.k
+    c         = firn.c
 
     # y-value :
     z         = firn.z[firn.index]
@@ -80,11 +82,11 @@ class plot():
 
     omMax  = 0.05
     omMin  = -0.01
-    omh    = omMin + 0.1*(omMax - omMin) / 2
+    #omh    = omMin + 0.1*(omMax - omMin) / 2
 
     rhoMin = 300                                 # rho x-coord min
     rhoMax = 1000                                # rho x-coord max
-    rhoh   = rhoMin + 0.1*(rhoMax - rhoMin) / 2  # rho height x-coord
+    #rhoh   = rhoMin + 0.1*(rhoMax - rhoMin) / 2  # rho height x-coord
 
     wMin   = -63
     wMax   = -24
@@ -92,17 +94,22 @@ class plot():
 
     kMin   = 0.0
     kMax   = 2.2
-    kh     = kMin + 0.1*(kMax - kMin) / 2
+    #kh     = kMin + 0.1*(kMax - kMin) / 2
+
+    cMin   = 2050
+    cMax   = 2150
+    #ch     = cMin + 0.1*(cMax - cMin) / 2
 
     zmax   = zs + 20                            # max z-coord
     zmin   = zb                                 # min z-coord
 
-    self.fig   = plt.figure(figsize=(18,6))
-    self.Tax   = self.fig.add_subplot(151)
-    self.omax  = self.fig.add_subplot(152)
-    self.rhoax = self.fig.add_subplot(153)
-    self.wax   = self.fig.add_subplot(154)
-    self.kax   = self.fig.add_subplot(155)
+    self.fig   = plt.figure(figsize=(12,10))
+    self.Tax   = self.fig.add_subplot(231)
+    self.omax  = self.fig.add_subplot(232)
+    self.rhoax = self.fig.add_subplot(233)
+    self.wax   = self.fig.add_subplot(234)
+    self.kax   = self.fig.add_subplot(235)
+    self.cax   = self.fig.add_subplot(236)
 
     # format : [xmin, xmax, ymin, ymax]
     self.Tax.axis([Tmin, Tmax, zmin, zmax])
@@ -116,6 +123,8 @@ class plot():
     self.wax.grid()
     self.kax.axis([kMin, kMax, zmin, zmax])
     self.kax.grid()
+    self.cax.axis([cMin, cMax, zmin, zmax])
+    self.cax.grid()
 
     # plots :
     self.phT,     = self.Tax.plot(T - 273.15, z, 'r-')
@@ -125,23 +134,28 @@ class plot():
 
     self.phom,    = self.omax.plot(omega, z, 'm-')
     self.phoms,   = self.omax.plot([omMin, omMax], [zs, zs], 'k-', lw=2)
-    self.phoms_0, = self.omax.plot(omh, origZ, 'ko')
-    self.phomsp,  = self.omax.plot(omh*np.ones(len(z)), z, 'r+')
+    #self.phoms_0, = self.omax.plot(omh, origZ, 'ko')
+    #self.phomsp,  = self.omax.plot(omh*np.ones(len(z)), z, 'r+')
     
     self.phrho,   = self.rhoax.plot(rho, z, 'g-')
     self.phrhoS,  = self.rhoax.plot([rhoMin, rhoMax], [zs, zs], 'k-', lw=2)
-    self.phrhoS_0,= self.rhoax.plot(rhoh, origZ, 'ko')
-    self.phrhoSp, = self.rhoax.plot(rhoh*np.ones(len(z)), z, 'r+')
+    #self.phrhoS_0,= self.rhoax.plot(rhoh, origZ, 'ko')
+    #self.phrhoSp, = self.rhoax.plot(rhoh*np.ones(len(z)), z, 'r+')
 
     self.phw,     = self.wax.plot(w, z, 'b-')
     self.phws,    = self.wax.plot([wMin, wMax], [zs, zs], 'k-', lw=2)
     self.phws_0,  = self.wax.plot(wh, origZ, 'ko')
     self.phwsp,   = self.wax.plot(wh*np.ones(len(z)), z, 'r+')
 
-    self.phk,     = self.kax.plot(k, z)
+    self.phk,     = self.kax.plot(k, z, 'c-')
     self.phks,    = self.kax.plot([kMin, kMax], [zs, zs], 'k-', lw=2)
-    self.phks_0,  = self.kax.plot(kh, origZ, 'ko')
-    self.phksp,   = self.kax.plot(kh*np.ones(len(z)), z, 'r+')
+    #self.phks_0,  = self.kax.plot(kh, origZ, 'ko')
+    #self.phksp,   = self.kax.plot(kh*np.ones(len(z)), z, 'r+')
+
+    self.phc,     = self.cax.plot(c, z, 'y-')
+    self.phcs,    = self.cax.plot([cMin, cMax], [zs, zs], 'k-', lw=2)
+    #self.phcs_0,  = self.cax.plot(ch, origZ, 'ko')
+    #self.phcsp,   = self.cax.plot(ch*np.ones(len(z)), z, 'r+')
 
     # formatting :
     self.fig_text = plt.figtext(.85,.95,'Time = 0.0 yr')
@@ -160,10 +174,14 @@ class plot():
 
     self.wax.set_title('Velocity')
     self.wax.set_xlabel(r'$w$ $\left [\frac{cm}{a}\right ]$')
-    #self.wax.set_ylabel(r'Depth $[m]$')
+    self.wax.set_ylabel(r'Depth $[m]$')
 
     self.kax.set_title('Thermal Conductivity')
     self.kax.set_xlabel(r'$k$ $\left [\frac{J}{m K s} \right ]$')
+    #self.kax.set_ylabel(r'Depth $[m]$')
+
+    self.cax.set_title('Specific Heat Capacity')
+    self.cax.set_xlabel(r'$c$ $\left [\frac{J}{kg K} \right ]$')
     #self.kax.set_ylabel(r'Depth $[m]$')
     
 
@@ -176,6 +194,7 @@ class plot():
     rho   = self.firn.rho
     w     = self.firn.w * self.spy * 1e2  # cm a^-1
     k     = self.firn.k
+    c     = self.firn.c
     z     = self.firn.z
     origZ = self.firn.origZ
     index = self.firn.index
@@ -190,14 +209,14 @@ class plot():
     self.phom.set_xdata(omega[index])
     self.phom.set_ydata(z)
     self.phoms.set_ydata(z[-1])
-    self.phoms_0.set_ydata(origZ)
-    self.phomsp.set_ydata(z)
+    #self.phoms_0.set_ydata(origZ)
+    #self.phomsp.set_ydata(z)
 
     self.phrho.set_xdata(rho[index])
     self.phrho.set_ydata(z)
     self.phrhoS.set_ydata(z[-1])
-    self.phrhoS_0.set_ydata(origZ)
-    self.phrhoSp.set_ydata(z)
+    #self.phrhoS_0.set_ydata(origZ)
+    #self.phrhoSp.set_ydata(z)
    
     self.phw.set_xdata(w[index])
     self.phw.set_ydata(z)
@@ -208,8 +227,14 @@ class plot():
     self.phk.set_xdata(k[index])
     self.phk.set_ydata(z)
     self.phks.set_ydata(z[-1])
-    self.phks_0.set_ydata(origZ)
-    self.phksp.set_ydata(z)
+    #self.phks_0.set_ydata(origZ)
+    #self.phksp.set_ydata(z)
+    
+    self.phc.set_xdata(c[index])
+    self.phc.set_ydata(z)
+    self.phcs.set_ydata(z[-1])
+    #self.phcs_0.set_ydata(origZ)
+    #self.phcsp.set_ydata(z)
 
   def plot_all(self, firns, titles, colors):
     """
