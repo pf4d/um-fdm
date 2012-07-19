@@ -270,7 +270,7 @@ while t <= tf:
   firn.omega           = omegaNew
   firn.T               = Tnew
   Kcoef.vector().set_local(KcoefNew)
-  rho_i.vector().set_local(rhoplot)
+  rho_i.vector().set_local(firn.rho)
   H_i.vector().set_local(Hnew)
   h_0 = project(as_vector([H_i, rho_i]), MV)
   h.vector().set_local(h_0.vector().array())
