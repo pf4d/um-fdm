@@ -26,9 +26,9 @@ rhoi  = 917.                   # density of ice ................. kg/m^3
 rhosi = 300.                   # initial density at surface ..... kg/m^3
 rhow  = 1000.                  # density of water ............... kg/m^3
 rhom  = 550.                   # density at 15 m ................ kg/m^3
-acc   = 250. / spy             # surface accumulation ........... kg/(m^2 s)
-A     = spy*acc/rhosi          # surface accumulation ........... m/a
-Va    = 10.                    # mean annual wind speed ......... m/s
+acc   = 91.8 / spy             # surface accumulation ........... kg/(m^2 s)
+A     = spy*acc/rhosi*1e3      # surface accumulation ........... mm/a
+Va    = 6.64                   # mean annual wind speed ......... m/s
 ki    = 2.1                    # thermal conductivity of ice .... W/(m K)
 Tw    = 273.15                 # triple point water ............. degrees K
 kcHh  = 3.7e-9                 # creep coefficient high ......... (m^3 s)/kg
@@ -195,11 +195,6 @@ t      = 0.0
 ht     = []
 origHt = []
 while t <= tf:
-  # update boundary conditions :
-  Hs.t     = t
-  Hs.c     = firn.c[index][-1]
-  rhoS.Ts  = firn.T[index][-1]
-
   # newton's iterative method :
   solve(f == 0, h, [Hbc, Dbc], J=df)
   
@@ -244,8 +239,8 @@ while t <= tf:
   rhoCoefNew          = ones(n)
   rhoHigh             = where(firn.rho >  550)[0]
   rhoLow              = where(firn.rho <= 550)[0]
-  rhoCoefNew[rhoHigh] = kcHh
-  rhoCoefNew[rhoLow]  = kcLw
+  rhoCoefNew[rhoHigh] = kcHh*(2.366 - 0.293*np.log(A))
+  rhoCoefNew[rhoLow]  = kcLw*(1.435 - 0.151*np.log(A))
   rhoCoef.vector().set_local(rhoCoefNew)
   
   # update coefficients and stuff :
@@ -253,33 +248,42 @@ while t <= tf:
   Hlow                = where(firn.H <  Hsp)[0]
   omegaNew            = zeros(n)
   Hnew                = zeros(n)
-  Tnew                = zeros(n)
   TcoefNew            = ones(n)
   KcoefNew            = ones(n)
+ 
+  # update enthalpy :
   omegaNew[Hhigh]     = (firn.H[Hhigh] - firn.c[Hhigh]*(Tw - T0)) / Lf
-  Hnew[Hhigh]         = firn.c[Hhigh]*(Tw - T0) + omega[Hhigh]*Lf
-  Hnew[Hlow]          = firn.H[Hlow]
-  KcoefNew[Hhigh]     = 1/10.0
   firn.omega          = omegaNew
-  Tnew[Hhigh]         = Tw
-  Tnew[Hlow]          = firn.T[Hlow]
-  TcoefNew[Hhigh]     = firn.c[Hhigh] / firn.H[Hhigh] * Tw
-  Tcoef.vector().set_local(TcoefNew)
-  #Kcoef.vector().set_local(KcoefNew)
+  Hnew[Hhigh]         = firn.c[Hhigh]*(Tw - T0) + firn.omega[Hhigh]*Lf
+  Hnew[Hlow]          = firn.H[Hlow]
+  
   rho_i.vector().set_local(firn.rho)
   H_i.vector().set_local(Hnew)
   h_0 = project(as_vector([H_i, rho_i]), MV)
   h.vector().set_local(h_0.vector().array())
+  firn.H = project(H, V).vector().array()
+  
+  # update variables dependent on enthalpy :
+  KcoefNew[Hhigh]     = 1/10.0
+  Kcoef.vector().set_local(KcoefNew)  # doesn't work?
+  TcoefNew[Hhigh]     = firn.c[Hhigh] / firn.H[Hhigh] * Tw
+  Tcoef.vector().set_local(TcoefNew)
+  firn.T = project(T, V).vector().array()
 
   # update the plotting parameters :
   plot.update_plot(t/spy)
-  
-  plt.draw()  # update the graph
 
   # update time and previous solution :
   t += dt
   h_1.assign(h)
   
+  # update boundary conditions :
+  Hs.t     = t
+  Hs.c     = firn.c[index][-1]
+  rhoS.Ts  = firn.T[index][-1]
+  
+  plt.draw()  # update the graph
+
 plt.ioff()
 plt.show()
 

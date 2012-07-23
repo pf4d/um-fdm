@@ -76,16 +76,21 @@ class plot():
     # original surface height :
     origZ     = firn.origZ
 
-    Tmin   = -20                                 # T x-coord min
-    Tmax   = 5                                   # T x-coord max
-    Th     = Tmin + 0.1*(Tmax - Tmin) / 2        # T height x-coord
+    zmax   = zs + 20                              # max z-coord
+    zmin   = zb                                   # min z-coord
 
-    omMax  = 0.05
+    Tmin   = -20                                  # T x-coord min
+    Tmax   = 5                                    # T x-coord max
+    Th     = Tmin + 0.1*(Tmax - Tmin) / 2         # T height x-coord
+    Tz     = zmax - 0.15*(zmax - zmin) / 2        # z-coord of Ts
+    Ts     = H[index][-1] / c[index][-1] - 273.15 # T of surface
+
+    omMax  = 0.09
     omMin  = -0.01
     #omh    = omMin + 0.1*(omMax - omMin) / 2
 
-    rhoMin = 300                                 # rho x-coord min
-    rhoMax = 1000                                # rho x-coord max
+    rhoMin = 300                                  # rho x-coord min
+    rhoMax = 1000                                 # rho x-coord max
     #rhoh   = rhoMin + 0.1*(rhoMax - rhoMin) / 2  # rho height x-coord
 
     wMin   = -63
@@ -97,11 +102,8 @@ class plot():
     #kh     = kMin + 0.1*(kMax - kMin) / 2
 
     cMin   = 2050
-    cMax   = 2150
+    cMax   = 2250
     #ch     = cMin + 0.1*(cMax - cMin) / 2
-
-    zmax   = zs + 20                            # max z-coord
-    zmin   = zb                                 # min z-coord
 
     self.fig   = plt.figure(figsize=(12,10))
     self.Tax   = self.fig.add_subplot(231)
@@ -127,32 +129,33 @@ class plot():
     self.cax.grid()
 
     # plots :
-    self.phT,     = self.Tax.plot(T - 273.15, z, 'r-')
+    self.Tsurf    = self.Tax.text(Th, Tz, r'Surface Temp: %.1f $\degree$C' % Ts)
+    self.phT,     = self.Tax.plot(T - 273.15, z, '0.3', lw=1.2)
     self.phTs,    = self.Tax.plot([Tmin, Tmax], [zs, zs], 'k-', lw=2)
     self.phTs_0,  = self.Tax.plot(Th, origZ, 'ko')
     self.phTsp,   = self.Tax.plot(Th*np.ones(len(z)), z, 'r+')
 
-    self.phom,    = self.omax.plot(omega, z, 'm-')
+    self.phom,    = self.omax.plot(omega, z, '0.3', lw=1.2)
     self.phoms,   = self.omax.plot([omMin, omMax], [zs, zs], 'k-', lw=2)
     #self.phoms_0, = self.omax.plot(omh, origZ, 'ko')
     #self.phomsp,  = self.omax.plot(omh*np.ones(len(z)), z, 'r+')
     
-    self.phrho,   = self.rhoax.plot(rho, z, 'g-')
+    self.phrho,   = self.rhoax.plot(rho, z, '0.3', lw=1.2)
     self.phrhoS,  = self.rhoax.plot([rhoMin, rhoMax], [zs, zs], 'k-', lw=2)
     #self.phrhoS_0,= self.rhoax.plot(rhoh, origZ, 'ko')
     #self.phrhoSp, = self.rhoax.plot(rhoh*np.ones(len(z)), z, 'r+')
 
-    self.phw,     = self.wax.plot(w, z, 'b-')
+    self.phw,     = self.wax.plot(w, z, '0.3', lw=1.2)
     self.phws,    = self.wax.plot([wMin, wMax], [zs, zs], 'k-', lw=2)
     self.phws_0,  = self.wax.plot(wh, origZ, 'ko')
     self.phwsp,   = self.wax.plot(wh*np.ones(len(z)), z, 'r+')
 
-    self.phk,     = self.kax.plot(k, z, 'c-')
+    self.phk,     = self.kax.plot(k, z, '0.3', lw=1.2)
     self.phks,    = self.kax.plot([kMin, kMax], [zs, zs], 'k-', lw=2)
     #self.phks_0,  = self.kax.plot(kh, origZ, 'ko')
     #self.phksp,   = self.kax.plot(kh*np.ones(len(z)), z, 'r+')
 
-    self.phc,     = self.cax.plot(c, z, 'y-')
+    self.phc,     = self.cax.plot(c, z, '0.3', lw=1.2)
     self.phcs,    = self.cax.plot([cMin, cMax], [zs, zs], 'k-', lw=2)
     #self.phcs_0,  = self.cax.plot(ch, origZ, 'ko')
     #self.phcsp,   = self.cax.plot(ch*np.ones(len(z)), z, 'r+')
@@ -198,8 +201,11 @@ class plot():
     z     = self.firn.z
     origZ = self.firn.origZ
     index = self.firn.index
+    Ts    = self.firn.H[index][-1] / c[index][-1] - 273.15
 
     self.fig_text.set_text('Time = %.2f yr' % t) 
+    
+    self.Tsurf.set_text(r'Surface Temp: %.1f $\degree$C' % Ts)
     self.phT.set_xdata(T[index] - 273.15)
     self.phT.set_ydata(z)
     self.phTs.set_ydata(z[-1])
