@@ -40,8 +40,9 @@ Eg    = 42.4e3                 # act. energy for grain growth ... J/mol
 # model variables :
 n     = 80                     # num of z-positions
 freq  = 2*pi/spy               # frequency of earth rotations ... rad / s
-Tavg  = Tw + 0.0               # average temperature ............ degrees K
+Tavg  = Tw - 5.0               # average temperature ............ degrees K
 cp    = 146.3 + 7.253*Tavg     # heat capacity of ice ........... J/(kg K)
+cp    = 2009.
 zs    = 50.                    # surface start .................. m
 zb    = 0.                     # depth .......................... m
 dz    = (zs - zb)/n            # initial z-spacing .............. m
@@ -90,14 +91,14 @@ MV     = V*V                                        # mixed function space
 
 # enthalpy surface condition with cyclical 2-meter air temperature :
 code   = 'c*( (Tavg + 9.9*sin(omega*t))  - T0)'
-Hs     = Expression(code, c=cp, Tavg=Tavg, omega=freq, t=0.0, T0=T0)
+Hs     = Expression(code, c=cp, Tavg=Tavg, omega=freq, t=t0, T0=T0)
 
 # temperature of base of firn :
-Tb    = Constant(Tavg)
+Tb     = Constant(Tavg)
 
 # variable surface density by S.R.M. Ligtenberg et all 2011 :
-code  = '-151.94 + 1.4266*(73.6 + 1.06*Ts + 0.0669*A + 4.77*Va)'
-rhoS  = Expression(code, Ts=Tavg, A=A, Va=Va)
+code   = '-151.94 + 1.4266*(73.6 + 1.06*Ts + 0.0669*A + 4.77*Va)'
+rhoS   = Expression(code, Ts=Tavg, A=A, Va=Va)
 
 # define the Dirichlet boundarys :
 def surface(x, on_boundary):
@@ -134,8 +135,9 @@ h_1.vector().set_local(h_0.vector().array()) # initalize H, rho in prev. sol
 # Define equations to be solved :
 # expression for vertical velocity of firn :
 w         = - acc / rho
+#c         = (146.3 + sqrt(146.3**2 + 4*7.253*H)) / 2
 #c         = 146.3 + 7.253*T
-c         = (146.3 + sqrt(146.3**2 + 4*7.253*H)) / 2
+c         = interpolate(Constant(cp), V)
 #k         = 9.828*exp(-0.0057*T)   # Aschwanden 2012
 k         = 2.1*(rho / rhoi)**2    # Arthern 2008
 Tcoef     = interpolate(Constant(1.0), V)
@@ -214,13 +216,11 @@ while t <= tf:
   
   # find vector of T, rho :
   firn.H   = project(H, V).vector().array()
-  firn.T   = project(T, V).vector().array()
   firn.rho = project(rho, V).vector().array()
  
   # calculate other data :
   firn.w   = project(w, V).vector().array()  # m s^-1
   firn.k   = project(k, V).vector().array()  # Arthern 2008
-  firn.c   = project(c, V).vector().array()
 
   # calculate height of each interval (conservation of mass) :
   lnew     = l*rhoin[index] / firn.rho[index]
@@ -248,7 +248,7 @@ while t <= tf:
     firn.origZ  = 0.0
 
   # update kc term in drhodt :
-  # if rho >  54, kc = kcHigh
+  # if rho >  550, kc = kcHigh
   # if rho <= 550, kc = kcLow
   rhoCoefNew          = ones(n)
   rhoHigh             = where(firn.rho >  550)[0]
@@ -265,7 +265,10 @@ while t <= tf:
   rhoNew              = zeros(n)
   TcoefNew            = ones(n)
   KcoefNew            = ones(n)
- 
+
+  KcoefNew[Hhigh]     = 1/10.0
+  TcoefNew[Hhigh]     = firn.c[Hhigh] / firn.H[Hhigh] * Tw
+
   # update enthalpy :
   omegaNew[Hhigh]     = (firn.H[Hhigh] - firn.c[Hhigh]*(Tw - T0)) / Lf
   firn.omega          = omegaNew
@@ -273,24 +276,24 @@ while t <= tf:
   Hnew[Hlow]          = firn.H[Hlow]
   
   # update density :
-  rhoNew[Hhigh]       = firn.omega[Hhigh]*rhow + \
-                        (1 - firn.omega[Hhigh])*firn.rho[Hhigh]
-  rhoNew[Hlow]        = firn.rho[Hlow]
+  #rhoNew[Hhigh]       = firn.omega[Hhigh]*rhow + \
+  #                      (1 - firn.omega[Hhigh])*firn.rho[Hhigh]
+  #rhoNew[Hlow]        = firn.rho[Hlow]
  
-  # update the vectors :
-  rho_i.vector().set_local(rhoNew)
+  # update the dolfin vectors :
+  rho_i.vector().set_local(firn.rho)
   H_i.vector().set_local(Hnew)
   h_0 = project(as_vector([H_i, rho_i]), MV)
   h.vector().set_local(h_0.vector().array())
-  firn.H = project(H, V).vector().array()
-
-  # update variables dependent on enthalpy :
-  KcoefNew[Hhigh]     = 1/10.0
   Kcoef.vector().set_local(KcoefNew)  # doesn't work?
-  TcoefNew[Hhigh]     = firn.c[Hhigh] / firn.H[Hhigh] * Tw
   Tcoef.vector().set_local(TcoefNew)
-  firn.T = project(T, V).vector().array()
   
+  # update firn object :
+  firn.rho = project(rho, V).vector().array()
+  firn.H   = project(H, V).vector().array()
+  firn.T   = project(T, V).vector().array()
+  firn.c   = c.vector().array()
+
   # update the plotting parameters :
   plot.update_plot(t/spy)
 
