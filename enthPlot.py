@@ -93,8 +93,8 @@ class plot():
     rhoMax = 1000                                 # rho x-coord max
     #rhoh   = rhoMin + 0.1*(rhoMax - rhoMin) / 2  # rho height x-coord
 
-    wMin   = -63
-    wMax   = -24
+    wMin   = -20
+    wMax   = -8
     wh     = wMin + 0.1*(wMax - wMin) / 2
 
     kMin   = 0.0

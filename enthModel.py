@@ -114,7 +114,7 @@ Dbc  = DirichletBC(MV.sub(1), rhoS, surface)  # density surface
 #===============================================================================
 # Define variational problem :
 H_i        = interpolate(Constant(cp*(Tavg - T0)), V) # initial enthalpy vector
-rho_i      = interpolate(Constant(rhoi), V)  # initial density vector
+rho_i      = interpolate(Constant(rhoin[0]), V)       # initial density vector
 h          = Function(MV)                    # solution
 H,rho      = split(h)                        # solutions for H, rho
 h_1        = Function(MV)                    # previous solution
@@ -174,6 +174,20 @@ df        = derivative(f, h, dh) # jacobian
 
 #===============================================================================
 # initialize data structures :
+
+# load initialization data :
+def set_initial_converge():
+  rhoin   = genfromtxt("data/enthalpy/rho.txt")
+  z       = genfromtxt("data/enthalpy/z.txt")
+  l       = genfromtxt("data/enthalpy/l.txt")
+
+  rho_i.vector().set_local(rhoin)
+  h_0 = project(as_vector([H_i,rho_i]), MV)    # project inital values on space
+  h.vector().set_local(h_0.vector().array())   # initalize T, rho in solution
+  h_1.vector().set_local(h_0.vector().array()) # initalize T, rho in prev. sol
+
+#set_initial_converge()
+
 # find vector of T, rho :
 hplot   = project(H, V).vector().array()
 tplot   = project(T, V).vector().array()
@@ -248,6 +262,7 @@ while t <= tf:
   Hlow                = where(firn.H <  Hsp)[0]
   omegaNew            = zeros(n)
   Hnew                = zeros(n)
+  rhoNew              = zeros(n)
   TcoefNew            = ones(n)
   KcoefNew            = ones(n)
  
@@ -257,19 +272,25 @@ while t <= tf:
   Hnew[Hhigh]         = firn.c[Hhigh]*(Tw - T0) + firn.omega[Hhigh]*Lf
   Hnew[Hlow]          = firn.H[Hlow]
   
-  rho_i.vector().set_local(firn.rho)
+  # update density :
+  rhoNew[Hhigh]       = firn.omega[Hhigh]*rhow + \
+                        (1 - firn.omega[Hhigh])*firn.rho[Hhigh]
+  rhoNew[Hlow]        = firn.rho[Hlow]
+ 
+  # update the vectors :
+  rho_i.vector().set_local(rhoNew)
   H_i.vector().set_local(Hnew)
   h_0 = project(as_vector([H_i, rho_i]), MV)
   h.vector().set_local(h_0.vector().array())
   firn.H = project(H, V).vector().array()
-  
+
   # update variables dependent on enthalpy :
   KcoefNew[Hhigh]     = 1/10.0
   Kcoef.vector().set_local(KcoefNew)  # doesn't work?
   TcoefNew[Hhigh]     = firn.c[Hhigh] / firn.H[Hhigh] * Tw
   Tcoef.vector().set_local(TcoefNew)
   firn.T = project(T, V).vector().array()
-
+  
   # update the plotting parameters :
   plot.update_plot(t/spy)
 
