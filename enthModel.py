@@ -44,6 +44,7 @@ Tavg  = Tw - 5.0               # average temperature ............ degrees K
 cp    = 146.3 + 7.253*Tavg     # heat capacity of ice ........... J/(kg K)
 cp    = 2009.
 zs    = 50.                    # surface start .................. m
+zs_0  = zs                     # previous time-step surface ..... m
 zb    = 0.                     # depth .......................... m
 dz    = (zs - zb)/n            # initial z-spacing .............. m
 l     = dz*ones(n+1)           # height vector .................. m
@@ -75,19 +76,19 @@ for cell in cells(mesh):
 mesh = refine(mesh, cell_markers)
 
 # update coordinates :
-z      = mesh.coordinates()[:,0].copy()             # initial z-coord
-numNew = len(z) - len(l)                            # number of split nodes
-l      = l[:-numNew]                                # remove split heights
-l      = append(l, dz/2 * ones(numNew * 2))         # append new split heights
-index  = argsort(z)                                 # index of updated mesh
-n      = len(l)                                     # new number of nodes
-rhoin  = rhoi*ones(n)                               # initial density
-omega  = zeros(n)
-z      = z[index]
+z      = mesh.coordinates()[:,0].copy()       # initial z-coord
+numNew = len(z) - len(l)                      # number of split nodes
+l      = l[:-numNew]                          # remove split heights
+l      = append(l, dz/2 * ones(numNew * 2))   # append new split heights
+index  = argsort(z)                           # index of updated mesh
+n      = len(l)                               # new number of nodes
+rhoin  = rhoi*ones(n)                         # initial density
+omega  = zeros(n)                             # water content percent
+z      = z[index]                             # re-order z
 
 # create function spaces :
-V      = FunctionSpace(mesh, 'Lagrange', 1)         # function space for rho, T
-MV     = V*V                                        # mixed function space
+V      = FunctionSpace(mesh, 'Lagrange', 1)   # function space for rho, T
+MV     = V*V                                  # mixed function space
 
 # enthalpy surface condition with cyclical 2-meter air temperature :
 code   = 'c*( (Tavg + 9.9*sin(omega*t))  - T0)'
@@ -133,24 +134,16 @@ h_1.vector().set_local(h_0.vector().array()) # initalize H, rho in prev. sol
 
 #===============================================================================
 # Define equations to be solved :
-# expression for vertical velocity of firn :
-w         = - acc / rho
-#c         = (146.3 + sqrt(146.3**2 + 4*7.253*H)) / 2
-#c         = 146.3 + 7.253*T
-c         = interpolate(Constant(cp), V)
-#k         = 9.828*exp(-0.0057*T)   # Aschwanden 2012
-k         = 2.1*(rho / rhoi)**2    # Arthern 2008
+w         = - acc / rho                                # vertical velocity 
+w_0       = - acc / rho                                # vertical velocity 
+#c         = (146.3 + sqrt(146.3**2 + 4*7.253*H)) / 2  # c in terms of H
+#c         = 146.3 + 7.253*T                           # c in terms of T
+c         = interpolate(Constant(cp), V)               # c constant
+#k         = 9.828*exp(-0.0057*T)                      # Aschwanden 2012
+k         = 2.1*(rho / rhoi)**2                        # Arthern 2008
 Tcoef     = interpolate(Constant(1.0), V)
 T         = Tcoef * H / c
-
-# thermal conductivity Arthern et all 1998 :
-#  dk    pk pr   pk pT
-#  -- =  -- -- + -- --  (chain rule)
-#  dz    pr pz   pT pz
-#dkdrho    = 4.2*(rho / rhoi**2)
-#drhodT    = 9.828*-5.7e-3*exp(-5.7e-3 * T)    # Patterson pg. 205
-#dkdT      = 4.2*(drhodT / rhoi**2)
-#dkdz      = dkdrho*grad(rho) + dkdT*grad(T)
+T_0       = Tcoef * H_0 / c
 
 Kcoef     = interpolate(Constant(1.0),  V)
 
@@ -162,12 +155,19 @@ f_H       = rho*(H - H_0)/dt*psi*dx + \
 # total derivative drhodt from Arthern 2010 :
 rhoCoef   = interpolate(Constant(kcHh), V)
 drhodt    = (acc*g*rhoCoef/kg)*exp( -Ec/(R*T) + Eg/(R*Tavg) )*(rhoi - rho)
+drho_0dt  = (acc*g*rhoCoef/kg)*exp( -Ec/(R*T_0) + Eg/(R*Tavg) )*(rhoi - rho_0)
 
 # material derivative :        backwards-difference :
 #  dr   pr     pr               pr   r_{k} - r_{k-1}
 #  -- = -- + w --               -- = ---------------
 #  dt   pt     pz               pt         dt
-f_rho     = ((rho-rho_0)/dt - (drhodt - w*grad(rho)))*phi*dx
+#f_rho     = ((rho-rho_0)/dt - (drhodt - w*grad(rho)))*phi*dx
+
+# theta scheme (1=Backwards-Euler, 0.5=Crank-Nicolson, 0=Forward-Euler) :
+theta     = 0.00
+f_rho     = ((rho-rho_0)/dt - \
+            theta*(drhodt - w*grad(rho)) - \
+            (1-theta)*(drho_0dt - w_0*grad(rho_0)))*phi*dx
 
 # equation to be minimzed :
 f         = f_H + f_rho
@@ -181,14 +181,16 @@ df        = derivative(f, h, dh) # jacobian
 def set_initial_converge():
   rhoin   = genfromtxt("data/enthalpy/rho.txt")
   z       = genfromtxt("data/enthalpy/z.txt")
-  l       = genfromtxt("data/enthalpy/l.txt")
+  zs_0    = z[-1]
 
   rho_i.vector().set_local(rhoin)
   h_0 = project(as_vector([H_i,rho_i]), MV)    # project inital values on space
   h.vector().set_local(h_0.vector().array())   # initalize T, rho in solution
   h_1.vector().set_local(h_0.vector().array()) # initalize T, rho in prev. sol
+  
+  return zs_0
 
-#set_initial_converge()
+zs_0 = set_initial_converge()
 
 # find vector of T, rho :
 hplot   = project(H, V).vector().array()
@@ -200,8 +202,8 @@ wplot   = project(w, V).vector().array()
 kplot   = project(k, V).vector().array()
 cplot   = project(c, V).vector().array()
 
-plt.ion()
-firn = firn(hplot, tplot, rhoplot, omega, wplot, kplot, cplot, z, index, zb, zs)
+plt.ion()   # interactive mode on
+firn = firn(hplot, tplot, rhoplot, omega, wplot, kplot, cplot, z, index)
 plot = plot(firn)
 
 
@@ -232,24 +234,30 @@ while t <= tf:
   # correct original height with initial surface conditions :
   if t == 0.0:
     firn.origZ = firn.z[-1]
-  
+  elif t >= 5 * spy and t <= 6 * spy:
+    Hs.Tavg = Tw - 10.0
+#  elif t >= 20 * spy:
+#    Hs.Tavg = Tw - 5.0
+
   # track the current height and original surface height of the firn :
   ht.append(firn.z[-1])
   origHt.append(firn.origZ)
   
-  # calculate the new height of original surface
-  # by interpolating vertical speed from w :
+  # calculate the new height of original surface by interpolating the 
+  # vertical speed from w and keeping the ratio intact :
   if firn.origZ > firn.z[0]:
     interp      = interp1d(firn.z, firn.w[index])
     zint        = array([firn.origZ])
     wOrigZ      = interp(zint)
-    firn.origZ += wOrigZ[0] * dt
+    firn.origZ  = (firn.z[-1] - zb) * (firn.origZ - zb) / (zs_0 - zb) + \
+                  wOrigZ[0] * dt
   else:
     firn.origZ  = 0.0
 
   # update kc term in drhodt :
   # if rho >  550, kc = kcHigh
   # if rho <= 550, kc = kcLow
+  # with parameterizations given by ligtenberg et all 2011
   rhoCoefNew          = ones(n)
   rhoHigh             = where(firn.rho >  550)[0]
   rhoLow              = where(firn.rho <= 550)[0]
@@ -257,7 +265,7 @@ while t <= tf:
   rhoCoefNew[rhoLow]  = kcLw*(1.435 - 0.151*np.log(A))
   rhoCoef.vector().set_local(rhoCoefNew)
   
-  # update coefficients and stuff :
+  # update coefficients used by enthalpy :
   Hhigh               = where(firn.H >= Hsp)[0]
   Hlow                = where(firn.H <  Hsp)[0]
   omegaNew            = zeros(n)
@@ -276,16 +284,15 @@ while t <= tf:
   Hnew[Hlow]          = firn.H[Hlow]
   
   # update density :
-  #rhoNew[Hhigh]       = firn.omega[Hhigh]*rhow + \
-  #                      (1 - firn.omega[Hhigh])*firn.rho[Hhigh]
-  #rhoNew[Hlow]        = firn.rho[Hlow]
+  firn.rho[Hhigh]     = firn.omega[Hhigh]*rhow + \
+                        (1 - firn.omega[Hhigh])*firn.rho[Hhigh]
  
   # update the dolfin vectors :
   rho_i.vector().set_local(firn.rho)
   H_i.vector().set_local(Hnew)
   h_0 = project(as_vector([H_i, rho_i]), MV)
   h.vector().set_local(h_0.vector().array())
-  Kcoef.vector().set_local(KcoefNew)  # doesn't work?
+  Kcoef.vector().set_local(KcoefNew)  #FIXME: erratic 
   Tcoef.vector().set_local(TcoefNew)
   
   # update firn object :
@@ -295,11 +302,12 @@ while t <= tf:
   firn.c   = c.vector().array()
 
   # update the plotting parameters :
-  plot.update_plot(t/spy)
+  plot.update_plot(firn, t/spy)
 
-  # update time and previous solution :
+  # update model parameters :
   t += dt
   h_1.assign(h)
+  zs_0 = firn.z[-1]
   
   # update boundary conditions :
   Hs.t     = t

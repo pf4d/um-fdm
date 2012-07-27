@@ -31,7 +31,7 @@ class firn():
   """
   Data structure to hold firn model state data.
   """
-  def __init__(self, H, T, rho, omega, w, k, c, z, index, zb, zs):
+  def __init__(self, H, T, rho, omega, w, k, c, z, index):
 
     self.H     = H
     self.T     = T 
@@ -42,9 +42,9 @@ class firn():
     self.c     = c
     self.z     = z
     self.index = index
-    self.zb    = zb
-    self.zs    = zs
-    self.origZ = zs
+    self.zb    = z[0]
+    self.zs    = z[-1]
+    self.origZ = self.zs
 
 
 class plot():
@@ -58,23 +58,22 @@ class plot():
     self.spy  = 31556926.0
      
     # x-values :
-    self.firn = firn
-    H         = firn.H
-    T         = firn.T
-    omega     = firn.omega
-    rho       = firn.rho
-    w         = firn.w * self.spy * 1e2 # cm a^-1 
-    k         = firn.k
-    c         = firn.c
+    H      = firn.H
+    T      = firn.T
+    omega  = firn.omega
+    rho    = firn.rho
+    w      = firn.w * self.spy * 1e2 # cm a^-1 
+    k      = firn.k
+    c      = firn.c
 
     # y-value :
-    z         = firn.z[firn.index]
-    zs        = firn.zs
-    zb        = firn.zb
-    index     = firn.index
+    z      = firn.z
+    zs     = firn.zs
+    zb     = firn.zb
+    index  = firn.index
     
     # original surface height :
-    origZ     = firn.origZ
+    origZ  = firn.origZ
 
     zmax   = zs + 20                              # max z-coord
     zmin   = zb                                   # min z-coord
@@ -93,7 +92,7 @@ class plot():
     rhoMax = 1000                                 # rho x-coord max
     #rhoh   = rhoMin + 0.1*(rhoMax - rhoMin) / 2  # rho height x-coord
 
-    wMin   = -20
+    wMin   = -28
     wMax   = -8
     wh     = wMin + 0.1*(wMax - wMin) / 2
 
@@ -101,7 +100,7 @@ class plot():
     kMax   = 2.2
     #kh     = kMin + 0.1*(kMax - kMin) / 2
 
-    cMin   = 2050
+    cMin   = 2000
     cMax   = 2250
     #ch     = cMin + 0.1*(cMax - cMin) / 2
 
@@ -188,20 +187,20 @@ class plot():
     #self.kax.set_ylabel(r'Depth $[m]$')
     
 
-  def update_plot(self, t):
+  def update_plot(self, firn, t):
     """
     Update the plot for each time step at time t.
     """    
-    T     = self.firn.T
-    omega = self.firn.omega
-    rho   = self.firn.rho
-    w     = self.firn.w * self.spy * 1e2  # cm a^-1
-    k     = self.firn.k
-    c     = self.firn.c
-    z     = self.firn.z
-    origZ = self.firn.origZ
-    index = self.firn.index
-    Ts    = self.firn.H[index][-1] / c[index][-1] - 273.15
+    T     = firn.T
+    omega = firn.omega
+    rho   = firn.rho
+    w     = firn.w * self.spy * 1e2  # cm a^-1
+    k     = firn.k
+    c     = firn.c
+    z     = firn.z
+    origZ = firn.origZ
+    index = firn.index
+    Ts    = firn.H[index][-1] / c[index][-1] - 273.15
 
     self.fig_text.set_text('Time = %.2f yr' % t) 
     
