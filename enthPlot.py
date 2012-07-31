@@ -332,8 +332,8 @@ class plot():
     and original surface height origHt.
     """
     # plot the surface height information :
-    plt.plot(x, ht,     label='Surface Height')
-    plt.plot(x, origHt, label='Original Surface')
+    plt.plot(x,               ht,     label='Surface Height')
+    plt.plot(x[:len(origHt)], origHt, label='Original Surface')
     plt.xlabel(r'time $[a]$')
     plt.ylabel(r'height $[m]$')
     plt.title('Surface Height Changes')

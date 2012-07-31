@@ -48,7 +48,7 @@ zs_0  = zs                     # previous time-step surface ..... m
 zb    = 0.                     # depth .......................... m
 dz    = (zs - zb)/n            # initial z-spacing .............. m
 l     = dz*ones(n+1)           # height vector .................. m
-dt    = 0.025*spy              # time-step ...................... s
+dt    = 1.000*spy              # time-step ...................... s
 t0    = 0.0                    # begin time ..................... s
 tf    = sys.argv[1]            # end-time ....................... string
 tf    = float(tf)*spy          # end-time ....................... s
@@ -164,7 +164,7 @@ drho_0dt  = (acc*g*rhoCoef/kg)*exp( -Ec/(R*T_0) + Eg/(R*Tavg) )*(rhoi - rho_0)
 #f_rho     = ((rho-rho_0)/dt - (drhodt - w*grad(rho)))*phi*dx
 
 # theta scheme (1=Backwards-Euler, 0.5=Crank-Nicolson, 0=Forward-Euler) :
-theta     = 0.00
+theta     = 1.00
 f_rho     = ((rho-rho_0)/dt - \
             theta*(drhodt - w*grad(rho)) - \
             (1-theta)*(drho_0dt - w_0*grad(rho_0)))*phi*dx
@@ -236,23 +236,25 @@ while t <= tf:
     firn.origZ = firn.z[-1]
   elif t >= 5 * spy and t <= 6 * spy:
     Hs.Tavg = Tw - 10.0
-#  elif t >= 20 * spy:
-#    Hs.Tavg = Tw - 5.0
+  elif t >= 20 * spy:
+    Hs.Tavg = Tw - 5.0
 
-  # track the current height and original surface height of the firn :
+  # track the current height of the firn :
   ht.append(firn.z[-1])
-  origHt.append(firn.origZ)
+  
+  # track original height :
+  if firn.origZ > firn.z[0]:
+    origHt.append(firn.origZ)
   
   # calculate the new height of original surface by interpolating the 
   # vertical speed from w and keeping the ratio intact :
-  if firn.origZ > firn.z[0]:
-    interp      = interp1d(firn.z, firn.w[index])
-    zint        = array([firn.origZ])
-    wOrigZ      = interp(zint)
-    firn.origZ  = (firn.z[-1] - zb) * (firn.origZ - zb) / (zs_0 - zb) + \
-                  wOrigZ[0] * dt
-  else:
-    firn.origZ  = 0.0
+  interp      = interp1d(firn.z, firn.w[index], 
+                         bounds_error=False, 
+                         fill_value=firn.w[index][0])
+  zint        = array([firn.origZ])
+  wOrigZ      = interp(zint)
+  firn.origZ  = (firn.z[-1] - zb) * (firn.origZ - zb) / (zs_0 - zb) + \
+                wOrigZ[0] * dt
 
   # update kc term in drhodt :
   # if rho >  550, kc = kcHigh
