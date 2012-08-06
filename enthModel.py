@@ -48,7 +48,7 @@ zs_0  = zs                     # previous time-step surface ..... m
 zb    = 0.                     # depth .......................... m
 dz    = (zs - zb)/n            # initial z-spacing .............. m
 l     = dz*ones(n+1)           # height vector .................. m
-dt    = 1.000*spy              # time-step ...................... s
+dt    = 0.025*spy              # time-step ...................... s
 t0    = 0.0                    # begin time ..................... s
 tf    = sys.argv[1]            # end-time ....................... string
 tf    = float(tf)*spy          # end-time ....................... s
@@ -163,8 +163,9 @@ drho_0dt  = (acc*g*rhoCoef/kg)*exp( -Ec/(R*T_0) + Eg/(R*Tavg) )*(rhoi - rho_0)
 #  dt   pt     pz               pt         dt
 #f_rho     = ((rho-rho_0)/dt - (drhodt - w*grad(rho)))*phi*dx
 
-# theta scheme (1=Backwards-Euler, 0.5=Crank-Nicolson, 0=Forward-Euler) :
-theta     = 1.00
+# theta scheme (1=Backwards-Euler, 0.667=Galerkin, 0.878=Liniger, 
+#               0.5=Crank-Nicolson, 0=Forward-Euler) :
+theta     = 0.667 
 f_rho     = ((rho-rho_0)/dt - \
             theta*(drhodt - w*grad(rho)) - \
             (1-theta)*(drho_0dt - w_0*grad(rho_0)))*phi*dx
