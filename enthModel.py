@@ -23,7 +23,7 @@ g     = 9.81                   # gravitational acceleration ..... m/s^2
 R     = 8.3144621              # gas constant ................... J/(mol K)
 spy   = 31556926.0             # seconds per year ............... s/a
 rhoi  = 917.                   # density of ice ................. kg/m^3
-rhosi = 300.                   # initial density at surface ..... kg/m^3
+rhosi = 400.                   # initial density at surface ..... kg/m^3
 rhow  = 1000.                  # density of water ............... kg/m^3
 rhom  = 550.                   # density at 15 m ................ kg/m^3
 acc   = 91.8 / spy             # surface accumulation ........... kg/(m^2 s)
@@ -48,7 +48,7 @@ zs_0  = zs                     # previous time-step surface ..... m
 zb    = 0.                     # depth .......................... m
 dz    = (zs - zb)/n            # initial z-spacing .............. m
 l     = dz*ones(n+1)           # height vector .................. m
-dt    = 1.000*spy              # time-step ...................... s
+dt    = 0.025*spy              # time-step ...................... s
 t0    = 0.0                    # begin time ..................... s
 tf    = sys.argv[1]            # end-time ....................... string
 tf    = float(tf)*spy          # end-time ....................... s
@@ -98,8 +98,12 @@ Hs     = Expression(code, c=cp, Tavg=Tavg, omega=freq, t=t0, T0=T0)
 Tb     = Constant(Tavg)
 
 # variable surface density by S.R.M. Ligtenberg et all 2011 :
-code   = '-151.94 + 1.4266*(73.6 + 1.06*Ts + 0.0669*A + 4.77*Va)'
-rhoS   = Expression(code, Ts=Tavg, A=A, Va=Va)
+code  = '-151.94 + 1.4266*(73.6 + 1.06*Ts + 0.0669*A + 4.77*Va)'
+rhoS  = Expression(code, Ts=Tavg, A=A, Va=Va)
+
+# experimental surface density :
+#code   = 'omegaS*rhow + (1 - omegaS)*rhos'
+#rhoS   = Expression(code, omegaS=0.0, rhow=rhow, rhos=rhosi)
 
 # define the Dirichlet boundarys :
 def surface(x, on_boundary):
@@ -136,8 +140,8 @@ h_1.vector().set_local(h_0.vector().array()) # initalize H, rho in prev. sol
 # Define equations to be solved :
 w         = - acc / rho                                # vertical velocity 
 w_0       = - acc / rho                                # vertical velocity 
-#c         = (146.3 + sqrt(146.3**2 + 4*7.253*H)) / 2  # c in terms of H
-#c         = 146.3 + 7.253*T                           # c in terms of T
+#c         = (146.3 + sqrt(146.3**2 + 4*7.253*H)) / 2   # c in terms of H
+#c         = 146.3 + 7.253*T                            # c in terms of T
 c         = interpolate(Constant(cp), V)               # c constant
 #k         = 9.828*exp(-0.0057*T)                      # Aschwanden 2012
 k         = 2.1*(rho / rhoi)**2                        # Arthern 2008
@@ -163,8 +167,9 @@ drho_0dt  = (acc*g*rhoCoef/kg)*exp( -Ec/(R*T_0) + Eg/(R*Tavg) )*(rhoi - rho_0)
 #  dt   pt     pz               pt         dt
 #f_rho     = ((rho-rho_0)/dt - (drhodt - w*grad(rho)))*phi*dx
 
-# theta scheme (1=Backwards-Euler, 0.5=Crank-Nicolson, 0=Forward-Euler) :
-theta     = 1.00
+# theta scheme (1=Backwards-Euler, 0.667=Galerkin, 0.878=Liniger, 
+#               0.5=Crank-Nicolson, 0=Forward-Euler) :
+theta     = 0.667 
 f_rho     = ((rho-rho_0)/dt - \
             theta*(drhodt - w*grad(rho)) - \
             (1-theta)*(drho_0dt - w_0*grad(rho_0)))*phi*dx
@@ -281,12 +286,16 @@ while t <= tf:
 
   # update enthalpy :
   omegaNew[Hhigh]     = (firn.H[Hhigh] - firn.c[Hhigh]*(Tw - T0)) / Lf
+  domega              = omegaNew - firn.omega # change in water content
+  domPos              = where(domega > 0)
+  domega[domPos]      = 0.0                   # make increases zero
   firn.omega          = omegaNew
   Hnew[Hhigh]         = firn.c[Hhigh]*(Tw - T0) + firn.omega[Hhigh]*Lf
   Hnew[Hlow]          = firn.H[Hlow]
   
   # update density :
   firn.rho[Hhigh]     = firn.omega[Hhigh]*rhow + \
+                        200.0*domega[Hhigh] + \
                         (1 - firn.omega[Hhigh])*firn.rho[Hhigh]
  
   # update the dolfin vectors :
@@ -301,7 +310,7 @@ while t <= tf:
   firn.rho = project(rho, V).vector().array()
   firn.H   = project(H, V).vector().array()
   firn.T   = project(T, V).vector().array()
-  firn.c   = c.vector().array()
+  firn.c   = project(c, V).vector().array()
 
   # update the plotting parameters :
   plot.update_plot(firn, t/spy)
@@ -312,9 +321,11 @@ while t <= tf:
   zs_0 = firn.z[-1]
   
   # update boundary conditions :
-  Hs.t     = t
-  Hs.c     = firn.c[index][-1]
-  rhoS.Ts  = firn.T[index][-1]
+  Hs.t        = t
+  Hs.c        = firn.c[index][-1]
+  rhoS.Ts     = firn.T[index][-1]
+  #rhoS.omegaS = firn.omega[index][-1]
+  #rhoS.rhos   = firn.rho[index][-1]
   
   plt.draw()  # update the graph
 
