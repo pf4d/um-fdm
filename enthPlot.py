@@ -45,6 +45,7 @@ class firn():
     self.zb    = z[0]
     self.zs    = z[-1]
     self.origZ = self.zs
+    self.Ts    = H[index][-1] / c[index][-1]
 
 
 class plot():
@@ -200,7 +201,7 @@ class plot():
     z     = firn.z
     origZ = firn.origZ
     index = firn.index
-    Ts    = firn.H[index][-1] / c[index][-1] - 273.15
+    Ts    = firn.Ts - 273.15
 
     self.fig_text.set_text('Time = %.2f yr' % t) 
     

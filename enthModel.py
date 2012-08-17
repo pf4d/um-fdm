@@ -40,7 +40,7 @@ Eg    = 42.4e3                 # act. energy for grain growth ... J/mol
 # model variables :
 n     = 80                     # num of z-positions
 freq  = 2*pi/spy               # frequency of earth rotations ... rad / s
-Tavg  = Tw - 5.0               # average temperature ............ degrees K
+Tavg  = Tw - 2.0               # average temperature ............ degrees K
 cp    = 146.3 + 7.253*Tavg     # heat capacity of ice ........... J/(kg K)
 cp    = 2009.
 zs    = 50.                    # surface start .................. m
@@ -98,12 +98,16 @@ Hs     = Expression(code, c=cp, Tavg=Tavg, omega=freq, t=t0, T0=T0)
 Tb     = Constant(Tavg)
 
 # variable surface density by S.R.M. Ligtenberg et all 2011 :
-code  = '-151.94 + 1.4266*(73.6 + 1.06*Ts + 0.0669*A + 4.77*Va)'
-rhoS  = Expression(code, Ts=Tavg, A=A, Va=Va)
+#code  = '-151.94 + 1.4266*(73.6 + 1.06*Ts + 0.0669*A + 4.77*Va)'
+#rhoS  = Expression(code, Ts=Tavg, A=A, Va=Va)
 
 # experimental surface density :
-#code   = 'omegaS*rhow + (1 - omegaS)*rhos'
-#rhoS   = Expression(code, omegaS=0.0, rhow=rhow, rhos=rhosi)
+code   = 'dp*rhon + (1 - dp)*rhoi'
+rhoS   = Expression(code, rhon=rhosi, rhoi=rhosi, dp=1.0)
+
+# constant surface density :
+#rhoS   = Expression('rhon', rhon=rhosi)
+
 
 # define the Dirichlet boundarys :
 def surface(x, on_boundary):
@@ -124,7 +128,9 @@ rho_i      = interpolate(Constant(rhoin[0]), V)       # initial density vector
 h          = Function(MV)                    # solution
 H,rho      = split(h)                        # solutions for H, rho
 h_1        = Function(MV)                    # previous solution
-H_0, rho_0 = split(h_1)                      # initial value functions
+h_2        = Function(MV)                    # previous previous solution
+H_1, rho_1 = split(h_1)                      # initial value functions
+H_2, rho_2 = split(h_2)                      # initial value functions
 
 dh         = TrialFunction(MV)               # trial function for solution
 dH, drho   = split(dh)                       # trial functions for H, rho
@@ -134,6 +140,7 @@ psi, phi   = split(j)                        # test functions for H, rho
 h_0 = project(as_vector([H_i,rho_i]), MV)    # project inital values on space
 h.vector().set_local(h_0.vector().array())   # initalize H, rho in solution
 h_1.vector().set_local(h_0.vector().array()) # initalize H, rho in prev. sol
+h_2.vector().set_local(h_0.vector().array()) # initalize H, rho in prev. prev.
 
 
 #===============================================================================
@@ -147,11 +154,11 @@ c         = interpolate(Constant(cp), V)               # c constant
 k         = 2.1*(rho / rhoi)**2                        # Arthern 2008
 Tcoef     = interpolate(Constant(1.0), V)
 T         = Tcoef * H / c
-T_0       = Tcoef * H_0 / c
+T_1       = Tcoef * H_1 / c
 
 Kcoef     = interpolate(Constant(1.0),  V)
 
-f_H       = rho*(H - H_0)/dt*psi*dx + \
+f_H       = rho*(H_2 - 4*H_1 + 3*H)/(2*dt)*psi*dx + \
             k/c*Kcoef*inner(grad(H), grad(psi))*dx - \
             div(rho*H*w)*psi*dx + \
             w*grad(H)*psi*dx
@@ -159,20 +166,25 @@ f_H       = rho*(H - H_0)/dt*psi*dx + \
 # total derivative drhodt from Arthern 2010 :
 rhoCoef   = interpolate(Constant(kcHh), V)
 drhodt    = (acc*g*rhoCoef/kg)*exp( -Ec/(R*T) + Eg/(R*Tavg) )*(rhoi - rho)
-drho_0dt  = (acc*g*rhoCoef/kg)*exp( -Ec/(R*T_0) + Eg/(R*Tavg) )*(rhoi - rho_0)
+drho_1dt  = (acc*g*rhoCoef/kg)*exp( -Ec/(R*T_1) + Eg/(R*Tavg) )*(rhoi - rho_1)
 
-# material derivative :        backwards-difference :
-#  dr   pr     pr               pr   r_{k} - r_{k-1}
-#  -- = -- + w --               -- = ---------------
-#  dt   pt     pz               pt         dt
+# SUPG method :        
+vnorm     = sqrt(dot(w, w) + 1e-10)
+cellh     = CellSize(mesh)
+phihat    = phi + cellh/(2*vnorm)*dot(w, grad(phi))
+
+# material derivative :        second difference :
+#  dr   pr     pr               pr   r_{k-2} - 4*r_{k-1} + 3*r_{k}
+#  -- = -- + w --               -- = -----------------------------
+#  dt   pt     pz               pt                dt
 #f_rho     = ((rho-rho_0)/dt - (drhodt - w*grad(rho)))*phi*dx
 
 # theta scheme (1=Backwards-Euler, 0.667=Galerkin, 0.878=Liniger, 
 #               0.5=Crank-Nicolson, 0=Forward-Euler) :
-theta     = 0.667 
-f_rho     = ((rho-rho_0)/dt - \
-            theta*(drhodt - w*grad(rho)) - \
-            (1-theta)*(drho_0dt - w_0*grad(rho_0)))*phi*dx
+theta     = 1.0 
+f_rho     = ((rho_2 - 4*rho_1 + 3*rho)/(2*dt)*phi - \
+            theta*(drhodt - w*grad(rho))*phihat - \
+            (1-theta)*(drho_1dt - w_0*grad(rho_1))*phihat)*dx
 
 # equation to be minimzed :
 f         = f_H + f_rho
@@ -192,6 +204,7 @@ def set_initial_converge():
   h_0 = project(as_vector([H_i,rho_i]), MV)    # project inital values on space
   h.vector().set_local(h_0.vector().array())   # initalize T, rho in solution
   h_1.vector().set_local(h_0.vector().array()) # initalize T, rho in prev. sol
+  h_2.vector().set_local(h_0.vector().array()) # initalize T, rho in prev. sol
   
   return zs_0
 
@@ -219,8 +232,11 @@ ht     = []
 origHt = []
 while t <= tf:
   # newton's iterative method :
-  solve(f == 0, h, [Hbc, Dbc], J=df)
-  
+  solve(f == 0, h, [Hbc, Dbc], J=df, 
+        solver_parameters={"newton_solver" : {"report" : False},
+                           "krylov_solver" : {"report" : False, 
+                                              "monitor_convergence" : False}})
+
   # find vector of T, rho :
   firn.H   = project(H, V).vector().array()
   firn.rho = project(rho, V).vector().array()
@@ -239,10 +255,13 @@ while t <= tf:
   # correct original height with initial surface conditions :
   if t == 0.0:
     firn.origZ = firn.z[-1]
-  elif t >= 5 * spy and t <= 6 * spy:
+    zs_0       = firn.z[-1]
+  if t >= 3 * spy:
     Hs.Tavg = Tw - 10.0
-  elif t >= 20 * spy:
+  if t > 25 * spy:
     Hs.Tavg = Tw - 5.0
+  if t > 35 * spy:
+    Hs.Tavg = Tw - 10.0
 
   # track the current height of the firn :
   ht.append(firn.z[-1])
@@ -286,18 +305,19 @@ while t <= tf:
 
   # update enthalpy :
   omegaNew[Hhigh]     = (firn.H[Hhigh] - firn.c[Hhigh]*(Tw - T0)) / Lf
-  domega              = omegaNew - firn.omega # change in water content
-  domPos              = where(domega > 0)
-  domega[domPos]      = 0.0                   # make increases zero
+  domega              = omegaNew - firn.omega          # water content chg.
+  domPos              = where(domega >  0)[0]          # water content inc.
+  domNeg              = where(domega <= 0)[0]          # water content dec.
+  rhoNotLiq           = where(firn.rho < rhow)[0]      # density < water
+  rhoInc              = intersect1d(domPos, rhoNotLiq) # where rho can inc.
   firn.omega          = omegaNew
   Hnew[Hhigh]         = firn.c[Hhigh]*(Tw - T0) + firn.omega[Hhigh]*Lf
   Hnew[Hlow]          = firn.H[Hlow]
   
   # update density :
-  firn.rho[Hhigh]     = firn.omega[Hhigh]*rhow + \
-                        200.0*domega[Hhigh] + \
-                        (1 - firn.omega[Hhigh])*firn.rho[Hhigh]
- 
+  firn.rho[rhoInc]    = firn.rho[rhoInc] + domega[rhoInc]*rhow 
+  firn.rho[domNeg]    = firn.rho[domNeg] + domega[domNeg]*200.0
+  
   # update the dolfin vectors :
   rho_i.vector().set_local(firn.rho)
   H_i.vector().set_local(Hnew)
@@ -311,22 +331,34 @@ while t <= tf:
   firn.H   = project(H, V).vector().array()
   firn.T   = project(T, V).vector().array()
   firn.c   = project(c, V).vector().array()
+  firn.Ts  = firn.H[index][-1] / firn.c[index][-1]
 
   # update the plotting parameters :
   plot.update_plot(firn, t/spy)
 
   # update model parameters :
   t += dt
+  h_2.assign(h_1)
   h_1.assign(h)
   zs_0 = firn.z[-1]
   
   # update boundary conditions :
-  Hs.t        = t
-  Hs.c        = firn.c[index][-1]
-  rhoS.Ts     = firn.T[index][-1]
-  #rhoS.omegaS = firn.omega[index][-1]
-  #rhoS.rhos   = firn.rho[index][-1]
-  
+  Hs.t      = t
+  Hs.c      = firn.c[index][-1]
+  rhoS.rhoi = firn.rho[index][-1]
+  if firn.Ts > Tw:
+    if domega[index][-1] > 0:
+      if rhoS.rhon < rhoi:
+        rhoS.rhon = rhoS.rhon + domega[index][-1]*rhow
+    else:
+      rhoS.rhon = rhoS.rhon + domega[index][-1]*200.0
+  else:
+    rhoS.rhon = rhosi
+  ltop      = lnew[-1]
+  dnew      = -firn.w[index][-1]*dt
+  rhoS.dp = dnew/ltop
+  #rhoS.Ts = firn.T[index][-1]
+
   plt.draw()  # update the graph
 
 plt.ioff()
