@@ -230,12 +230,10 @@ plot = plot(firn)
 t      = 0.0
 ht     = []
 origHt = []
+set_log_active(False)
 while t <= tf:
   # newton's iterative method :
-  solve(f == 0, h, [Hbc, Dbc], J=df, 
-        solver_parameters={"newton_solver" : {"report" : False},
-                           "krylov_solver" : {"report" : False, 
-                                              "monitor_convergence" : False}})
+  solve(f == 0, h, [Hbc, Dbc], J=df)
 
   # find vector of T, rho :
   firn.H   = project(H, V).vector().array()
