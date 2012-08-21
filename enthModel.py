@@ -76,7 +76,7 @@ for cell in cells(mesh):
 mesh = refine(mesh, cell_markers)
 
 # update coordinates :
-z      = mesh.coordinates()[:,0].copy()       # initial z-coord
+z      = mesh.coordinates()[:,0]              # initial z-coord
 numNew = len(z) - len(l)                      # number of split nodes
 l      = l[:-numNew]                          # remove split heights
 l      = append(l, dz/2 * ones(numNew * 2))   # append new split heights
@@ -84,7 +84,6 @@ index  = argsort(z)                           # index of updated mesh
 n      = len(l)                               # new number of nodes
 rhoin  = rhoi*ones(n)                         # initial density
 omega  = zeros(n)                             # water content percent
-z      = z[index]                             # re-order z
 
 # create function spaces :
 V      = FunctionSpace(mesh, 'Lagrange', 1)   # function space for rho, T
@@ -168,7 +167,7 @@ rhoCoef   = interpolate(Constant(kcHh), V)
 drhodt    = (acc*g*rhoCoef/kg)*exp( -Ec/(R*T) + Eg/(R*Tavg) )*(rhoi - rho)
 drho_1dt  = (acc*g*rhoCoef/kg)*exp( -Ec/(R*T_1) + Eg/(R*Tavg) )*(rhoi - rho_1)
 
-# SUPG method :        
+# SUPG method (unused) :        
 vnorm     = sqrt(dot(w, w) + 1e-10)
 cellh     = CellSize(mesh)
 phihat    = phi + cellh/(2*vnorm)*dot(w, grad(phi))
@@ -181,10 +180,10 @@ phihat    = phi + cellh/(2*vnorm)*dot(w, grad(phi))
 
 # theta scheme (1=Backwards-Euler, 0.667=Galerkin, 0.878=Liniger, 
 #               0.5=Crank-Nicolson, 0=Forward-Euler) :
-theta     = 1.0 
-f_rho     = ((rho_2 - 4*rho_1 + 3*rho)/(2*dt)*phi - \
-            theta*(drhodt - w*grad(rho))*phihat - \
-            (1-theta)*(drho_1dt - w_0*grad(rho_1))*phihat)*dx
+theta     = 0.5 
+f_rho     = (rho_2 - 4*rho_1 + 3*rho)/(2*dt)*phi*dx - \
+            theta*(drhodt - w*grad(rho))*phi*dx - \
+            (1-theta)*(drho_1dt - w_0*grad(rho_1))*phi*dx
 
 # equation to be minimzed :
 f         = f_H + f_rho
@@ -197,8 +196,9 @@ df        = derivative(f, h, dh) # jacobian
 # load initialization data :
 def set_initial_converge():
   rhoin   = genfromtxt("data/enthalpy/rho.txt")
-  z       = genfromtxt("data/enthalpy/z.txt")
-  zs_0    = z[-1]
+  zTemp   = genfromtxt("data/enthalpy/z.txt")
+  zs_0    = zTemp[index][-1]
+  #mesh.coordinates()[:,0] = zTemp  FIXME why wouldn't this work?
 
   rho_i.vector().set_local(rhoin)
   h_0 = project(as_vector([H_i,rho_i]), MV)    # project inital values on space
@@ -246,36 +246,39 @@ while t <= tf:
   # calculate height of each interval (conservation of mass) :
   lnew     = l*rhoin[index] / firn.rho[index]
   zSum     = zb
+  zTemp    = zeros(n)
   for i in range(n)[1:]:
-    firn.z[i]  = zSum + lnew[i]
-    zSum      += lnew[i]
-  
+    zTemp[i] = zSum + lnew[i]
+    zSum    += lnew[i]
+  firn.z[index] = zTemp
+  mesh.coordinates()[:,0] = firn.z
+
   # correct original height with initial surface conditions :
   if t == 0.0:
-    firn.origZ = firn.z[-1]
-    zs_0       = firn.z[-1]
-  if t >= 3 * spy:
+    firn.origZ = firn.z[index][-1]
+    zs_0       = firn.z[index][-1]
+  if t >= 10 * spy:
     Hs.Tavg = Tw - 10.0
-  if t > 25 * spy:
-    Hs.Tavg = Tw - 5.0
-  if t > 35 * spy:
-    Hs.Tavg = Tw - 10.0
+  #if t > 25 * spy:
+  #  Hs.Tavg = Tw - 5.0
+  #if t > 35 * spy:
+  #  Hs.Tavg = Tw - 10.0
 
   # track the current height of the firn :
-  ht.append(firn.z[-1])
+  ht.append(firn.z[index][-1])
   
   # track original height :
-  if firn.origZ > firn.z[0]:
+  if firn.origZ > firn.z[index][0]:
     origHt.append(firn.origZ)
   
   # calculate the new height of original surface by interpolating the 
   # vertical speed from w and keeping the ratio intact :
-  interp      = interp1d(firn.z, firn.w[index], 
+  interp      = interp1d(firn.z[index], firn.w[index], 
                          bounds_error=False, 
                          fill_value=firn.w[index][0])
   zint        = array([firn.origZ])
   wOrigZ      = interp(zint)
-  firn.origZ  = (firn.z[-1] - zb) * (firn.origZ - zb) / (zs_0 - zb) + \
+  firn.origZ  = (firn.z[index][-1] - zb) * (firn.origZ - zb) / (zs_0 - zb) + \
                 wOrigZ[0] * dt
 
   # update kc term in drhodt :
@@ -338,7 +341,7 @@ while t <= tf:
   t += dt
   h_2.assign(h_1)
   h_1.assign(h)
-  zs_0 = firn.z[-1]
+  zs_0 = firn.z[index][-1]
   
   # update boundary conditions :
   Hs.t      = t

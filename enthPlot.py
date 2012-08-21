@@ -42,8 +42,8 @@ class firn():
     self.c     = c
     self.z     = z
     self.index = index
-    self.zb    = z[0]
-    self.zs    = z[-1]
+    self.zb    = z[index][0]
+    self.zs    = z[index][-1]
     self.origZ = self.zs
     self.Ts    = H[index][-1] / c[index][-1]
 
@@ -68,10 +68,10 @@ class plot():
     c      = firn.c
 
     # y-value :
-    z      = firn.z
+    index  = firn.index
+    z      = firn.z[index]
     zs     = firn.zs
     zb     = firn.zb
-    index  = firn.index
     
     # original surface height :
     origZ  = firn.origZ
@@ -198,9 +198,9 @@ class plot():
     w     = firn.w * self.spy * 1e2  # cm a^-1
     k     = firn.k
     c     = firn.c
-    z     = firn.z
-    origZ = firn.origZ
     index = firn.index
+    z     = firn.z[index]
+    origZ = firn.origZ
     Ts    = firn.Ts - 273.15
 
     self.fig_text.set_text('Time = %.2f yr' % t) 
@@ -286,17 +286,18 @@ class plot():
 
     # plots :
     for firn, title, color in zip(firns, titles, colors):
-      Tax.plot(firn.T[firn.index] - 273.15, firn.z, color, label=title, lw=2)
-      Tax.plot([Tmin, Tmax], [firn.z[-1], firn.z[-1]], color, lw=2)
+      i = firn.index
+      Tax.plot(firn.T[i] - 273.15, firn.z[i], color, label=title, lw=2)
+      Tax.plot([Tmin, Tmax], [firn.z[i][-1], firn.z[i][-1]], color, lw=2)
 
-      rhoax.plot(firn.rho[firn.index], firn.z, color, lw=2)
-      rhoax.plot([rhoMin, rhoMax], [firn.z[-1], firn.z[-1]], color, lw=2)
+      rhoax.plot(firn.rho[i], firn.z[i], color, lw=2)
+      rhoax.plot([rhoMin, rhoMax], [firn.z[i][-1], firn.z[i][-1]], color, lw=2)
 
-      wax.plot(firn.w[firn.index], firn.z, color, lw=2)
-      wax.plot([wMin, wMax], [firn.z[-1], firn.z[-1]], color, lw=2)
+      wax.plot(firn.w[i], firn.z[i], color, lw=2)
+      wax.plot([wMin, wMax], [firn.z[i][-1], firn.z[i][-1]], color, lw=2)
 
-      kax.plot(firn.k2[firn.index], firn.z, color, lw=2)
-      kax.plot([kMin, kMax], [firn.z[-1], firn.z[-1]], color, lw=2)
+      kax.plot(firn.k2[i], firn.z[i], color, lw=2)
+      kax.plot([kMin, kMax], [firn.z[i][-1], firn.z[i][-1]], color, lw=2)
     
     # formatting :
     fig_text = plt.figtext(.85,.95,'Time = 0.0 yr')
