@@ -180,10 +180,10 @@ phihat    = phi + cellh/(2*vnorm)*dot(w, grad(phi))
 
 # theta scheme (1=Backwards-Euler, 0.667=Galerkin, 0.878=Liniger, 
 #               0.5=Crank-Nicolson, 0=Forward-Euler) :
-theta     = 0.5 
+theta     = 0.000
 f_rho     = (rho_2 - 4*rho_1 + 3*rho)/(2*dt)*phi*dx - \
-            theta*(drhodt - w*grad(rho))*phi*dx - \
-            (1-theta)*(drho_1dt - w_0*grad(rho_1))*phi*dx
+            theta*(drhodt - w*grad(rho))*phihat*dx - \
+            (1-theta)*(drho_1dt - w_0*grad(rho_1))*phihat*dx
 
 # equation to be minimzed :
 f         = f_H + f_rho
