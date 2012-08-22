@@ -40,32 +40,33 @@ We begin with the standard heat-transport equation (Patterson, 2001
     k_i \frac{\partial^2 T}{\partial z^2} +
     \left( \frac{dk}{dt} - \rho c_i w \right) \frac{\partial T}{\partial z}
   $$
-with heat sources from the deformation of ice ommitted, $\rho$ is density, $c_i$ is heat capacity, $k_i$ is thermal conductivity, $w$ is the vertical velocity, and $T$ is temperature of firn.  We can descritize the temperature differential with the second-order accurate backward-difference formula
-  $$\frac{\partial T}{\partial t} = \frac{T^{k-2} - 4T^{k-1} + 3T}{2dt}$$
-with the superscripts referring to the time index.
+with heat sources from the deformation of ice ommitted, $\rho$ density, $c_i$ heat capacity, $k_i$ thermal conductivity, $w$ vertical velocity, and $T$ temperature of firn.  We can descritize the temperature differential with the second-order accurate backward-difference formula
+  $$\frac{\partial T}{\partial t} = \frac{T^{k-2} - 4T^{k-1} + 3T}{2dt},$$
+with superscripts referring to time index.
 To solve the total derivative $dk/dt$ we must apply the chain rule
   $$
   \frac{dk_i}{dz} = 
   \frac{\partial k_i}{\partial \rho} \frac{\partial \rho}{\partial z} + 
   \frac{\partial k_i}{\partial T} \frac{\partial T}{\partial z}.
   $$
-The thermal conductiviy of ice defined by Arthern et. al, 1998 as
+The thermal conductiviy of ice is defined by Arthern et. al, 1998 as
   $$k_i = 2.1 \left(\frac{\rho}{\rho_i}\right)^2,$$
-we have
+and gives
   $$
   \frac{\partial k_i}{\partial \rho} = 
-    4.2 \frac{\rho}{\rho_i^2},
-  $$
-  $$
-  \frac{\partial k_i}{\partial T} = 
-    \frac{4.2}{\rho_i^2} \left( \frac{\partial \rho}{\partial T} \right),
+    4.2 \frac{\rho}{\rho_i^2}
   $$
 and
   $$
-  \frac{\partial \rho}{\partial T} = 
-    \SI{5.6e-2} \exp ((\SI{-5.7e-3})T)
+  \frac{\partial k_i}{\partial T} = 
+    \frac{4.2}{\rho_i^2} \left( \frac{\partial \rho}{\partial T} \right).
   $$
-defined in Patterson, 2001.  The vertical velocity of ice, $w$, is directly proportional to the accumulation, $b$,
+Patterson, 2001 defined 
+  $$
+  \frac{\partial \rho}{\partial T} = 
+    \SI{5.6e-2} \exp ((\SI{-5.7e-3})T).
+  $$
+The vertical velocity of ice, $w$, is directly proportional to the accumulation, $b$,
   $$
   w = -\frac{b}{\rho}
   $$
@@ -82,12 +83,12 @@ Arthern et. al, 2010 described the total derivative with the formula
    c_0(\rho_i - \rho), &\rho <= 550\ kg\ m^{-3}\\
    c_1(\rho_i - \rho), &\rho > 550\ kg\ m^{-3}
   \end{cases}$$
-Zwally and Li, 2002 defined the multiplying constant with an arrhenius-type relation
+Zwally and Li, 2002 defined the multiplying constant $c$ with an arrhenius-type relation
   $$
   c_0 = c_1 = 
   b \rho_i / \rho_w \beta(T)K_{0G}(T)\exp \left( -\frac{E(T)}{RT} \right),
   $$
-with $K_{0G}(T) \exp(-E(T)/(RT)) = 8.36T^{-2.061}$, and $\beta(T)$ a smoothing function to match a desired density rate.  Arthern et. al 2010 developed a semi-empirical formula by coupling the rate equations for Nabarro-Herring creep and normal grain-growth  
+with $K_{0G}(T) \exp(-E(T)/(RT)) = 8.36T^{-2.061}$, and $\beta(T)$ a smoothing function to match a desired density rate.  Arthern et. al 2010 developed a semi-empirical formula by coupling the rate equations for Nabarro-Herring creep and normal grain-growth : 
   $$
   \begin{cases}
     c_0 = M_0 bg\frac{k_{c0}}{k_g}\exp\left(\frac{E_c}{RT} + 

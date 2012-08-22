@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.1415926-1.40.10 (TeX Live 2009/Debian) (format=pdflatex 2012.5.16)  22 AUG 2012 16:40
+This is pdfTeX, Version 3.1415926-1.40.10 (TeX Live 2009/Debian) (format=pdflatex 2012.5.16)  22 AUG 2012 16:56
 entering extended mode
  %&-line parsing enabled.
 **fdm.tex
@@ -384,7 +384,7 @@ File: images/logo.png Graphic file (type png)
 LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <14.4> not available
 (Font)              Font shape `OT1/ptm/b/n' tried instead on input line 29.
 
-Overfull \hbox (7.30093pt too wide) detected at line 114
+Overfull \hbox (7.30093pt too wide) detected at line 115
 \OML/cmm/m/it/10 ^^Z[] \OT1/cmr/m/n/10 = \OMS/cmsy/m/n/10 ^^@\OT1/cmr/m/n/10 15
 1\OML/cmm/m/it/10 :\OT1/cmr/m/n/10 94 + 1\OML/cmm/m/it/10 :\OT1/cmr/m/n/10 4266
 (73\OML/cmm/m/it/10 :\OT1/cmr/m/n/10 6 + 1\OML/cmm/m/it/10 :\OT1/cmr/m/n/10 06\
@@ -396,39 +396,39 @@ m/m/it/10 V[]\OT1/cmr/m/n/10 )\OML/cmm/m/it/10 :
 [2
 
 ]
-Underfull \hbox (badness 10000) in paragraph at lines 173--176
+Underfull \hbox (badness 10000) in paragraph at lines 174--177
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 189--192
+Underfull \hbox (badness 10000) in paragraph at lines 190--193
 
  []
 
 
-Overfull \hbox (5.14798pt too wide) detected at line 211
+Overfull \hbox (5.14798pt too wide) detected at line 212
 \OML/cmm/m/it/10 w\OT1/cmr/m/n/10 (\OML/cmm/m/it/10 z\OT1/cmr/m/n/10 )\OT1/cmr/
 bx/n/10 B \OT1/cmr/m/n/10 = [] \OML/cmm/m/it/10 ;
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 213--216
+Underfull \hbox (badness 10000) in paragraph at lines 214--217
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 213--216
+Underfull \hbox (badness 10000) in paragraph at lines 214--217
 
  []
 
 [3]
-Underfull \hbox (badness 10000) in paragraph at lines 224--227
+Underfull \hbox (badness 10000) in paragraph at lines 225--228
 
  []
 
 LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <10> not available
-(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 251.
-LaTeX Font Info:    Try loading font information for OT1+pcr on input line 286.
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 252.
+LaTeX Font Info:    Try loading font information for OT1+pcr on input line 287.
 
 (/usr/share/texmf-texlive/tex/latex/psnfss/ot1pcr.fd
 File: ot1pcr.fd 2001/06/04 font definitions for OT1/pcr.
@@ -461,7 +461,7 @@ LaTeX Warning: There were multiply-defined labels.
 Here is how much of TeX's memory you used:
  4925 strings out of 493848
  66058 string characters out of 1152823
- 154541 words of memory out of 3000000
+ 155541 words of memory out of 3000000
  8095 multiletter control sequences out of 15000+50000
  25966 words of font info for 73 fonts, out of 3000000 for 9000
  714 hyphenation exceptions out of 8191
@@ -479,7 +479,7 @@ nts/cm/cmsy7.pfb></usr/share/texmf-texlive/fonts/type1/urw/courier/ucrr8a.pfb><
 /usr/share/texmf-texlive/fonts/type1/urw/times/utmb8a.pfb></usr/share/texmf-tex
 live/fonts/type1/urw/times/utmr8a.pfb></usr/share/texmf-texlive/fonts/type1/urw
 /times/utmri8a.pfb>
-Output written on fdm.pdf (5 pages, 553613 bytes).
+Output written on fdm.pdf (5 pages, 553599 bytes).
 PDF statistics:
  88 PDF objects out of 1000 (max. 8388607)
  0 named destinations out of 1000 (max. 500000)
