@@ -158,9 +158,8 @@ T_1       = Tcoef * H_1 / c
 Kcoef     = interpolate(Constant(1.0),  V)
 
 f_H       = rho*(H_2 - 4*H_1 + 3*H)/(2*dt)*psi*dx + \
-            k/c*Kcoef*inner(grad(H), grad(psi))*dx - \
-            div(rho*H*w)*psi*dx + \
-            w*grad(H)*psi*dx
+            k/c*Kcoef*inner(grad(H), grad(psi))*dx + \
+            rho*w*grad(H)*psi*dx
 
 # total derivative drhodt from Arthern 2010 :
 rhoCoef   = interpolate(Constant(kcHh), V)
