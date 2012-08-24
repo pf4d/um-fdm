@@ -316,7 +316,7 @@ while t <= tf:
   
   # update density :
   firn.rho[rhoInc]    = firn.rho[rhoInc] + domega[rhoInc]*rhow 
-  firn.rho[domNeg]    = firn.rho[domNeg] + domega[domNeg]*200.0
+  firn.rho[domNeg]    = firn.rho[domNeg] + domega[domNeg]*83.0
   
   # update the dolfin vectors :
   rho_i.vector().set_local(firn.rho)
@@ -351,7 +351,7 @@ while t <= tf:
       if rhoS.rhon < rhoi:
         rhoS.rhon = rhoS.rhon + domega[index][-1]*rhow
     else:
-      rhoS.rhon = rhoS.rhon + domega[index][-1]*200.0
+      rhoS.rhon = rhoS.rhon + domega[index][-1]*83.0
   else:
     rhoS.rhon = rhosi
   ltop      = lnew[-1]
