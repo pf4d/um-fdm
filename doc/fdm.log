@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.1415926-1.40.10 (TeX Live 2009/Debian) (format=pdflatex 2012.5.16)  24 AUG 2012 17:06
+This is pdfTeX, Version 3.1415926-1.40.10 (TeX Live 2009/Debian) (format=pdflatex 2012.7.2)  26 AUG 2012 17:52
 entering extended mode
  %&-line parsing enabled.
 **fdm.tex
@@ -29,12 +29,10 @@ File: size10.clo 2007/10/19 v1.4h Standard LaTeX file (size option)
 \belowcaptionskip=\skip42
 \bibindent=\dimen102
 )
-(/usr/share/texmf-texlive/tex/latex/natbib/natbib.sty
-Package: natbib 2009/07/16 8.31 (PWD, AO)
-\bibhang=\skip43
-\bibsep=\skip44
-LaTeX Info: Redefining \cite on input line 694.
-\c@NAT@ctr=\count87
+(/usr/share/texmf-texlive/tex/latex/cite/cite.sty
+LaTeX Info: Redefining \cite on input line 285.
+LaTeX Info: Redefining \nocite on input line 356.
+Package: cite 2009/08/29  v 5.2
 )
 (/usr/share/texmf-texlive/tex/latex/ltxmisc/url.sty
 \Urlmuskip=\muskip10
@@ -52,7 +50,7 @@ Package: xkeyval 2008/08/13 v2.6a package option processing (HA)
 (/usr/share/texmf-texlive/tex/generic/xkeyval/xkeyval.tex
 \XKV@toks=\toks14
 \XKV@tempa@toks=\toks15
-\XKV@depth=\count88
+\XKV@depth=\count87
 File: xkeyval.tex 2008/08/13 v2.6a key=value parser (HA)
 
 (/usr/share/texmf-texlive/tex/generic/xkeyval/keyval.tex)))
@@ -69,8 +67,8 @@ Package: array 2008/09/09 v2.4c Tabular extension package (FMi)
 \col@sep=\dimen104
 \extrarowheight=\dimen105
 \NC@list=\toks17
-\extratabsurround=\skip45
-\backup@length=\skip46
+\extratabsurround=\skip43
+\backup@length=\skip44
 )
 (/usr/share/texmf-texlive/tex/latex/tools/xspace.sty
 Package: xspace 2006/05/08 v1.12 Space after command names (DPC,MH)
@@ -80,24 +78,24 @@ Package: xspace 2006/05/08 v1.12 Space after command names (DPC,MH)
 \si@tempboxc=\box28
 \si@tempboxd=\box29
 \si@temptoks=\toks18
-\si@tab@mantprecnt=\count89
-\si@tab@mantpostcnt=\count90
-\si@tab@expprecnt=\count91
-\si@tab@exppostcnt=\count92
-\si@num@dp=\count93
-\si@num@sf=\count94
-\si@eVcorra=\skip47
-\si@eVcorrb=\skip48
-\si@frc@displen=\skip49
-\si@frc@textlen=\skip50
-\si@frc@suplen=\skip51
-\si@frc@ssuplen=\skip52
-\si@num@rndtarget=\count95
+\si@tab@mantprecnt=\count88
+\si@tab@mantpostcnt=\count89
+\si@tab@expprecnt=\count90
+\si@tab@exppostcnt=\count91
+\si@num@dp=\count92
+\si@num@sf=\count93
+\si@eVcorra=\skip45
+\si@eVcorrb=\skip46
+\si@frc@displen=\skip47
+\si@frc@textlen=\skip48
+\si@frc@suplen=\skip49
+\si@frc@ssuplen=\skip50
+\si@num@rndtarget=\count94
 \si@tab@toks=\toks19
 \si@tab@pretoks=\toks20
 \si@tab@posttoks=\toks21
-\si@tempcnta=\count96
-\si@tempcntb=\count97
+\si@tempcnta=\count95
+\si@tempcntb=\count96
 \si@tab@prebox=\box30
 \si@tab@midbox=\box31
 \si@tab@postbox=\box32
@@ -107,10 +105,10 @@ Package: xspace 2006/05/08 v1.12 Space after command names (DPC,MH)
 \si@tab@expdim=\dimen108
 \si@tempdima=\dimen109
 \si@tempdimb=\dimen110
-\si@unt@unitcnta=\count98
-\si@unt@unitcntb=\count99
-\si@unt@depthcnt=\count100
-\si@unt@prefixcnt=\count101
+\si@unt@unitcnta=\count97
+\si@unt@unitcntb=\count98
+\si@unt@depthcnt=\count99
+\si@unt@prefixcnt=\count100
 \si@unt@powerdim=\dimen111
 
 (/usr/share/texmf-texlive/tex/latex/siunitx/config/si-prefix.cfg
@@ -154,14 +152,14 @@ Package graphics Info: Driver file: pdftex.def on input line 91.
 
 (/usr/share/texmf-texlive/tex/latex/pdftex-def/pdftex.def
 File: pdftex.def 2010/03/12 v0.04p Graphics/color for pdfTeX
-\Gread@gobject=\count102
+\Gread@gobject=\count101
 ))
 \Gin@req@height=\dimen112
 \Gin@req@width=\dimen113
 )
 (/usr/share/texmf-texlive/tex/latex/amsmath/amsmath.sty
 Package: amsmath 2000/07/18 v2.13 AMS math features
-\@mathmargin=\skip53
+\@mathmargin=\skip51
 
 For additional information on amsmath, use the `?' option.
 (/usr/share/texmf-texlive/tex/latex/amsmath/amsbsy.sty
@@ -171,13 +169,13 @@ Package: amsbsy 1999/11/29 v1.2d
 (/usr/share/texmf-texlive/tex/latex/amsmath/amsopn.sty
 Package: amsopn 1999/12/14 v2.01 operator names
 )
-\inf@bad=\count103
+\inf@bad=\count102
 LaTeX Info: Redefining \frac on input line 211.
-\uproot@=\count104
-\leftroot@=\count105
+\uproot@=\count103
+\leftroot@=\count104
 LaTeX Info: Redefining \overline on input line 307.
-\classnum@=\count106
-\DOTSCASE@=\count107
+\classnum@=\count105
+\DOTSCASE@=\count106
 LaTeX Info: Redefining \ldots on input line 379.
 LaTeX Info: Redefining \dots on input line 382.
 LaTeX Info: Redefining \cdots on input line 467.
@@ -186,15 +184,15 @@ LaTeX Info: Redefining \cdots on input line 467.
 \big@size=\dimen115
 LaTeX Font Info:    Redeclaring font encoding OML on input line 567.
 LaTeX Font Info:    Redeclaring font encoding OMS on input line 568.
-\macc@depth=\count108
-\c@MaxMatrixCols=\count109
+\macc@depth=\count107
+\c@MaxMatrixCols=\count108
 \dotsspace@=\muskip11
-\c@parentequation=\count110
-\dspbrk@lvl=\count111
+\c@parentequation=\count109
+\dspbrk@lvl=\count110
 \tag@help=\toks22
-\row@=\count112
-\column@=\count113
-\maxfields@=\count114
+\row@=\count111
+\column@=\count112
+\maxfields@=\count113
 \andhelp@=\toks23
 \eqnshift@=\dimen116
 \alignsep@=\dimen117
@@ -203,8 +201,8 @@ LaTeX Font Info:    Redeclaring font encoding OMS on input line 568.
 \totwidth@=\dimen120
 \lineht@=\dimen121
 \@envbody=\toks24
-\multlinegap=\skip54
-\multlinetaggap=\skip55
+\multlinegap=\skip52
+\multlinetaggap=\skip53
 \mathdisplay@stack=\toks25
 LaTeX Info: Redefining \[ on input line 2666.
 LaTeX Info: Redefining \] on input line 2667.
@@ -232,7 +230,7 @@ nment
 
 (/usr/share/texmf-texlive/tex/latex/float/float.sty
 Package: float 2001/11/08 v1.3d Float enhancements (AL)
-\c@float@type=\count115
+\c@float@type=\count114
 \float@exts=\toks27
 \float@box=\box36
 \@float@everytoks=\toks28
@@ -242,16 +240,16 @@ Package: float 2001/11/08 v1.3d Float enhancements (AL)
 Package: ifthen 2001/05/26 v1.1c Standard LaTeX ifthen package (DPC)
 )
 \@float@every@algorithm=\toks29
-\c@algorithm=\count116
+\c@algorithm=\count115
 )
 (/usr/share/texmf-texlive/tex/latex/algorithms/algorithmic.sty
 Package: algorithmic 2009/08/24 v0.1 Document Style `algorithmic'
-\c@ALC@unique=\count117
-\c@ALC@line=\count118
-\c@ALC@rem=\count119
-\c@ALC@depth=\count120
-\ALC@tlm=\skip56
-\algorithmicindent=\skip57
+\c@ALC@unique=\count116
+\c@ALC@line=\count117
+\c@ALC@rem=\count118
+\c@ALC@depth=\count119
+\ALC@tlm=\skip54
+\algorithmicindent=\skip55
 )
 (/usr/share/texmf-texlive/tex/latex/geometry/geometry.sty
 Package: geometry 2008/12/21 v4.2 Page Geometry
@@ -264,9 +262,9 @@ Package ifpdf Info: pdfTeX in pdf mode detected.
 Package: ifvtex 2008/11/04 v1.4 Switches for detecting VTeX and its modes (HO)
 Package ifvtex Info: VTeX not detected.
 )
-\Gm@cnth=\count121
-\Gm@cntv=\count122
-\c@Gm@tempcnt=\count123
+\Gm@cnth=\count120
+\Gm@cntv=\count121
+\c@Gm@tempcnt=\count122
 \Gm@bindingoffset=\dimen125
 \Gm@wd@mp=\dimen126
 \Gm@odd@mp=\dimen127
@@ -276,45 +274,45 @@ Package ifvtex Info: VTeX not detected.
 (/usr/share/texmf-texlive/tex/xelatex/xetexconfig/geometry.cfg)) (./fdm.aux)
 \openout1 = `fdm.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 15.
-LaTeX Font Info:    ... okay on input line 15.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 15.
-LaTeX Font Info:    ... okay on input line 15.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 15.
-LaTeX Font Info:    ... okay on input line 15.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 15.
-LaTeX Font Info:    ... okay on input line 15.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 15.
-LaTeX Font Info:    ... okay on input line 15.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 15.
-LaTeX Font Info:    ... okay on input line 15.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 15.
-LaTeX Font Info:    Try loading font information for TS1+cmr on input line 15.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 16.
+LaTeX Font Info:    ... okay on input line 16.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 16.
+LaTeX Font Info:    ... okay on input line 16.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 16.
+LaTeX Font Info:    ... okay on input line 16.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 16.
+LaTeX Font Info:    ... okay on input line 16.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 16.
+LaTeX Font Info:    ... okay on input line 16.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 16.
+LaTeX Font Info:    ... okay on input line 16.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 16.
+LaTeX Font Info:    Try loading font information for TS1+cmr on input line 16.
 
 (/usr/share/texmf-texlive/tex/latex/base/ts1cmr.fd
 File: ts1cmr.fd 1999/05/25 v2.5h Standard LaTeX font definitions
 )
-LaTeX Font Info:    ... okay on input line 15.
-LaTeX Font Info:    Try loading font information for OT1+ptm on input line 15.
+LaTeX Font Info:    ... okay on input line 16.
+LaTeX Font Info:    Try loading font information for OT1+ptm on input line 16.
 
 (/usr/share/texmf-texlive/tex/latex/psnfss/ot1ptm.fd
 File: ot1ptm.fd 2001/06/04 font definitions for OT1/ptm.
 )
 Package siunitx Info: xfrac package unavailable
 (siunitx)             using `fraction=sfrac' will fall back on
-(siunitx)             nicefrac-like method on input line 15.
+(siunitx)             nicefrac-like method on input line 16.
 
 (/usr/share/texmf-texlive/tex/context/base/supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
-\scratchcounter=\count124
+\scratchcounter=\count123
 \scratchdimen=\dimen129
 \scratchbox=\box38
-\nofMPsegments=\count125
-\nofMParguments=\count126
+\nofMPsegments=\count124
+\nofMParguments=\count125
 \everyMPshowfont=\toks31
-\MPscratchCnt=\count127
+\MPscratchCnt=\count126
 \MPscratchDim=\dimen130
-\MPnumerator=\count128
+\MPnumerator=\count127
 \everyMPtoPDFconversion=\toks32
 )
 *geometry auto-detecting driver*
@@ -358,11 +356,11 @@ driver: pdftex
 
 (1in=72.27pt, 1cm=28.45pt)
 -----------------------
-LaTeX Font Info:    Try loading font information for U+msa on input line 15.
+LaTeX Font Info:    Try loading font information for U+msa on input line 16.
 (/usr/share/texmf-texlive/tex/latex/amsfonts/umsa.fd
 File: umsa.fd 2009/06/22 v3.00 AMS symbols A
 )
-LaTeX Font Info:    Try loading font information for U+msb on input line 15.
+LaTeX Font Info:    Try loading font information for U+msb on input line 16.
 
 (/usr/share/texmf-texlive/tex/latex/amsfonts/umsb.fd
 File: umsb.fd 2009/06/22 v3.00 AMS symbols B
@@ -374,9 +372,15 @@ File: images/logoPlain.png Graphic file (type png)
 
 {/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map} <./images/logoPlain.png>]
 LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <14.4> not available
-(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 30.
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 31.
 
-Overfull \hbox (7.30093pt too wide) detected at line 111
+Overfull \hbox (4.66086pt too wide) in paragraph at lines 33--34
+\OT1/ptm/m/it/10 Lang-way \OT1/ptm/m/n/10 [1980] de-vel-oped a firn den-si-fi-c
+a-tion model based
+ []
+
+
+Overfull \hbox (7.30093pt too wide) detected at line 114
 \OML/cmm/m/it/10 ^^Z[] \OT1/cmr/m/n/10 = \OMS/cmsy/m/n/10 ^^@\OT1/cmr/m/n/10 15
 1\OML/cmm/m/it/10 :\OT1/cmr/m/n/10 94 + 1\OML/cmm/m/it/10 :\OT1/cmr/m/n/10 4266
 (73\OML/cmm/m/it/10 :\OT1/cmr/m/n/10 6 + 1\OML/cmm/m/it/10 :\OT1/cmr/m/n/10 06\
@@ -387,68 +391,69 @@ m/m/it/10 V[]\OT1/cmr/m/n/10 )\OML/cmm/m/it/10 :
 
 [2
 
-] <images/surfaceDensity.png, id=22, 245.2362pt x 280.4076pt>
+] <images/surfaceDensity.png, id=23, 248.127pt x 281.1303pt>
 File: images/surfaceDensity.png Graphic file (type png)
 
 <use images/surfaceDensity.png>
-LaTeX Font Info:    Try loading font information for OT1+pcr on input line 203.
+LaTeX Font Info:    Try loading font information for OT1+pcr on input line 208.
 
 
 (/usr/share/texmf-texlive/tex/latex/psnfss/ot1pcr.fd
 File: ot1pcr.fd 2001/06/04 font definitions for OT1/pcr.
-)
-Overfull \hbox (2.32224pt too wide) in paragraph at lines 205--205
-[]      \OT1/pcr/m/n/9 + k/c*Kcoef*inner(grad(H), grad(psi))[] 
- []
-
-[3 <./images/surfaceDensity.png>]
-Overfull \hbox (7.72223pt too wide) in paragraph at lines 304--304
-[]\OT1/pcr/m/n/9 Dbc  = DirichletBC(MV.sub(1), rhoS, surface)[] 
+) [3 <./images/surfaceDensity.png>] [4]
+Overfull \hbox (10.12265pt too wide) in paragraph at lines 351--351
+[]                      \OT1/pcr/m/n/8 fill_value=firn.w[index][0])[] 
  []
 
 
-Overfull \hbox (2.32224pt too wide) in paragraph at lines 326--326
-[]\OT1/pcr/m/n/9 lnew     = l*rhoin[index] / firn.rho[index][] 
- []
-
-[4]
-Underfull \hbox (badness 10000) in paragraph at lines 355--356
+Underfull \hbox (badness 10000) in paragraph at lines 373--374
 
  []
 
 LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <10> not available
-(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 357.
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 375.
 
-Overfull \hbox (5.40294pt too wide) in paragraph at lines 360--379
+Overfull \hbox (9.64833pt too wide) in paragraph at lines 378--400
 [] 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 360--379
+Underfull \hbox (badness 10000) in paragraph at lines 378--400
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 383--404
+Underfull \hbox (badness 10000) in paragraph at lines 404--425
 
  []
 
-
-Underfull \hbox (badness 10000) in paragraph at lines 408--418
-
- []
-
-[5
+[5]
+Missing character: There is no ‚ in font ptmr7t!
+Missing character: There is no Ä in font ptmr7t!
+Missing character: There is no ê in font ptmr7t!
+Missing character: There is no ‚ in font ptmr7t!
+Missing character: There is no Ä in font ptmr7t!
+Missing character: There is no ì in font ptmr7t!
+Missing character: There is no ‚ in font ptmr7t!
+Missing character: There is no Ä in font ptmr7t!
+Missing character: There is no ì in font ptmr7t!
+Missing character: There is no ‚ in font ptmr7t!
+Missing character: There is no Ä in font ptmr7t!
+Missing character: There is no ì in font ptmr7t!
+Missing character: There is no ‚ in font ptmr7t!
+Missing character: There is no Ä in font ptmr7t!
+Missing character: There is no ì in font ptmr7t!
+ [6
 
 ] (./fdm.aux) ) 
 Here is how much of TeX's memory you used:
- 4870 strings out of 493848
- 65269 string characters out of 1152823
- 153541 words of memory out of 3000000
- 8045 multiletter control sequences out of 15000+50000
- 27139 words of font info for 74 fonts, out of 3000000 for 9000
+ 4643 strings out of 493848
+ 62566 string characters out of 1152824
+ 149487 words of memory out of 3000000
+ 7818 multiletter control sequences out of 15000+50000
+ 27710 words of font info for 74 fonts, out of 3000000 for 9000
  714 hyphenation exceptions out of 8191
- 54i,13n,76p,727b,346s stack positions out of 5000i,500n,10000p,200000b,50000s
+ 56i,14n,77p,817b,351s stack positions out of 5000i,500n,10000p,200000b,50000s
 {/usr/share/texmf-texlive/fonts/enc/dvips/base/8r.enc}</usr/shar
 e/texmf-texlive/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/share/texmf-tex
 live/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/share/texmf-texlive/fonts/
@@ -466,9 +471,9 @@ live/fonts/type1/public/amsfonts/cm/cmsy8.pfb></usr/share/texmf-texlive/fonts/t
 ype1/urw/courier/ucrr8a.pfb></usr/share/texmf-texlive/fonts/type1/urw/times/utm
 b8a.pfb></usr/share/texmf-texlive/fonts/type1/urw/times/utmr8a.pfb></usr/share/
 texmf-texlive/fonts/type1/urw/times/utmri8a.pfb>
-Output written on fdm.pdf (5 pages, 441196 bytes).
+Output written on fdm.pdf (6 pages, 463862 bytes).
 PDF statistics:
- 100 PDF objects out of 1000 (max. 8388607)
+ 103 PDF objects out of 1000 (max. 8388607)
  0 named destinations out of 1000 (max. 500000)
  11 words of extra memory for PDF output out of 10000 (max. 10000000)
 

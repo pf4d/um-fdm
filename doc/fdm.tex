@@ -1,6 +1,6 @@
 \documentclass{article}%You can define the type of paper here.
 %%Useful packages that I commonly use.
-\usepackage[numbers]{natbib}%Bibliography package (help at http://merkel.zoneo.net/Latex/natbib.php).
+\usepackage{cite}%Bibliography package (help at http://merkel.zoneo.net/Latex/natbib.php).
 \usepackage{url}%Package to highlight url.
 \usepackage{times}%Sets font to be times.
 \usepackage{siunitx}
@@ -10,7 +10,8 @@
 \usepackage{algorithm, algorithmic} %pseudo-code
 %%For those who want smaller margins, you can use this:
 \usepackage[top=1in, bottom=1in, left=1in, right=1in]{geometry}
-
+\newcommand{\sups}[1]{\ensuremath{^{\textrm{#1}}}}
+\newcommand{\subs}[1]{\ensuremath{_{\textrm{#1}}}}
 
 \begin{document}
 
@@ -29,12 +30,14 @@
 %% Introduction ================================================================
 \section{Introduction}
 
-The top layer of snow on a glacier or ice sheet increases in density as depth increases.  Several models have been created to simulate this process, some based on temperature and others based on enthalpy.  I have re-created these models with the finite-element software package FEniCS.
+The top layer of snow on a glacier or ice sheet increases in density as depth increases; newly accumulated snow builds up and compresses the layers below.  \emph{Herron and Langway} [1980] developed a firn densification model based on Arrhenius-type equations with variable rate constants and found that the densification rate decreased suddenly around $550$ kg m\sups{-3}.  \emph{Zwally and Li} [2002] expanded upon this model and found an alternate temperature-dependant value for the rate constant.  \emph{Arthern et al.} [2010] developed yet another set of equations based from their in situ measurements of Antarctic snow compaction.  \emph{Ligtenberg et al.} [2011] modified the \emph{Arthern et al.} [2010] parameterization to better fit areas with a higher average anual temperature. 
+
+We have re-created a number of these models and integrated them with an enthalpy-formulation proposed by \emph{Aschwanden et al.} [2012] which accounts for melting of firn layers in percolation zones.  The model has been created with the finite-element software package FEniCS; an explanation of its usage and flexibility will be made clear.
 
 %% Temperature =================================================================
 \section{Temperature Solution}
 
-We begin with the standard heat-transport equation (Patterson, 2001
+We begin with the standard heat-transport equation as explained by \emph{Patterson} [2001]
 
   $$
   \rho c_i \frac{\partial T}{\partial t} = 
@@ -47,7 +50,7 @@ with heat sources from the deformation of ice ommitted, $\rho$ density, $c_i$ he
   \frac{\partial k_i}{\partial \rho} \frac{\partial \rho}{\partial z} + 
   \frac{\partial k_i}{\partial T} \frac{\partial T}{\partial z}.
   $$
-The thermal conductiviy of ice is defined by Arthern et. al, 1998 as
+The thermal conductiviy of ice is defined by \emph{Arthern et. al, 1998} as
   $$k_i = 2.1 \left(\frac{\rho}{\rho_i}\right)^2,$$
 and gives
   $$
@@ -59,7 +62,7 @@ and
   \frac{\partial k_i}{\partial T} = 
     \frac{4.2}{\rho_i^2} \left( \frac{\partial \rho}{\partial T} \right).
   $$
-Patterson, 2001 defined $\rho$ in terms of $T$ and from this can be derived
+\emph{Patterson} [2001] defined $\rho$ in terms of $T$ and from this can be derived
   $$
   \frac{\partial \rho}{\partial T} = 
     \SI{5.6e-2} \exp ((\SI{-5.7e-3})T).
@@ -75,10 +78,10 @@ Arthern et. al, 2010 described this total derivative with the formula
   $$
   \frac{d \rho}{dt} = 
   \begin{cases}
-   c_0(\rho_i - \rho), &\rho <= 550\ kg\ m^{-3}\\
-   c_1(\rho_i - \rho), &\rho > 550\ kg\ m^{-3}
+   c_0(\rho_i - \rho), &\rho <= \rho_m\\
+   c_1(\rho_i - \rho), &\rho > \rho_m
   \end{cases}.$$
-Zwally and Li, 2002 defined the multiplying constant $c$ with an arrhenius-type relation
+\emph{Zwally and Li} [2002] defined the multiplying constant $c$ with an arrhenius-type relation
   $$
   c_0 = c_1 = 
   b \beta(T)\left(\frac{\rho_i}{\rho_w}\right)
@@ -96,11 +99,11 @@ with $K_{0G}(T) \exp(-E(T)/(RT)) = 8.36T^{-2.061}$, and $\beta(T)$ a smoothing f
 with the creep coefficients defined as
   $$
   \begin{cases}
-    k_{c0} = \SI{9.2e-9} m^3\ s\ kg^{-1} \\
-    k_{c1} = \SI{3.7e-9} m^3\ s\ kg^{-1}  
+    k_{c0} = \text{\SI{9.2e-9} m\sups{3} s kg\sups{-1}} \\
+    k_{c1} = \text{\SI{3.7e-9} m\sups{3} s kg\sups{-1}}  
   \end{cases}
   $$
-and $M$ defined by Ligtenberg et. al 2011 to better fit with observed densification rates in higher-temperature environments :
+and $M$ defined in \emph{Ligtenberg et al.} [2011] to better fit with observed densification rates in higher-temperature environments :
   $$
   \begin{cases}
     M_0 = 2.366 - 0.293\ln(b*\SI{1e3})\\
@@ -114,21 +117,21 @@ Within the same paper a firn surface density expression from data was given :
 %% Enthalpy ====================================================================
 \section{Enthalpy Solution}
 
-As stated in Aschwanden et. al 2012, we take 'enthalpy' to be synonymous with 'internal energy' due to the exclusion of work done with changing volume.  The equation used here is the shallow-enthalpy :
+As stated in \emph{Aschwanden et al.} [2012], we take 'enthalpy' to be synonymous with 'internal energy' due to the exclusion of work done with changing volume.  The equation used here is the shallow-enthalpy :
 	$$
   \rho \frac{\partial H}{\partial t} = \frac{\partial}{\partial z} 
     \left( 
       \begin{Bmatrix}
-        K_i(H), &\text{Temperate}\\
+        K_i, &\text{Temperate}\\
         K_0, &\text{Cold}
       \end{Bmatrix}
       \frac{\partial H}{\partial z} 
     \right) + w \rho \frac{\partial H}{\partial z}.
   $$
 Strain heating has been neglected and the advective term $w \rho\ \partial H / \partial z$ has been added.  The coefficient for temperate ice is 
-  $$K_i(H) = \frac{k_i}{c_i}.$$
+  $$K_i = \frac{k_i}{c_i}.$$
 The coefficient for cold ice is
-  $$K_0 = \frac{1}{10}K_i(H).$$
+  $$K_0 = \frac{1}{10}K_i.$$
 Temperate firn is defined as firn with $H > H_s$ and cold firn $H <= H_s$, with
   $$H_s = \int_{T_0}^{T_m}{c_i(T)}dT$$ 
 where $T_m = 273.15$ K and $T_0 = 0.0$ K.  The enthalpy can be found with a constant heat capacity of $2009$ J kg$^{-1}$ K$^{-1}$ with the linear equation
@@ -141,7 +144,7 @@ where $T_m = 273.15$ K and $T_0 = 0.0$ K.  The enthalpy can be found with a cons
   $$
 where $L_f$ is the latent heat of fusion and $\omega$ represents the water content percentage of firn given by
   $$\omega L_f = H - c_i(T_w - T_0).$$
-It is conveinent to find the temperature :
+Temperature may be derived from enthalpy easily :
   $$T = \frac{H}{c_i}.$$
 The density equations remain the same as the temperature solution, and the surface density at time index $n+1$ can be described as : 
   $$\rho_s^{n+1} = \rho_b^{n+1} d_p + \rho_s^{n} (1 - d_p),$$
@@ -149,15 +152,17 @@ where
   $$\rho_b^{n+1} = \rho_b^{n-1} + \Delta \omega_s \rho_b^n,$$
   $$\Delta \omega_s = \omega_s^{n} - \omega_s^{n-1},$$ 
   $$d_p = \frac{d_n}{l_s},$$
-  $$d_n = w_sdt,$$
-$l_s$ is the length of the surface node, and
+  $$d_n = w_sdt,\text{ and}$$
+  \begin{center}$l_s$ is the length of the surface node.\end{center}
+If $T_s > T_w$, the density and re-freezing of newly accumulated surface snow is given by
   $$
   \rho_b^n = 
   \begin{cases}
-    \rho_w - \rho_i\ \text{kg m}^{-3},  &T <= T_w\\
-    \rho_w\ \text{kg m}^{-3}, &T > T_w
-  \end{cases}.
+    \rho_w - \rho_i\ \text{kg m}^{-3},  &\Delta\omega <= 0\\
+    \rho_w\ \text{kg m}^{-3}, &\Delta\omega > 0
+  \end{cases},
   $$
+and when $T_s < T_w$, $\rho_b^n = \rho_{si}$.
 \begin{figure}[H]
 	\centering
 		\includegraphics[width=0.42\textwidth]{images/surfaceDensity.png}
@@ -168,7 +173,7 @@ $l_s$ is the length of the surface node, and
 %% Method ======================================================================
 \section{Finite Element Method}
 
-This section will focus on the enthalpy solution; solving these equations with FENicS is done with Galerkin's method which requires finding the weak formulation :
+This section will focus on the enthalpy solution.  Solving these equations with FENicS is done with Galerkin's method and requires finding the weak formulation :
   $$
     0 =
     \int_{\Omega} 
@@ -198,8 +203,8 @@ Here we have integrated over the entire domain, $\Omega$, and multiplied by a te
   $$
 We can descritize the enthalpy time-differential with the second-order accurate backward-difference formula
   $$\frac{\partial H}{\partial t} = \frac{H^{k-2} - 4H^{k-1} + 3H}{2dt},$$
-with superscripts referring to time index.  This equation can be represented in FENicS as :
-\small
+with superscripts referring to time index.  This equation can be represented in FENicS as :\par
+\footnotesize
 \begin{alltt}
 f_H = (rho*(H_2 - 4*H_1 + 3*H)/(2*dt)*psi 
       + k/c*Kcoef*inner(grad(H), grad(psi))
@@ -215,8 +220,8 @@ The weak form for density is found similarly :
     \int_{\Omega} w\nabla \rho \phi\ d \Omega -
     \int_{\Omega}\frac{d \rho}{dt}\phi\ d \Omega.
   $$
-With the partial-time-differential of density defined indentically to the enthalpy equation, this can be represented in FENicS with the Arthern et. all 2010 densification equation as :
-\small
+With the partial-time-differential of density defined indentically to the enthalpy equation, this can be represented in FENicS with the \emph{Arthern et al.} [2010] densification equation as :\par
+\footnotesize
 \begin{alltt}
 c      = b*g*rhoCoef/kg * 
          exp(-Ec/(R*T) + Eg/(R*Tavg))
@@ -240,20 +245,20 @@ The test functions for each function can now be described as
     \psi, \phi \subset u.
   $$
 In FENicS these spaces can be defined by this :
-\small
+\footnotesize
 \begin{alltt}
-V         = FunctionSpace(mesh, 
-                          'Lagrange', 
-                          1)
-MV        = V*V
-h         = Function(MV)
-H,rho     = split(h)    
-dh        = TrialFunction(MV)
-dH, drho  = split(dh)
-j         = TestFunction(MV)
-psi, phi  = split(j)
+mesh     = Interval(n, zb, zs)
+V        = FunctionSpace(mesh, 'Lagrange', 1)
+MV       = V*V
+h        = Function(MV)
+H,rho    = split(h)    
+dh       = TrialFunction(MV)
+dH, drho = split(dh)
+j        = TestFunction(MV)
+psi, phi = split(j)
 \end{alltt}
 \normalsize
+The variable \texttt{zb} is the z-position of the base of the firn column which does not change and \texttt{n} is the number of nodes; the \texttt{mesh} variable defines the spacial dimensions of the system to be soloved and is here created in one dimension.  The mesh may also be created in three dimensions if desired, or made to fit a custom grid.
 
 We define the entire function as 
   $$
@@ -264,7 +269,7 @@ Solving this system can be accomplished with \emph{Newton's Method} which requir
     J = \frac{\partial f}{\partial v}.
   $$
 In FENicS this becomes :
-\small
+\footnotesize
 \begin{alltt}
 f  = f_H + f_rho
 J  = derivative(f, h, dh)
@@ -275,7 +280,7 @@ J  = derivative(f, h, dh)
 %% Boundary Conditions =========================================================
 \section{Boundary Conditions}
 
-The cyclical enthalpy boundary condition for the surface can be simulated with 
+A cyclical enthalpy boundary condition for the surface can be simulated with 
   $$
     H_s = c_i ( T_s - T_0 ),
   $$
@@ -287,7 +292,7 @@ where $\alpha$ is the amplitude of temperature variation and $\omega = 2\pi / sp
     \rho_s^{n+1} = \rho_b^{n+1} d_p + \rho_s^{n} (1 - d_p).
   $$
 Both of these can be created with FENicS with
-\small
+\footnotesize
 \begin{alltt}
 code = 'c*(Tavg + 9.9*sin(omega*t) - T0)'
 Hs   = Expression(code, c=cp, Tavg=Tavg, 
@@ -306,8 +311,8 @@ Dbc  = DirichletBC(MV.sub(1), rhoS, surface)
 \normalsize
 Within the time-loop the variables \texttt{t}, \texttt{rhon}, \texttt{rhoi}, and \texttt{dp} can be updated as needed.
 
-Now all that is left is to iterate through time and call the \texttt{solve} method at each step :
-\small
+Now all that is left is to iterate through time and call the \texttt{solve} method at each step :\par
+\footnotesize
 \begin{alltt}
 solve(f == 0, h, [Hbc, Dbc], J=J)
 \end{alltt}
@@ -318,10 +323,10 @@ The use of the \texttt{solve} function in this way chooses \emph{Newton's Method
 %% Model Parameters ============================================================
 \section{Model Parameters}
 
-Within the time-loop there are a number of parameters which need to be updated.  Taking into account conservation of mass, the height $l$ of each node must be re-calculated :
-  $$l^{n+1} = l^n \frac{\rho_{ini}}{\rho},$$
-where $\rho_{ini}$ is the density of the firn column when the system was initialized.  With the height of the nodes calculated, the z-positions may be found by iterating through the heights and setting the z vector's correspoding cell equal to the current sum.  After sucessfull calculation the FENicS \texttt{mesh} object must have its coordinates refreshed.  These tasks may be completed with the following code :
-\small
+Within the time-loop there are a number of parameters which need to be updated.  Taking into account conservation of mass, the height $l$ of each node must be re-calculated :\par
+  $$l_{new} = l_{ini} \frac{\rho_{ini}}{\rho},$$
+where $\rho_{ini}$ abd $l_{ini}$ are the density and height vectors of the firn column when the system was initialized.  With the height of the nodes calculated, the z-positions may be found by iterating through the heights and setting the z vector's correspoding cell equal to the current sum.  After sucessfull calculation the FENicS \texttt{mesh} object must have its coordinates refreshed.  These tasks may be completed with the following code :\par
+\footnotesize
 \begin{alltt}
 lnew     = l*rhoin[index] / firn.rho[index]
 zSum     = zb
@@ -333,20 +338,33 @@ firn.z[index] = zTemp
 mesh.coordinates()[:,0] = firn.z
 \end{alltt}
 \normalsize
-The variable \texttt{index} is an array of positions corresponding to the correct ordering of the nodes, necessarry after mesh refinement; \texttt{zb} is the z-position of the base of the firn column which does not change and \texttt{n} is the nuber of nodes.
+The variable \texttt{index} is an array of positions corresponding to the correct ordering of the nodes, necessary after mesh refinement.  
 
 The height $s$ at time index $n$ of the original surface may be calculated as follows :
   $$s^{n} = (z_s - z_b) \frac{s^{n-1} - z_b}{z_{s} - z_b} + w_s dt.$$
-This maintains the relative location of the original surface to the current surface and moves downward proportional to $w$.
+This maintains the relative location of the original surface to the current surface and moves downward proportional to $w$.  This is accomplished in Python with\par
+\footnotesize
+\begin{alltt}
+interp     = interp1d(firn.z[index], 
+                      firn.w[index],
+                      bounds_error=False,
+                      fill_value=firn.w[index][0])
+zint       = array([firn.origZ])
+wOrigZ     = interp(zint)
+firn.origZ = (firn.z[index][-1] - zb) * 
+             (firn.origZ - zb) / 
+             (zs_0 - zb) + wOrigZ[0] * dt
+\end{alltt}
+\normalsize
 
-For all operations it is conveinent to store all the state data from the simulation in a class object for ease of access.  For this purpose the \texttt{firn} class was created and contains the signature 
-\small
+For all operations it is conveinent to store all the state data from the simulation in a class object for ease of access.  For this purpose the \texttt{firn} class was created and contains the signature\par 
+\footnotesize
 \begin{alltt}
 firn(self, H, T, rho, omega, w, 
      k, c, z, index)
 \end{alltt}
 \normalsize
-with \texttt{z} the node z-positions as defined above, \texttt{index} index of re-ordered mesh locations, and other variables as described earlier in the paper.
+with \texttt{z} the node z-positions as defined above, \texttt{index} the index of re-ordered mesh locations, and other variables as described earlier in the paper.
 
 
 %% Variable Definition =========================================================
@@ -369,7 +387,10 @@ $\rho_w$ & $1000$ & kg m$^{-3}$ & density of water\\
 $\rho_m$ & $550$ & kg m$^{-3}$ & critical density value\\
 $k_i$  & $2.1$ & W m$^{-1}$K$^{-1}$ & thermal conductivity of ice\\
 $c_i$  & $2009$ & J kg$^{-1}$K$^{-1}$ & heat capacity of ice\\
+$L_f$ & \SI{3.34e5} & J kg$^{-1}$ & latent heat of fusion\\
+$H_s$ & $c_i(T_w - T_0)$ & J kg$^{-1}$ &  Enthalpy of ice at $T_w$\\
 $T_w$  & $273.15$ & K & triple point of water\\
+$T_0$ & $0.0$ & K & reference temperature\\
 $k_g$ & \SI{1.3e-7} & m$^2$s$^{-1}$ & grain growth coefficient\\
 $E_c$ & \SI{60e3} & J mol$^{-1}$ & act. energy for water in ice\\
 $E_g$ & \SI{42.4e3} & J mol$^{-1}$ & act. energy for grain growth\\
@@ -377,7 +398,7 @@ $E_g$ & \SI{42.4e3} & J mol$^{-1}$ & act. energy for grain growth\\
 \end{tabular}
 \normalsize\\
 
-\noindent\textbf{Model :}
+\noindent\textbf{Model Specific :}
 
 \footnotesize
 \noindent\begin{tabular}{lcc}
@@ -402,20 +423,6 @@ $t_f$ & s & end-time\\
 \end{tabular}
 \normalsize\\
 
-\noindent\textbf{Enthalpy-specific :}
-
-\footnotesize
-\noindent\begin{tabular}{lccc}
-\hline
-Var. & Value & Units & Description\\
-\hline
-$T_0$ & $0.0$ & K & reference temperature\\
-$L_f$ & \SI{3.34e5} & J kg$^{-1}$ & latent heat of fusion\\
-$H_s$ & $c_i(T_w - T_0)$ & J kg$^{-1}$ &  Enthalpy of ice at $T_w$\\
-\hline
-\end{tabular}
-\normalsize\\
-
 
 %% Verification ================================================================
 \section{Verification of Program}
@@ -424,6 +431,31 @@ $H_s$ & $c_i(T_w - T_0)$ & J kg$^{-1}$ &  Enthalpy of ice at $T_w$\\
 %% Interpretation ==============================================================
 \section{Interpretation}
 
+%% Future Developments =========================================================
+\section{Future Developments}
+
+At its current state of development the model does not take into account water transport through the firn column, describeable with the darcy flow equations :
+  $$
+    q = \frac{-k}{\mu}\nabla P, \ \  v = \frac{q}{\phi},
+  $$
+where $k$ is the permeability, $\mu$ is the viscosity of water at $0\degree$ C, $\nabla P$ is the pressure gradient vector, and $\phi$ is porosity.
+
+\emph{Waldner et al.} [2002] introduces this issue and provides references to numerous models which simulate this phenomenon.  One such paper is \emph{Coleou et al.} [1998] which supplies an equation for the irreducable water content of snow. 
+\newpage
+%% Bibliography ================================================================
+\begin{thebibliography}{1}
+
+  \bibitem{asch12}Aschwanden, A., Bueler, E., Khroulev, C., and Blatter, H. 2012. An enthalpy formulation for glaciers and ice sheets. \textit{J. Glaciol.} \textbf{58}(209), 441-457.
+  \bibitem{pat94}Paterson, W.S.B. 1994. \textit{The physics of glaciers}, 3rd edn. Elsevier, Oxford
+  \bibitem{arth10}Arthern, R.J., Vaughan, D.G., Rankin, A.M., Mulvaney, R., and Thomaa, E.R. 2009. In situ measurements of Antarctic snow compaction compared with predictions of models. \textit{J. Geophys. Res., 115}, FO3011, doi:10.1029/2009JF001306.
+  \bibitem{reeh08}Reeh, N. 2008. A nonsteady\mbox{-}state firn\mbox{-}densification model for the percolation zone of a glacier. \textit{J. Geophys. Res., 113}, F03023, doi:10.1029/2007JF000746.
+  \bibitem{zwa02}Zwally, H., and J. Li. 2002. Seasonal and interannual variations of firn densification and ice\mbox{‐}sheet surface elevation at the Greenland summit. \textit{J. Glaciol.} \textbf{48}(161), 199–207.
+  \bibitem{ligt11}Ligtenberg, S.R.M., Helsen, M.M., and van den Broeke, M.R. 2011. An improved semi\mbox{-}empirical model for the densification of Antarctic firn. \textit{The Cryosphere}. \textbf{5}, 809–819. doi:10.5194/tc-5-809-2011.
+  \bibitem{}Coleou, C. and Lesaffre, B. 1998. Irreducible water saturation in snow: experimental results in a cold laboratory. \textit{Ann. Glaciol., 26}, 64–68.
+  \bibitem{herr80}Herron, M. and Langway, C. 1980. Firn densification: an empirical model. \textit{J. Glaciol.} \textbf{25}(93), 373–385.
+  \bibitem{wald02}Waldner, P.A., Schneebeli, M., Schultze \mbox{-} Zimmermann, U., and Fl\"{u}hler, H. 2002. Effect of snow structure on water flow and solute transport. \textit{Hydrol. Process.}, DOI: 10.1002/hyp.1401
+
+\end{thebibliography}
 
 \end{document}
 %%Compile with pdflatex file.tex
