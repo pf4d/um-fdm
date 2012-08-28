@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.1415926-1.40.10 (TeX Live 2009/Debian) (format=pdflatex 2012.7.2)  26 AUG 2012 17:52
+This is pdfTeX, Version 3.1415926-1.40.10 (TeX Live 2009/Debian) (format=pdflatex 2012.5.16)  28 AUG 2012 14:13
 entering extended mode
  %&-line parsing enabled.
 **fdm.tex
@@ -271,7 +271,14 @@ Package ifvtex Info: VTeX not detected.
 \Gm@even@mp=\dimen128
 \Gm@dimlist=\toks30
 
-(/usr/share/texmf-texlive/tex/xelatex/xetexconfig/geometry.cfg)) (./fdm.aux)
+(/usr/share/texmf-texlive/tex/xelatex/xetexconfig/geometry.cfg)) (./fdm.aux
+
+LaTeX Warning: Label `fig:500 year orbit' multiply defined.
+
+
+LaTeX Warning: Label `fig:500 year orbit' multiply defined.
+
+)
 \openout1 = `fdm.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 16.
@@ -288,8 +295,7 @@ LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 16.
 LaTeX Font Info:    ... okay on input line 16.
 LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 16.
 LaTeX Font Info:    Try loading font information for TS1+cmr on input line 16.
-
-(/usr/share/texmf-texlive/tex/latex/base/ts1cmr.fd
+ (/usr/share/texmf-texlive/tex/latex/base/ts1cmr.fd
 File: ts1cmr.fd 1999/05/25 v2.5h Standard LaTeX font definitions
 )
 LaTeX Font Info:    ... okay on input line 16.
@@ -406,74 +412,83 @@ Overfull \hbox (10.12265pt too wide) in paragraph at lines 351--351
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 373--374
+Overfull \hbox (0.92126pt too wide) in paragraph at lines 359--360
+\OT1/ptm/m/n/10 The sec-ond in-dex for \OT1/pcr/m/n/10 firn.z \OT1/ptm/m/n/10 r
+efers to the sur-face, \OT1/pcr/m/n/10 [-1]\OT1/ptm/m/n/10 ,
+ []
+
+
+Overfull \hbox (2.4115pt too wide) in paragraph at lines 368--369
+\OT1/ptm/m/n/10 ac-com-plished with the \OT1/pcr/m/n/10 set[]local(<numpy array
+>)
+ []
+
+
+Overfull \hbox (36.6412pt too wide) in paragraph at lines 370--371
+[]\OT1/ptm/m/n/10 A func-tion has been pro-vided (\OT1/pcr/m/n/10 set[]initial[
+]converge()\OT1/ptm/m/n/10 )
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 378--379
 
  []
 
 LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <10> not available
-(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 375.
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 380.
 
-Overfull \hbox (9.64833pt too wide) in paragraph at lines 378--400
-[] 
+Overfull \hbox (9.64833pt too wide) in paragraph at lines 384--405
+ [] 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 378--400
-
+Overfull \hbox (52.53111pt too wide) in paragraph at lines 439--440
+\OT1/ptm/m/n/10 the den-sity data was saved to a text file, \OT1/pcr/m/n/10 set
+[]initial[]converge()
  []
 
+[5] <images/40yrDen.png, id=41, 587.19376pt x 562.1pt>
+File: images/40yrDen.png Graphic file (type png)
 
-Underfull \hbox (badness 10000) in paragraph at lines 404--425
+<use images/40yrDen.png> <images/40yrHt.png, id=42, 597.6729pt x 457.4691pt>
+File: images/40yrHt.png Graphic file (type png)
 
- []
+<use images/40yrHt.png> [6 <./images/40yrDen.png> <./images/40yrHt.png>]
+[7
 
-[5]
-Missing character: There is no ‚ in font ptmr7t!
-Missing character: There is no Ä in font ptmr7t!
-Missing character: There is no ê in font ptmr7t!
-Missing character: There is no ‚ in font ptmr7t!
-Missing character: There is no Ä in font ptmr7t!
-Missing character: There is no ì in font ptmr7t!
-Missing character: There is no ‚ in font ptmr7t!
-Missing character: There is no Ä in font ptmr7t!
-Missing character: There is no ì in font ptmr7t!
-Missing character: There is no ‚ in font ptmr7t!
-Missing character: There is no Ä in font ptmr7t!
-Missing character: There is no ì in font ptmr7t!
-Missing character: There is no ‚ in font ptmr7t!
-Missing character: There is no Ä in font ptmr7t!
-Missing character: There is no ì in font ptmr7t!
- [6
+] (./fdm.aux)
 
-] (./fdm.aux) ) 
+LaTeX Warning: There were multiply-defined labels.
+
+ ) 
 Here is how much of TeX's memory you used:
- 4643 strings out of 493848
- 62566 string characters out of 1152824
- 149487 words of memory out of 3000000
- 7818 multiletter control sequences out of 15000+50000
+ 4654 strings out of 493848
+ 62783 string characters out of 1152823
+ 151487 words of memory out of 3000000
+ 7827 multiletter control sequences out of 15000+50000
  27710 words of font info for 74 fonts, out of 3000000 for 9000
  714 hyphenation exceptions out of 8191
- 56i,14n,77p,817b,351s stack positions out of 5000i,500n,10000p,200000b,50000s
-{/usr/share/texmf-texlive/fonts/enc/dvips/base/8r.enc}</usr/shar
-e/texmf-texlive/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/share/texmf-tex
-live/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/share/texmf-texlive/fonts/
-type1/public/amsfonts/cm/cmmi5.pfb></usr/share/texmf-texlive/fonts/type1/public
-/amsfonts/cm/cmmi6.pfb></usr/share/texmf-texlive/fonts/type1/public/amsfonts/cm
-/cmmi7.pfb></usr/share/texmf-texlive/fonts/type1/public/amsfonts/cm/cmmi8.pfb><
-/usr/share/texmf-texlive/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/share/t
-exmf-texlive/fonts/type1/public/amsfonts/cm/cmr5.pfb></usr/share/texmf-texlive/
-fonts/type1/public/amsfonts/cm/cmr6.pfb></usr/share/texmf-texlive/fonts/type1/p
-ublic/amsfonts/cm/cmr7.pfb></usr/share/texmf-texlive/fonts/type1/public/amsfont
-s/cm/cmr8.pfb></usr/share/texmf-texlive/fonts/type1/public/amsfonts/cm/cmsy10.p
-fb></usr/share/texmf-texlive/fonts/type1/public/amsfonts/cm/cmsy6.pfb></usr/sha
-re/texmf-texlive/fonts/type1/public/amsfonts/cm/cmsy7.pfb></usr/share/texmf-tex
-live/fonts/type1/public/amsfonts/cm/cmsy8.pfb></usr/share/texmf-texlive/fonts/t
-ype1/urw/courier/ucrr8a.pfb></usr/share/texmf-texlive/fonts/type1/urw/times/utm
-b8a.pfb></usr/share/texmf-texlive/fonts/type1/urw/times/utmr8a.pfb></usr/share/
-texmf-texlive/fonts/type1/urw/times/utmri8a.pfb>
-Output written on fdm.pdf (6 pages, 463862 bytes).
+ 56i,14n,77p,819b,403s stack positions out of 5000i,500n,10000p,200000b,50000s
+{/usr/share/texmf-texlive/fonts/enc/dvips/base/8r.enc}</usr/share/texmf-texli
+ve/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/share/texmf-texlive/fonts/ty
+pe1/public/amsfonts/cm/cmmi10.pfb></usr/share/texmf-texlive/fonts/type1/public/
+amsfonts/cm/cmmi5.pfb></usr/share/texmf-texlive/fonts/type1/public/amsfonts/cm/
+cmmi6.pfb></usr/share/texmf-texlive/fonts/type1/public/amsfonts/cm/cmmi7.pfb></
+usr/share/texmf-texlive/fonts/type1/public/amsfonts/cm/cmmi8.pfb></usr/share/te
+xmf-texlive/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/share/texmf-texlive/
+fonts/type1/public/amsfonts/cm/cmr5.pfb></usr/share/texmf-texlive/fonts/type1/p
+ublic/amsfonts/cm/cmr6.pfb></usr/share/texmf-texlive/fonts/type1/public/amsfont
+s/cm/cmr7.pfb></usr/share/texmf-texlive/fonts/type1/public/amsfonts/cm/cmr8.pfb
+></usr/share/texmf-texlive/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/shar
+e/texmf-texlive/fonts/type1/public/amsfonts/cm/cmsy6.pfb></usr/share/texmf-texl
+ive/fonts/type1/public/amsfonts/cm/cmsy7.pfb></usr/share/texmf-texlive/fonts/ty
+pe1/public/amsfonts/cm/cmsy8.pfb></usr/share/texmf-texlive/fonts/type1/urw/cour
+ier/ucrr8a.pfb></usr/share/texmf-texlive/fonts/type1/urw/times/utmb8a.pfb></usr
+/share/texmf-texlive/fonts/type1/urw/times/utmr8a.pfb></usr/share/texmf-texlive
+/fonts/type1/urw/times/utmri8a.pfb>
+Output written on fdm.pdf (7 pages, 535979 bytes).
 PDF statistics:
- 103 PDF objects out of 1000 (max. 8388607)
+ 112 PDF objects out of 1000 (max. 8388607)
  0 named destinations out of 1000 (max. 500000)
- 11 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 21 words of extra memory for PDF output out of 10000 (max. 10000000)
 
