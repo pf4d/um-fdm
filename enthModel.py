@@ -193,7 +193,7 @@ df        = derivative(f, h, dh) # jacobian
 # initialize data structures :
 
 # load initialization data :
-def set_initial_converge():
+def set_ini_conv():
   rhoin   = genfromtxt("data/enthalpy/rho.txt")
   zTemp   = genfromtxt("data/enthalpy/z.txt")
   zs_0    = zTemp[index][-1]
@@ -207,7 +207,7 @@ def set_initial_converge():
   
   return zs_0
 
-zs_0 = set_initial_converge()
+zs_0 = set_ini_conv()
 
 # find vector of T, rho :
 hplot   = project(H, V).vector().array()

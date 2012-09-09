@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.1415926-1.40.10 (TeX Live 2009/Debian) (format=pdflatex 2012.7.2)  8 SEP 2012 20:10
+This is pdfTeX, Version 3.1415926-1.40.10 (TeX Live 2009/Debian) (format=pdflatex 2012.7.2)  9 SEP 2012 11:00
 entering extended mode
  %&-line parsing enabled.
 **fdm.tex
@@ -397,46 +397,52 @@ m/m/it/10 V[]\OT1/cmr/m/n/10 )\OML/cmm/m/it/10 :
 
 [2
 
-] <images/surfaceDensity.png, id=23, 248.127pt x 281.1303pt>
+]
+Overfull \hbox (5.17043pt too wide) in paragraph at lines 148--150
+\OT1/ptm/m/n/10 per-a-ture so-lu-tion, but the den-sity of the firn col-umn cha
+nges
+ []
+
+<images/surfaceDensity.png, id=23, 248.127pt x 281.1303pt>
 File: images/surfaceDensity.png Graphic file (type png)
 
 <use images/surfaceDensity.png> [3 <./images/surfaceDensity.png>]
-LaTeX Font Info:    Try loading font information for OT1+pcr on input line 208.
+LaTeX Font Info:    Try loading font information for OT1+pcr on input line 218.
 
 
 (/usr/share/texmf-texlive/tex/latex/psnfss/ot1pcr.fd
 File: ot1pcr.fd 2001/06/04 font definitions for OT1/pcr.
 ) [4]
-Overfull \hbox (10.12265pt too wide) in paragraph at lines 351--351
+Overfull \hbox (10.12265pt too wide) in paragraph at lines 361--361
 []                      \OT1/pcr/m/n/8 fill_value=firn.w[index][0])[] 
  []
 
 
-Overfull \hbox (0.92126pt too wide) in paragraph at lines 359--360
+Overfull \hbox (0.92126pt too wide) in paragraph at lines 369--370
 \OT1/ptm/m/n/10 The sec-ond in-dex for \OT1/pcr/m/n/10 firn.z \OT1/ptm/m/n/10 r
 efers to the sur-face, \OT1/pcr/m/n/10 [-1]\OT1/ptm/m/n/10 ,
  []
 
 
-Overfull \hbox (2.98103pt too wide) in paragraph at lines 370--371
+Overfull \hbox (2.98103pt too wide) in paragraph at lines 380--381
 []\OT1/ptm/m/n/10 A func-tion has been pro-vided (\OT1/pcr/m/n/10 set[]ini[]con
 v\OT1/ptm/m/n/10 ) which
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 380--381
+Underfull \hbox (badness 10000) in paragraph at lines 390--391
 
  []
 
 LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <10> not available
-(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 382.
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 392.
 
-Overfull \hbox (9.64833pt too wide) in paragraph at lines 385--406
+Overfull \hbox (9.64833pt too wide) in paragraph at lines 395--416
  [] 
  []
 
 [5]
-Underfull \hbox (badness 10000) in paragraph at lines 410--411
+Underfull \hbox (badness 10000) in paragraph at lines 420--421
 
  []
 
@@ -477,7 +483,7 @@ pe1/public/amsfonts/cm/cmsy8.pfb></usr/share/texmf-texlive/fonts/type1/urw/cour
 ier/ucrr8a.pfb></usr/share/texmf-texlive/fonts/type1/urw/times/utmb8a.pfb></usr
 /share/texmf-texlive/fonts/type1/urw/times/utmr8a.pfb></usr/share/texmf-texlive
 /fonts/type1/urw/times/utmri8a.pfb>
-Output written on fdm.pdf (7 pages, 541382 bytes).
+Output written on fdm.pdf (7 pages, 541926 bytes).
 PDF statistics:
  112 PDF objects out of 1000 (max. 8388607)
  0 named destinations out of 1000 (max. 500000)

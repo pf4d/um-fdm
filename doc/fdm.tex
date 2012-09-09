@@ -146,7 +146,17 @@ where $L_f$ is the latent heat of fusion and $\omega$ represents the water conte
   $$\omega L_f = H - c_i(T_w - T_0).$$
 Temperature may be derived from enthalpy easily:
   $$T = \frac{H}{c_i}.$$
-The density equations remain the same as the temperature solution, and the surface-density at time index $n+1$ can be described as: 
+The densification equations remain the same as in the temperature solution, but the density of the firn column changes with the percentage of water content:
+  $$
+  \rho^n = 
+  \begin{cases}
+    \rho^{n-1} + \Delta\omega(\rho_w - \rho_i)\ \text{kg m\sups{-3}},  
+      &\Delta\omega <= 0\\
+    \rho^{n-1} + \Delta\omega\rho_w\ \text{kg m\sups{-3}}, 
+      &\Delta\omega > 0
+  \end{cases},
+  $$
+where $\Delta\omega = \omega^n - \omega^{n-1}$ is the change in water content and superscripts refer to the time index.  This has the effect of adding water to the firn column and refreezing the portion of firn with decreasing water content.  The surface-density at time index $n+1$ can be described as: 
   $$\rho_s^{n+1} = \rho_{\dot{b}}^{n+1} d_p + \rho_s^{n} (1 - d_p),$$
 where
   $$\rho_{\dot{b}}^{n+1} = \rho_{\dot{b}}^{n-1} + \Delta \omega_s \rho_{\dot{b}}^n,$$
@@ -154,12 +164,12 @@ where
   $$d_p = \frac{d_n}{l_s},$$
   $$d_n = w_sdt,\text{ and}$$
   \begin{center}$l_s$ is the length of the surface node.\end{center}
-If $T_s >= T_w$ the density of surface and column snow while taking into account re-freezing is simulated by making
+If $T_s >= T_w$, the density of surface snow while taking into account re-freezing is simulated making
   $$
   \rho_{\dot{b}}^n = 
   \begin{cases}
-    \rho_w - \rho_i\ \text{kg m}^{-3},  &\Delta\omega <= 0\\
-    \rho_w\ \text{kg m}^{-3}, &\Delta\omega > 0
+    \rho_w - \rho_i\ \text{kg m}^{-3},  &\Delta\omega_s < 0\\
+    \rho_w\ \text{kg m}^{-3}, &\Delta\omega_s > 0\\
   \end{cases},
   $$
 but when $T_s < T_w$, $\rho_{\dot{b}}^n$ is simply made to be $\rho_{si}$.
@@ -287,7 +297,7 @@ A cyclical enthalpy boundary condition for the surface can be simulated with
   $$
     T_s = T_{avg} + \alpha \sin(\omega t),
   $$
-where $\alpha$ is the amplitude of temperature variation and $\omega = 2\pi / spy$ is the frequency.  The surface-density boundary condition can be likewise described as (see figure 1): 
+where $\alpha$ is the amplitude of temperature variation and $\omega = 2\pi / spy$ is the frequency.  The surface-density boundary condition can be likewise described as (see Figure 1): 
   $$
     \rho_s^{n+1} = \rho_{\dot{b}}^{n+1} d_p + \rho_s^{n} (1 - d_p).
   $$
@@ -439,7 +449,7 @@ $t_f$ & s & end-time\\
 %% Verification ================================================================
 \section{Verification of Program}
 
-A converging run of the program was done quickly by making $dt$ equal $spy$: this has the effect of producing a steady-state solution.  After the density-profile converged the data was saved to a text file in the \texttt{data} folder.  The script was run again with the average surface air temperature $T_{avg}$ made so   that the surface temperature peaks at $8\degree$ C if $t < 10$ years, and $0\degree$ C if $t >= 10$ years. This has the effect of halting any melting and refreezing after this time period.  For this run the method \texttt{set\_ini\_conv} was called to initialize the previous runs data and $dt$ was set to $0.0025*spy$; the results are shown in figures 2 and 3.
+A converging run of the program was done quickly by making $dt$ equal $spy$: this has the effect of producing a steady-state solution.  After the density-profile converged the data was saved to a text file in the \texttt{data} folder.  The script was run again with the average surface air temperature $T_{avg}$ made so   that the surface temperature peaks at $8\degree$ C if $t < 10$ years, and $0\degree$ C if $t >= 10$ years. This has the effect of halting any melting and refreezing after this time period.  For this run the method \texttt{set\_ini\_conv} was called to initialize the previous runs data and $dt$ was set to $0.0025*spy$; the results are shown in Figures 2 and 3.
 
 
 %% Interpretation ==============================================================
@@ -449,7 +459,7 @@ The surface-density equation has two values for new accumulation: $\rho_{si}$ an
 
 Testing with real-world temperature and accumulation data-sets is required to validate the model.  The simulation's surface-height- and density-profile outputs while using these data may then be compared against cataloged surface-height and density-profile data to verify its accuracy.
 
-Above the ice lens in figure 2 you will see numerical distortion: this is caused by the sudden rise in density where the lens begins.  This distortion is a source of inaccuracies and needs also to be corrected.
+Above the ice lens in Figure 2 you will see numerical distortion: this is caused by the sudden rise in density where the lens begins.  This distortion is a source of inaccuracies and needs also to be corrected.
 
 \newpage
 %% Current Work ================================================================
@@ -499,7 +509,7 @@ This model is a good start towards accurately modeling the densification of firn
   \bibitem{pat94}Paterson, W.S.B. 1994. \textit{The physics of glaciers}, 3rd edn. Elsevier, Oxford
   \bibitem{arth10}Arthern, R.J., Vaughan, D.G., Rankin, A.M., Mulvaney, R., and Thomas, E.R. 2010. In situ measurements of Antarctic snow compaction compared with predictions of models. \textit{J. Geophys. Res., 115}, FO3011, doi:10.1029/2009JF001306.
   \bibitem{reeh08}Reeh, N. 2008. A nonsteady\mbox{-}state firn\mbox{-}densification model for the percolation zone of a glacier. \textit{J. Geophys. Res., 113}, F03023, doi:10.1029/2007JF000746.
-  \bibitem{zwa02}Zwally, H., and J. Li. 2002. Seasonal and interannual variations of firn densification and ice\mbox{-}sheet surface elevation at the Greenland summit. \textit{J. Glaciol.} \textbf{48}(161), 199\mbox{-}207.
+  \bibitem{zwa02}Zwally, H. and J. Li. 2002. Seasonal and interannual variations of firn densification and ice\mbox{-}sheet surface elevation at the Greenland summit. \textit{J. Glaciol.} \textbf{48}(161), 199\mbox{-}207.
   \bibitem{ligt11}Ligtenberg, S.R.M., Helsen, M.M., and van den Broeke, M.R. 2011. An improved semi\mbox{-}empirical model for the densification of Antarctic firn. \textit{The Cryosphere}. \textbf{5}, 809\mbox{-}819. doi:10.5194/tc\mbox{-}5\mbox{-}809\mbox{-}2011.
   \bibitem{}Coleou, C. and Lesaffre, B. 1998. Irreducible water saturation in snow: experimental results in a cold laboratory. \textit{Ann. Glaciol., 26}, 64\mbox{-}68.
   \bibitem{herr80}Herron, M. and Langway, C. 1980. Firn densification: an empirical model. \textit{J. Glaciol.} \textbf{25}(93), 373\mbox{-}385.
