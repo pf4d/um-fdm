@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.1415926-1.40.10 (TeX Live 2009/Debian) (format=pdflatex 2012.5.16)  7 SEP 2012 14:00
+This is pdfTeX, Version 3.1415926-1.40.10 (TeX Live 2009/Debian) (format=pdflatex 2012.7.2)  8 SEP 2012 20:10
 entering extended mode
  %&-line parsing enabled.
 **fdm.tex
@@ -424,39 +424,42 @@ v\OT1/ptm/m/n/10 ) which
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 378--379
+Underfull \hbox (badness 10000) in paragraph at lines 380--381
 
  []
 
 LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <10> not available
-(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 380.
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 382.
 
-Overfull \hbox (9.64833pt too wide) in paragraph at lines 384--405
+Overfull \hbox (9.64833pt too wide) in paragraph at lines 385--406
  [] 
  []
 
-[5] <images/40yrDen.png, id=41, 587.19376pt x 562.1pt>
+[5]
+Underfull \hbox (badness 10000) in paragraph at lines 410--411
+
+ []
+
+[6] <images/40yrDen.png, id=44, 587.19376pt x 562.1pt>
 File: images/40yrDen.png Graphic file (type png)
 
-<use images/40yrDen.png> <images/40yrHt.png, id=42, 597.6729pt x 457.4691pt>
+<use images/40yrDen.png> <images/40yrHt.png, id=45, 597.6729pt x 457.4691pt>
 File: images/40yrHt.png Graphic file (type png)
 
-<use images/40yrHt.png> [6 <./images/40yrDen.png> <./images/40yrHt.png>]
-[7
-
-] (./fdm.aux)
+<use images/40yrHt.png> [7 <./images/40yrDen.png> <./images/40yrHt.png>]
+(./fdm.aux)
 
 LaTeX Warning: There were multiply-defined labels.
 
  ) 
 Here is how much of TeX's memory you used:
  4655 strings out of 493848
- 62791 string characters out of 1152823
+ 62791 string characters out of 1152824
  149487 words of memory out of 3000000
  7828 multiletter control sequences out of 15000+50000
  27710 words of font info for 74 fonts, out of 3000000 for 9000
  714 hyphenation exceptions out of 8191
- 56i,14n,77p,844b,403s stack positions out of 5000i,500n,10000p,200000b,50000s
+ 56i,14n,77p,850b,403s stack positions out of 5000i,500n,10000p,200000b,50000s
 {/usr/share/texmf-texlive/fonts/enc/dvips/base/8r.enc}</usr/share/texmf-texli
 ve/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/share/texmf-texlive/fonts/ty
 pe1/public/amsfonts/cm/cmmi10.pfb></usr/share/texmf-texlive/fonts/type1/public/
@@ -474,7 +477,7 @@ pe1/public/amsfonts/cm/cmsy8.pfb></usr/share/texmf-texlive/fonts/type1/urw/cour
 ier/ucrr8a.pfb></usr/share/texmf-texlive/fonts/type1/urw/times/utmb8a.pfb></usr
 /share/texmf-texlive/fonts/type1/urw/times/utmr8a.pfb></usr/share/texmf-texlive
 /fonts/type1/urw/times/utmri8a.pfb>
-Output written on fdm.pdf (7 pages, 539742 bytes).
+Output written on fdm.pdf (7 pages, 541382 bytes).
 PDF statistics:
  112 PDF objects out of 1000 (max. 8388607)
  0 named destinations out of 1000 (max. 500000)

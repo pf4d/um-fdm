@@ -110,7 +110,7 @@ and $M$ defined in \emph{Ligtenberg et al.} [2011] to better fit with observed d
     M_1 = 1.435 - 0.151\ln(\dot{b}*\SI{1e3})
   \end{cases}.
   $$
-Within the same paper a firn surface density expression from data was given:
+Within the same paper a firn surface-density expression from data was given:
   $$ \rho_s = -151.94 + 1.4266(73.6 + 1.06T_s + 0.0669A + 4.77V_a).$$
 
 
@@ -146,7 +146,7 @@ where $L_f$ is the latent heat of fusion and $\omega$ represents the water conte
   $$\omega L_f = H - c_i(T_w - T_0).$$
 Temperature may be derived from enthalpy easily:
   $$T = \frac{H}{c_i}.$$
-The density equations remain the same as the temperature solution, and the surface density at time index $n+1$ can be described as: 
+The density equations remain the same as the temperature solution, and the surface-density at time index $n+1$ can be described as: 
   $$\rho_s^{n+1} = \rho_{\dot{b}}^{n+1} d_p + \rho_s^{n} (1 - d_p),$$
 where
   $$\rho_{\dot{b}}^{n+1} = \rho_{\dot{b}}^{n-1} + \Delta \omega_s \rho_{\dot{b}}^n,$$
@@ -203,7 +203,7 @@ Here we have integrated the enthalpy equation over the entire domain, $\Omega$, 
   $$
 We can discretize the enthalpy time-differential with the second-order accurate backward-difference formula
   $$\frac{\partial H}{\partial t} = \frac{H^{k-2} - 4H^{k-1} + 3H^k}{2dt},$$
-with superscripts referring to time indexs.  This equation can be represented in FEniCS as:\par
+with superscripts referring to time index.  This equation can be represented in FEniCS as:\par
 \footnotesize
 \begin{alltt}
 f_H = rho*(H_2 - 4*H_1 + 3*H)/(2*dt)*psi*dx
@@ -367,9 +367,11 @@ with \texttt{z} the node z-positions as defined above, \texttt{index} the index 
 
 The variables for accumulation and surface temperature are the main driving forces in the simulation, and data from a specific site may be used in the model by interpolating the data in increments of $dt$ and inserting the values into the equations.  This may be accomplished with the \texttt{set\_local(n)} method of the \texttt{vector} class, which takes as input a NumPy array \texttt{n} with indexes corresponding to node positions within the \texttt{mesh} object.  If the variable is used in the surface boundary condition, this may be updated within the FEniCS \texttt{Expression} object with the dot operator.
 
-A function has been provided (\texttt{set\_ini\_conv}) which initializes the density to a previously-derived density.  The density may also be initialized to a set of real-world data if desired, and is demonstrated in the temperature equation model, \texttt{objModel.py}.
+A function has been provided (\texttt{set\_ini\_conv}) which initializes the density to a previously derived density.  The density may also be initialized to a set of real-world data if desired, and is demonstrated in the temperature equation model, \texttt{objModel.py}.
 
 The \texttt{plot.py} file contains the class \texttt{firn} and the previously undescribed \texttt{plot} class.  This class uses the plotting package MatPlotLib to display the data contained in the \texttt{firn} object.  The method \texttt{plot\_all\_height()} plots the height history for a group of simulations and is useful for comparing the effects of model parameters. 
+
+Another version of \texttt{enthModel}, the main simulation class, has been created which uses collected data for density and surface temperature.  When using this version, it is important to make $dt$ less than or equal to the time interval of recorded events so all data points are included. 
 
 
 %% Variable Definition =========================================================
@@ -378,7 +380,6 @@ The \texttt{plot.py} file contains the class \texttt{firn} and the previously un
 Many variable are used in this simulation and many do not change.  These are defined below:\\
 
 \noindent\textbf{Constants :}
-
 \begin{center}
 \footnotesize
 \noindent\begin{tabular}{lccc}
@@ -406,8 +407,9 @@ $E_g$ & \SI{42.4e3} & J mol$^{-1}$ & act. energy for grain growth\\
 \end{center}
 
 \newpage
-\noindent\textbf{Model Specific :}
+\noindent Variables used by the model can be specified to suit simulation requirements:\\
 
+\noindent\textbf{Model Specific :}
 \begin{center}
 \footnotesize
 \noindent\begin{tabular}{lcc}
@@ -437,8 +439,43 @@ $t_f$ & s & end-time\\
 %% Verification ================================================================
 \section{Verification of Program}
 
-A converging run of the program was done quickly by making $dt$ equal $spy$: this has the effect of producing a steady-state solution.  After the density profile converged the data was saved to a text file in the \texttt{data} folder.  The script was run again with the average surface air temperature $T_{avg}$ made so   that the surface temperature peaks at $8\degree$ C if $t < 10$ years, and $0\degree$ C if $t >= 10$ years. This has the effect of halting any melting and refreezing after this time period.  For this run the method \texttt{set\_ini\_conv} was called to initialize the previous run's data and $dt$ was set to $0.0025*spy$; the results are shown in figures 2 and 3.
+A converging run of the program was done quickly by making $dt$ equal $spy$: this has the effect of producing a steady-state solution.  After the density-profile converged the data was saved to a text file in the \texttt{data} folder.  The script was run again with the average surface air temperature $T_{avg}$ made so   that the surface temperature peaks at $8\degree$ C if $t < 10$ years, and $0\degree$ C if $t >= 10$ years. This has the effect of halting any melting and refreezing after this time period.  For this run the method \texttt{set\_ini\_conv} was called to initialize the previous runs data and $dt$ was set to $0.0025*spy$; the results are shown in figures 2 and 3.
 
+
+%% Interpretation ==============================================================
+\section{Interpretation}
+
+The surface-density equation has two values for new accumulation: $\rho_{si}$ and $\rho_w$ depending on the 2-meter average surface air temperature.  This is quite simplified; a better approach that models real-life circumstances can be found.  
+
+Testing with real-world temperature and accumulation data-sets is required to validate the model.  The simulation's surface-height- and density-profile outputs while using these data may then be compared against cataloged surface-height and density-profile data to verify its accuracy.
+
+Above the ice lens in figure 2 you will see numerical distortion: this is caused by the sudden rise in density where the lens begins.  This distortion is a source of inaccuracies and needs also to be corrected.
+
+\newpage
+%% Current Work ================================================================
+\section{Work in Progress}
+At its current state of development the model does not take into account water transport through the firn column, describable with the Darcy flow equations:
+  $$
+    q = \frac{-k}{\mu}\nabla P, \ \  v = \frac{q}{\phi},
+  $$
+where $k$ is permeability, $\mu =$ \SI{1.787e-3} Pa$\cdot$s is the viscosity of water at $0\degree$ C, $\nabla P$ is the pressure gradient vector, and $\phi = \rho/\rho_i$ is porosity.
+
+\emph{Waldner et al.} [2002] introduces this issue and provides references to numerous models which simulate this phenomenon.  \emph{Coleou et al.} [1998] supplies an equation for the irreducible water content of snow
+  $$
+    S_0 = \frac{0.0057}{1 - \phi} + 0.0017,
+  $$
+which may be used with the expression for permeability from \emph{Bozhinskiy \& Krass} [1989] :
+  $$
+    k = k_0 \exp(m \phi)\left( \frac{S - S_0}{\phi - S_0} \right)^2,
+  $$
+where $S$ is the relative water content and $k$ \& $m$ are empirical constants.
+
+
+%% Conclusion ==================================================================
+\section{Concluding Remarks}
+This model is a good start towards accurately modeling the densification of firn: it uses the work of many established models and has the potential to expand;  The simulation is able to assimilate data easily, is mathematically easy to interpret, and runs efficiently.  This subject is a worthy candidate for further study.  
+
+\newpage 
 \begin{figure}[H]
 	\centering
 		\includegraphics[width=0.42\textwidth]{images/40yrDen.png}
@@ -453,29 +490,8 @@ A converging run of the program was done quickly by making $dt$ equal $spy$: thi
 	\caption{\footnotesize 40-year height history of the column (blue) and original surface (green) resulting in the previous figure.  This shows a rapid decrease in height as the lens is formed in the first ten years of simulation.  The fluctuations in height show an increase in height with winter temperatures.}
 \end{figure}
 
-Above the ice lens you will see numerical distortion - this is caused by the sudden rise in density where the lens begins.  This distortion is a source of inaccuracies and needs to be addressed.
 
-
-%% Future Developments =========================================================
-\section{Future Developments}
-
-At its current state of development the model does not take into account water transport through the firn column, describable with the Darcy flow equations:
-  $$
-    q = \frac{-k}{\mu}\nabla P, \ \  v = \frac{q}{\phi},
-  $$
-where $k$ is permeability, $\mu =$ \SI{1.787e-3} Pa s is the viscosity of water at $0\degree$ C, $\nabla P$ is the pressure gradient vector, and $\phi = \rho/\rho_i$ is porosity.
-
-\emph{Waldner et al.} [2002] introduces this issue and provides references to numerous models which simulate this phenomenon.  \emph{Coleou et al.} [1998] supplies an equation for the irreducible water content of snow
-  $$
-    S_0 = \frac{0.0057}{1 - \phi} + 0.0017,
-  $$
-which may be used with the expression for permeability from \emph{Bozhinskiy \& Krass} [1989] :
-  $$
-    k = k_0 \exp(m \phi)\left( \frac{S - S_0}{\phi - S_0} \right)^2,
-  $$
-where $S$ is the relative water content and $k$ \& $m$ are empirical constants.
-
-\newpage 
+\newpage
 %% Bibliography ================================================================
 \begin{thebibliography}{1}
 
