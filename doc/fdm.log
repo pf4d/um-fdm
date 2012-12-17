@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.1415926-1.40.10 (TeX Live 2009/Debian) (format=pdflatex 2012.7.2)  10 SEP 2012 18:42
+This is pdfTeX, Version 3.1415926-1.40.10 (TeX Live 2009/Debian) (format=pdflatex 2012.5.16)  17 DEC 2012 13:26
 entering extended mode
  %&-line parsing enabled.
 **fdm.tex
@@ -413,11 +413,6 @@ LaTeX Font Info:    Try loading font information for OT1+pcr on input line 222.
 (/usr/share/texmf-texlive/tex/latex/psnfss/ot1pcr.fd
 File: ot1pcr.fd 2001/06/04 font definitions for OT1/pcr.
 ) [4]
-Overfull \hbox (10.12265pt too wide) in paragraph at lines 365--365
-[]                      \OT1/pcr/m/n/8 fill_value=firn.w[index][0])[] 
- []
-
-
 Overfull \hbox (0.92126pt too wide) in paragraph at lines 373--374
 \OT1/ptm/m/n/10 The sec-ond in-dex for \OT1/pcr/m/n/10 firn.z \OT1/ptm/m/n/10 r
 efers to the sur-face, \OT1/pcr/m/n/10 [-1]\OT1/ptm/m/n/10 ,
@@ -483,7 +478,7 @@ LaTeX Warning: There were multiply-defined labels.
  ) 
 Here is how much of TeX's memory you used:
  4672 strings out of 493848
- 63073 string characters out of 1152824
+ 63073 string characters out of 1152823
  150487 words of memory out of 3000000
  7842 multiletter control sequences out of 15000+50000
  27710 words of font info for 74 fonts, out of 3000000 for 9000
@@ -506,7 +501,7 @@ pe1/public/amsfonts/cm/cmsy8.pfb></usr/share/texmf-texlive/fonts/type1/urw/cour
 ier/ucrr8a.pfb></usr/share/texmf-texlive/fonts/type1/urw/times/utmb8a.pfb></usr
 /share/texmf-texlive/fonts/type1/urw/times/utmr8a.pfb></usr/share/texmf-texlive
 /fonts/type1/urw/times/utmri8a.pfb>
-Output written on fdm.pdf (7 pages, 542151 bytes).
+Output written on fdm.pdf (7 pages, 542468 bytes).
 PDF statistics:
  112 PDF objects out of 1000 (max. 8388607)
  0 named destinations out of 1000 (max. 500000)

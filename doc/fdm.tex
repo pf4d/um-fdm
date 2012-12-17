@@ -82,7 +82,7 @@ with $\dot{b}$ in units of kg m\sups{-2} s\sups{-1}.  The densification process 
   $$
   \frac{d \rho}{dt} = 
   \begin{cases}
-   c_0(\rho_i - \rho), &\rho <= \rho_m\\
+   c_0(\rho_i - \rho), &\rho \leq \rho_m\\
    c_1(\rho_i - \rho), &\rho > \rho_m
   \end{cases}.$$
 \emph{Zwally and Li} [2002] defined a single multiplying constant $c$ with an Arrhenius-type relation
@@ -136,13 +136,13 @@ Strain heating has been neglected and the advective term $w \rho\ \partial H / \
   $$K_i = \frac{k_i}{c_i},$$
 and the coefficient for cold ice is
   $$K_0 = \frac{1}{10}K_i.$$
-Temperate firn is defined as firn with $H > H_s$, cold firn with $H <= H_s$, where
+Temperate firn is defined as firn with $H > H_s$, cold firn with $H \leq H_s$, where
   $$H_s = \int_{T_0}^{T_m}{c_i(T)}dT,$$ 
 with $T_m = 273.15$ K and $T_0 = 0.0$ K.  The enthalpy can be found with a constant heat capacity of $2009$ J kg\sups{-1} K\sups{-1} by the linear equation
   $$
   H = 
   \begin{cases}
-    c_i(T - T_0), &\text{where } T <= T_m\\
+    c_i(T - T_0), &\text{where } T \leq T_m\\
     c_i(T_w - T_0) + \omega L_f,  &\text{where } T > T_m
   \end{cases}
   $$
@@ -155,7 +155,7 @@ The densification equations remain the same as in the temperature solution, but 
   \rho^n = 
   \begin{cases}
     \rho^{n-1} + \Delta\omega(\rho_w - \rho_i)\ \text{kg m\sups{-3}},  
-      &\Delta\omega <= 0\\
+      &\Delta\omega \leq 0\\
     \rho^{n-1} + \Delta\omega\rho_w\ \text{kg m\sups{-3}}, 
       &\Delta\omega > 0
   \end{cases},
@@ -168,7 +168,7 @@ where
   $$d_p = \frac{d_n}{l_s},$$
   $$d_n = w_sdt,\text{ and}$$
   \begin{center}$l_s$ is the length of the surface node.\end{center}
-If $T_s >= T_w$, the density of surface snow while taking into account re-freezing is simulated making
+If $T_s \geq T_w$, the density of surface snow while taking into account re-freezing is simulated making
   $$
   \rho_{\dot{b}}^n = 
   \begin{cases}
@@ -342,14 +342,14 @@ Within the time-loop there are a number of parameters which need to be updated. 
 where $\rho_{ini}$ abd $l_{ini}$ are the density and height vectors of the firn column when the system was initialized.  With the height of the nodes calculated, the z-positions may be found by iterating through the heights and setting the z vector's corresponding cell equal to the current sum.  After successful calculation the FEniCS \texttt{mesh} object must have its coordinates refreshed.  These tasks may be completed with the following code:\par
 \footnotesize
 \begin{alltt}
-lnew     = l*rhoin[index] / firn.rho[index]
+lnew     = l*rhoin / firn.rho
 zSum     = zb
 zTemp    = zeros(n)
 for i in range(n)[1:]:
   zTemp[i] = zSum + lnew[i]
   zSum    += lnew[i]
-firn.z[index] = zTemp
-mesh.coordinates()[:,0] = firn.z
+firn.z  = zTemp
+mesh.coordinates()[:,0][index] = firn.z
 \end{alltt}
 \normalsize
 The variable \texttt{index} is an array of positions corresponding to the correct ordering of the nodes, necessary after mesh refinement.  
@@ -359,13 +359,13 @@ The height $s$ at time index $n$ of the original surface may be calculated as fo
 This maintains the relative location of the original surface to the current surface and moves downward proportional to $w$.  This is accomplished in Python with\par
 \footnotesize
 \begin{alltt}
-interp     = interp1d(firn.z[index], 
-                      firn.w[index],
+interp     = interp1d(firn.z, 
+                      firn.w,
                       bounds_error=False,
-                      fill_value=firn.w[index][0])
+                      fill_value=firn.w[0])
 zint       = array([firn.origZ])
 wOrigZ     = interp(zint)
-firn.origZ = (firn.z[index][-1] - zb) * 
+firn.origZ = (firn.z[-1] - zb) * 
              (firn.origZ - zb) / 
              (zs_0 - zb) + wOrigZ[0] * dt
 \end{alltt}
