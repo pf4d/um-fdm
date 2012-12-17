@@ -40,12 +40,12 @@ class firn():
     self.w     = w
     self.k     = k
     self.c     = c
-    self.z     = z
+    self.z     = z[index]
     self.index = index
     self.zb    = z[index][0]
     self.zs    = z[index][-1]
     self.origZ = self.zs
-    self.Ts    = H[index][-1] / c[index][-1]
+    self.Ts    = H[-1] / c[-1]
 
 
 class plot():
@@ -68,8 +68,7 @@ class plot():
     c      = firn.c
 
     # y-value :
-    index  = firn.index
-    z      = firn.z[index]
+    z      = firn.z
     zs     = firn.zs
     zb     = firn.zb
     
@@ -83,7 +82,7 @@ class plot():
     Tmax   = 5                                    # T x-coord max
     Th     = Tmin + 0.1*(Tmax - Tmin) / 2         # T height x-coord
     Tz     = zmax - 0.15*(zmax - zmin) / 2        # z-coord of Ts
-    Ts     = H[index][-1] / c[index][-1] - 273.15 # T of surface
+    Ts     = H[-1] / c[-1] - 273.15 # T of surface
 
     omMax  = 0.09
     omMin  = -0.01
@@ -198,45 +197,44 @@ class plot():
     w     = firn.w * self.spy * 1e2  # cm a^-1
     k     = firn.k
     c     = firn.c
-    index = firn.index
-    z     = firn.z[index]
+    z     = firn.z
     origZ = firn.origZ
     Ts    = firn.Ts - 273.15
 
     self.fig_text.set_text('Time = %.2f yr' % t) 
     
     self.Tsurf.set_text(r'Surface Temp: %.1f $\degree$C' % Ts)
-    self.phT.set_xdata(T[index] - 273.15)
+    self.phT.set_xdata(T - 273.15)
     self.phT.set_ydata(z)
     self.phTs.set_ydata(z[-1])
     self.phTs_0.set_ydata(origZ)
     self.phTsp.set_ydata(z)
     
-    self.phom.set_xdata(omega[index])
+    self.phom.set_xdata(omega)
     self.phom.set_ydata(z)
     self.phoms.set_ydata(z[-1])
     #self.phoms_0.set_ydata(origZ)
     #self.phomsp.set_ydata(z)
 
-    self.phrho.set_xdata(rho[index])
+    self.phrho.set_xdata(rho)
     self.phrho.set_ydata(z)
     self.phrhoS.set_ydata(z[-1])
     #self.phrhoS_0.set_ydata(origZ)
     #self.phrhoSp.set_ydata(z)
    
-    self.phw.set_xdata(w[index])
+    self.phw.set_xdata(w)
     self.phw.set_ydata(z)
     self.phws.set_ydata(z[-1])
     self.phws_0.set_ydata(origZ)
     self.phwsp.set_ydata(z)
     
-    self.phk.set_xdata(k[index])
+    self.phk.set_xdata(k)
     self.phk.set_ydata(z)
     self.phks.set_ydata(z[-1])
     #self.phks_0.set_ydata(origZ)
     #self.phksp.set_ydata(z)
     
-    self.phc.set_xdata(c[index])
+    self.phc.set_xdata(c)
     self.phc.set_ydata(z)
     self.phcs.set_ydata(z[-1])
     #self.phcs_0.set_ydata(origZ)

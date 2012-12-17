@@ -63,7 +63,7 @@ omega = zeros(n+1)
 
 #===============================================================================
 # create mesh and define function space :
-mesh  = Interval(n, zb, zs)
+mesh  = IntervalMesh(n, zb, zs)
 
 # refine mesh :
 cell_markers = CellFunction("bool", mesh)
@@ -207,7 +207,7 @@ def set_ini_conv():
   
   return zs_0
 
-zs_0 = set_ini_conv()
+#zs_0 = set_ini_conv()
 
 # find vector of T, rho :
 hplot   = project(H, V).vector().array()
@@ -243,41 +243,42 @@ while t <= tf:
   firn.k   = project(k, V).vector().array()  # Arthern 2008
 
   # calculate height of each interval (conservation of mass) :
-  lnew     = l*rhoin[index] / firn.rho[index]
+  lnew     = l*rhoin / firn.rho
   zSum     = zb
   zTemp    = zeros(n)
   for i in range(n)[1:]:
     zTemp[i] = zSum + lnew[i]
     zSum    += lnew[i]
-  firn.z[index] = zTemp
-  mesh.coordinates()[:,0] = firn.z
+  firn.z   = zTemp
+  mesh.coordinates()[:,0][index] = firn.z
 
   # correct original height with initial surface conditions :
   if t == 0.0:
-    firn.origZ = firn.z[index][-1]
-    zs_0       = firn.z[index][-1]
-  if t >= 10 * spy:
+    firn.origZ = firn.z[-1]
+    zs_0       = firn.z[-1]
     Hs.Tavg = Tw - 10.0
+  #if t >= 10 * spy:
+  #  Hs.Tavg = Tw - 10.0
   #if t > 25 * spy:
   #  Hs.Tavg = Tw - 5.0
   #if t > 35 * spy:
   #  Hs.Tavg = Tw - 10.0
 
   # track the current height of the firn :
-  ht.append(firn.z[index][-1])
+  ht.append(firn.z[-1])
   
   # track original height :
-  if firn.origZ > firn.z[index][0]:
+  if firn.origZ > firn.z[0]:
     origHt.append(firn.origZ)
   
   # calculate the new height of original surface by interpolating the 
   # vertical speed from w and keeping the ratio intact :
-  interp      = interp1d(firn.z[index], firn.w[index], 
+  interp      = interp1d(firn.z, firn.w, 
                          bounds_error=False, 
-                         fill_value=firn.w[index][0])
+                         fill_value=firn.w[0])
   zint        = array([firn.origZ])
   wOrigZ      = interp(zint)
-  firn.origZ  = (firn.z[index][-1] - zb) * (firn.origZ - zb) / (zs_0 - zb) + \
+  firn.origZ  = (firn.z[-1] - zb) * (firn.origZ - zb) / (zs_0 - zb) + \
                 wOrigZ[0] * dt
 
   # update kc term in drhodt :
@@ -331,7 +332,7 @@ while t <= tf:
   firn.H   = project(H, V).vector().array()
   firn.T   = project(T, V).vector().array()
   firn.c   = project(c, V).vector().array()
-  firn.Ts  = firn.H[index][-1] / firn.c[index][-1]
+  firn.Ts  = firn.H[-1] / firn.c[-1]
 
   # update the plotting parameters :
   plot.update_plot(firn, t/spy)
@@ -340,24 +341,24 @@ while t <= tf:
   t += dt
   h_2.assign(h_1)
   h_1.assign(h)
-  zs_0 = firn.z[index][-1]
+  zs_0 = firn.z[-1]
   
   # update boundary conditions :
   Hs.t      = t
-  Hs.c      = firn.c[index][-1]
-  rhoS.rhoi = firn.rho[index][-1]
+  Hs.c      = firn.c[-1]
+  rhoS.rhoi = firn.rho[-1]
   if firn.Ts > Tw:
-    if domega[index][-1] > 0:
+    if domega[-1] > 0:
       if rhoS.rhon < rhoi:
-        rhoS.rhon = rhoS.rhon + domega[index][-1]*rhow
+        rhoS.rhon = rhoS.rhon + domega[-1]*rhow
     else:
-      rhoS.rhon = rhoS.rhon + domega[index][-1]*83.0
+      rhoS.rhon = rhoS.rhon + domega[-1]*83.0
   else:
     rhoS.rhon = rhosi
   ltop      = lnew[-1]
-  dnew      = -firn.w[index][-1]*dt
+  dnew      = -firn.w[-1]*dt
   rhoS.dp = dnew/ltop
-  #rhoS.Ts = firn.T[index][-1]
+  #rhoS.Ts = firn.T[-1]
 
   plt.draw()  # update the graph
 
