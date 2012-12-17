@@ -66,6 +66,7 @@ class plot():
     w      = firn.w * self.spy * 1e2 # cm a^-1 
     k      = firn.k
     c      = firn.c
+    Ts     = firn.Ts - 273.15
 
     # y-value :
     z      = firn.z
@@ -75,14 +76,13 @@ class plot():
     # original surface height :
     origZ  = firn.origZ
 
-    zmax   = zs + 20                              # max z-coord
+    zmax   = zs + (zs - zb) / 5                   # max z-coord
     zmin   = zb                                   # min z-coord
 
-    Tmin   = -20                                  # T x-coord min
-    Tmax   = 5                                    # T x-coord max
+    Tmin   = -65                                  # T x-coord min
+    Tmax   = -35                                  # T x-coord max
     Th     = Tmin + 0.1*(Tmax - Tmin) / 2         # T height x-coord
     Tz     = zmax - 0.15*(zmax - zmin) / 2        # z-coord of Ts
-    Ts     = H[-1] / c[-1] - 273.15 # T of surface
 
     omMax  = 0.09
     omMin  = -0.01

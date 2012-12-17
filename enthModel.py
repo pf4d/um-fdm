@@ -26,7 +26,7 @@ rhoi  = 917.                   # density of ice ................. kg/m^3
 rhosi = 360.                   # initial density at surface ..... kg/m^3
 rhow  = 1000.                  # density of water ............... kg/m^3
 rhom  = 550.                   # density at 15 m ................ kg/m^3
-acc   = 91.8 / spy             # surface accumulation ........... kg/(m^2 s)
+acc   = 91.7 / spy             # surface accumulation ........... kg/(m^2 s)
 A     = spy*acc/rhosi*1e3      # surface accumulation ........... mm/a
 Va    = 6.64                   # mean annual wind speed ......... m/s
 ki    = 2.1                    # thermal conductivity of ice .... W/(m K)
@@ -38,24 +38,24 @@ Ec    = 60e3                   # act. energy for water in ice ... J/mol
 Eg    = 42.4e3                 # act. energy for grain growth ... J/mol
 
 # model variables :
-n     = 80                     # num of z-positions
+n     = 10                     # num of z-positions
 freq  = 2*pi/spy               # frequency of earth rotations ... rad / s
 Tavg  = Tw - 50.0              # average temperature ............ degrees K
 cp    = 146.3 + 7.253*Tavg     # heat capacity of ice ........... J/(kg K)
 cp    = 2009.
-zs    = 50.                  # surface start .................. m
+zs    = 1000.                  # surface start .................. m
 zs_0  = zs                     # previous time-step surface ..... m
 zb    = 0.                     # depth .......................... m
 dz    = (zs - zb)/n            # initial z-spacing .............. m
 l     = dz*ones(n+1)           # height vector .................. m
-dt    = 0.0025*spy             # time-step ...................... s
+dt    = 0.025*spy              # time-step ...................... s
 t0    = 0.0                    # begin time ..................... s
 tf    = sys.argv[1]            # end-time ....................... string
 tf    = float(tf)*spy          # end-time ....................... s
 
 # enthalpy-specific :
 T0    = 0.0                    # reference temperature .......... K
-beta  = 7.9e-8                 # clausius-Clapeyron ............. K/Pa
+beta  = 7.9e-8                 # Clausius-Clapeyron ............. K/Pa
 Lf    = 3.34e5                 # latent heat of fusion .......... J/kg
 Hsp   = cp*(Tw - T0)           # Enthalpy of ice at Tw .......... J/kg
 omega = zeros(n+1)
@@ -64,22 +64,37 @@ omega = zeros(n+1)
 #===============================================================================
 # create mesh and define function space :
 mesh  = IntervalMesh(n, zb, zs)
+z     = mesh.coordinates()[:,0]              # initial z-coord
 
-# refine mesh :
-cell_markers = CellFunction("bool", mesh)
-cell_markers.set_all(False)
-origin = Point(zs)
-for cell in cells(mesh):
-  p  = cell.midpoint()
-  if p.distance(origin) < 5:
-    cell_markers[cell] = True
-mesh = refine(mesh, cell_markers)
+def refine_mesh(mesh, z, l, i):
+  
+  if i == 4096 :
+    return z, l, mesh
+  
+  else :
+    zs = z[-1]
+    zb = z[0]
+    
+    cell_markers = CellFunction("bool", mesh)
+    cell_markers.set_all(False)
+    origin = Point(zs)
+    for cell in cells(mesh):
+      p  = cell.midpoint()
+      if p.distance(origin) < (zs - zb) / i:
+        cell_markers[cell] = True
+    mesh = refine(mesh, cell_markers)
+    
+    # update coordinates :
+    z      = mesh.coordinates()[:,0]              # initial z-coord
+    numNew = len(z) - len(l)                      # number of split nodes
+    l      = l[:-numNew]                          # remove split heights
+    l      = append(l, dz/i * ones(numNew * 2))   # append new split heights
+    
+    return refine_mesh(mesh, z, l, i*2)
 
-# update coordinates :
-z      = mesh.coordinates()[:,0]              # initial z-coord
-numNew = len(z) - len(l)                      # number of split nodes
-l      = l[:-numNew]                          # remove split heights
-l      = append(l, dz/2 * ones(numNew * 2))   # append new split heights
+
+z, l, mesh = refine_mesh(mesh, z, l, 2)
+
 index  = argsort(z)                           # index of updated mesh
 n      = len(l)                               # new number of nodes
 rhoin  = rhoi*ones(n)                         # initial density
@@ -90,8 +105,8 @@ V      = FunctionSpace(mesh, 'Lagrange', 1)   # function space for rho, T
 MV     = V*V                                  # mixed function space
 
 # enthalpy surface condition with cyclical 2-meter air temperature :
-code   = 'c*( (Tavg + 10.0*(cos(2*pi*t) + 0.3*cos(4*pi*t)))  - T0 )'
-Hs     = Expression(code, c=cp, Tavg=Tavg, pi=pi, omega=freq, t=t0, T0=T0)
+code   = 'c*( (Tavg + 10.0*(cos(2*omega*t) + 0.3*cos(4*omega*t)))  - T0 )'
+Hs     = Expression(code, c=cp, Tavg=Tavg, omega=pi/spy, t=t0, T0=T0)
 
 # temperature of base of firn :
 Tb     = Constant(Tavg)
@@ -256,7 +271,6 @@ while t <= tf:
   if t == 0.0:
     firn.origZ = firn.z[-1]
     zs_0       = firn.z[-1]
-    Hs.Tavg = Tw - 10.0
   #if t >= 10 * spy:
   #  Hs.Tavg = Tw - 10.0
   #if t > 25 * spy:
