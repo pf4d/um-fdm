@@ -23,7 +23,7 @@ g     = 9.81                   # gravitational acceleration ..... m/s^2
 R     = 8.3144621              # gas constant ................... J/(mol K)
 spy   = 31556926.0             # seconds per year ............... s/a
 rhoi  = 917.                   # density of ice ................. kg/m^3
-rhosi = 400.                   # initial density at surface ..... kg/m^3
+rhosi = 360.                   # initial density at surface ..... kg/m^3
 rhow  = 1000.                  # density of water ............... kg/m^3
 rhom  = 550.                   # density at 15 m ................ kg/m^3
 acc   = 91.8 / spy             # surface accumulation ........... kg/(m^2 s)
@@ -40,15 +40,15 @@ Eg    = 42.4e3                 # act. energy for grain growth ... J/mol
 # model variables :
 n     = 80                     # num of z-positions
 freq  = 2*pi/spy               # frequency of earth rotations ... rad / s
-Tavg  = Tw - 2.0               # average temperature ............ degrees K
+Tavg  = Tw - 50.0              # average temperature ............ degrees K
 cp    = 146.3 + 7.253*Tavg     # heat capacity of ice ........... J/(kg K)
 cp    = 2009.
-zs    = 50.                    # surface start .................. m
+zs    = 50.                  # surface start .................. m
 zs_0  = zs                     # previous time-step surface ..... m
 zb    = 0.                     # depth .......................... m
 dz    = (zs - zb)/n            # initial z-spacing .............. m
 l     = dz*ones(n+1)           # height vector .................. m
-dt    = 0.025*spy              # time-step ...................... s
+dt    = 0.0025*spy             # time-step ...................... s
 t0    = 0.0                    # begin time ..................... s
 tf    = sys.argv[1]            # end-time ....................... string
 tf    = float(tf)*spy          # end-time ....................... s
@@ -90,8 +90,8 @@ V      = FunctionSpace(mesh, 'Lagrange', 1)   # function space for rho, T
 MV     = V*V                                  # mixed function space
 
 # enthalpy surface condition with cyclical 2-meter air temperature :
-code   = 'c*( (Tavg + 9.9*sin(omega*t))  - T0)'
-Hs     = Expression(code, c=cp, Tavg=Tavg, omega=freq, t=t0, T0=T0)
+code   = 'c*( (Tavg + 10.0*(cos(2*pi*t) + 0.3*cos(4*pi*t)))  - T0 )'
+Hs     = Expression(code, c=cp, Tavg=Tavg, pi=pi, omega=freq, t=t0, T0=T0)
 
 # temperature of base of firn :
 Tb     = Constant(Tavg)
