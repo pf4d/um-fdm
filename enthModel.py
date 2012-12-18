@@ -9,7 +9,6 @@ FEniCS solution to firn enthalpy / density profile.
 
 from numpy import *
 import numpy as np
-from density import *
 from dolfin import *
 from scipy.interpolate import interp1d
 from enthPlot import *
@@ -48,7 +47,7 @@ zs_0  = zs                     # previous time-step surface ..... m
 zb    = 0.                     # depth .......................... m
 dz    = (zs - zb)/n            # initial z-spacing .............. m
 l     = dz*ones(n+1)           # height vector .................. m
-dt    = 0.025*spy              # time-step ...................... s
+dt    = 1.0*spy                # time-step ...................... s
 t0    = 0.0                    # begin time ..................... s
 tf    = sys.argv[1]            # end-time ....................... string
 tf    = float(tf)*spy          # end-time ....................... s
@@ -66,9 +65,9 @@ omega = zeros(n+1)
 mesh  = IntervalMesh(n, zb, zs)
 z     = mesh.coordinates()[:,0]              # initial z-coord
 
-def refine_mesh(mesh, z, l, i):
+def refine_mesh(mesh, z, l, dz, i, m):
   
-  if i == 4096 :
+  if m > 10 :
     return z, l, mesh
   
   else :
@@ -88,12 +87,12 @@ def refine_mesh(mesh, z, l, i):
     z      = mesh.coordinates()[:,0]              # initial z-coord
     numNew = len(z) - len(l)                      # number of split nodes
     l      = l[:-numNew]                          # remove split heights
-    l      = append(l, dz/i * ones(numNew * 2))   # append new split heights
+    l      = append(l, dz/2 * ones(numNew * 2))   # append new split heights
     
-    return refine_mesh(mesh, z, l, i*2)
+    return refine_mesh(mesh, z, l, l[-1], i*1.15, m+1)
 
 
-z, l, mesh = refine_mesh(mesh, z, l, 2)
+z, l, mesh = refine_mesh(mesh, z, l, l[-1], 2, 1)
 
 index  = argsort(z)                           # index of updated mesh
 n      = len(l)                               # new number of nodes
@@ -105,7 +104,7 @@ V      = FunctionSpace(mesh, 'Lagrange', 1)   # function space for rho, T
 MV     = V*V                                  # mixed function space
 
 # enthalpy surface condition with cyclical 2-meter air temperature :
-code   = 'c*( (Tavg + 10.0*(cos(2*omega*t) + 0.3*cos(4*omega*t)))  - T0 )'
+code   = 'c*( (Tavg + 10.0*(sin(2*omega*t) + 0.3*sin(4*omega*t)))  - T0 )'
 Hs     = Expression(code, c=cp, Tavg=Tavg, omega=pi/spy, t=t0, T0=T0)
 
 # temperature of base of firn :
@@ -117,7 +116,7 @@ Tb     = Constant(Tavg)
 
 # experimental surface density :
 code   = 'dp*rhon + (1 - dp)*rhoi'
-rhoS   = Expression(code, rhon=rhosi, rhoi=rhosi, dp=1.0)
+rhoS   = Expression(code, rhon=rhosi, rhoi=rhoi, dp=1e-3)
 
 # constant surface density :
 #rhoS   = Expression('rhon', rhon=rhosi)
@@ -194,7 +193,7 @@ phihat    = phi + cellh/(2*vnorm)*dot(w, grad(phi))
 
 # theta scheme (1=Backwards-Euler, 0.667=Galerkin, 0.878=Liniger, 
 #               0.5=Crank-Nicolson, 0=Forward-Euler) :
-theta     = 0.000
+theta     = 1.000
 f_rho     = (rho_2 - 4*rho_1 + 3*rho)/(2*dt)*phi*dx - \
             theta*(drhodt - w*grad(rho))*phihat*dx - \
             (1-theta)*(drho_1dt - w_0*grad(rho_1))*phihat*dx
@@ -361,17 +360,17 @@ while t <= tf:
   Hs.t      = t
   Hs.c      = firn.c[-1]
   rhoS.rhoi = firn.rho[-1]
-  if firn.Ts > Tw:
-    if domega[-1] > 0:
-      if rhoS.rhon < rhoi:
-        rhoS.rhon = rhoS.rhon + domega[-1]*rhow
-    else:
-      rhoS.rhon = rhoS.rhon + domega[-1]*83.0
-  else:
-    rhoS.rhon = rhosi
-  ltop      = lnew[-1]
-  dnew      = -firn.w[-1]*dt
-  rhoS.dp = dnew/ltop
+  #if firn.Ts > Tw:
+  #  if domega[-1] > 0:
+  #    if rhoS.rhon < rhoi:
+  #      rhoS.rhon = rhoS.rhon + domega[-1]*rhow
+  #  else:
+  #    rhoS.rhon = rhoS.rhon + domega[-1]*83.0
+  #else:
+  #  rhoS.rhon = rhosi
+  #ltop      = lnew[-1]
+  #dnew      = -firn.w[-1]*dt
+  #rhoS.dp = dnew/ltop
   #rhoS.Ts = firn.T[-1]
 
   plt.draw()  # update the graph

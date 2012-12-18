@@ -9,8 +9,12 @@ Plotting for enthalby Firn Densification Model.
 
 import matplotlib.pyplot as plt
 from matplotlib.ticker import ScalarFormatter, FormatStrFormatter
+from pylab import mpl
 import numpy as np
 
+mpl.rcParams['font.family'] = 'serif'
+mpl.rcParams['legend.fontsize'] = 'medium'
+    
 class FixedOrderFormatter(ScalarFormatter):
   """
   Formats axis ticks using scientific notation with a constant order of 
@@ -332,8 +336,8 @@ class plot():
     and original surface height origHt.
     """
     # plot the surface height information :
-    plt.plot(x,               ht,     label='Surface Height')
-    plt.plot(x[:len(origHt)], origHt, label='Original Surface')
+    plt.plot(x,               ht,     'k-',  lw=1.5, label=r'Surface Height')
+    plt.plot(x[:len(origHt)], origHt, 'k--', lw=1.5, label=r'Original Surface')
     plt.xlabel(r'time $[a]$')
     plt.ylabel(r'height $[m]$')
     plt.title('Surface Height Changes')
