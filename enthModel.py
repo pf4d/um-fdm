@@ -47,7 +47,7 @@ zs_0  = zs                     # previous time-step surface ..... m
 zb    = 0.                     # depth .......................... m
 dz    = (zs - zb)/n            # initial z-spacing .............. m
 l     = dz*ones(n+1)           # height vector .................. m
-dt    = 1.0*spy                # time-step ...................... s
+dt    = 0.025*spy              # time-step ...................... s
 t0    = 0.0                    # begin time ..................... s
 tf    = sys.argv[1]            # end-time ....................... string
 tf    = float(tf)*spy          # end-time ....................... s
@@ -221,7 +221,7 @@ def set_ini_conv():
   
   return zs_0
 
-#zs_0 = set_ini_conv()
+zs_0 = set_ini_conv()
 
 # find vector of T, rho :
 hplot   = project(H, V).vector().array()
