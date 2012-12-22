@@ -355,7 +355,7 @@ mesh.coordinates()[:,0][index] = firn.z
 The variable \texttt{index} is an array of positions corresponding to the correct ordering of the nodes, necessary after mesh refinement.  
 
 The height $s$ at time index $n$ of the original surface may be calculated as follows:
-  $$s^{n} = (z_s - z_b) \frac{s^{n-1} - z_b}{z_{s} - z_b} + w_s dt.$$
+  $$s^{n} = (z_s^0 - z_b) \frac{s^{n-1} - z_b}{z_s^{n-1} - z_b} + w_s dt.$$
 This maintains the relative location of the original surface to the current surface and moves downward proportional to $w$.  This is accomplished in Python with\par
 \footnotesize
 \begin{alltt}
@@ -400,21 +400,21 @@ Many variable are used in this simulation and many do not change.  These are def
 \hline
 Var. & Value & Units & Description\\
 \hline
-$g$ & $9.81$ & m s$^{-2}$ & gravitational acceleration\\
-$R$ & $8.3144621$ & J mol$^{-1}$ K$^{-1}$ & gas constant\\
+$g$ & $9.81$ & m s\sups{-2} & gravitational acceleration\\
+$R$ & $8.3144621$ & J mol\sups{-1} K\sups{-1} & gas constant\\
 $spy$  & $31556926$ & s & seconds per year\\
-$\rho_i$ & $917$ & kg m$^{-3}$ & density of ice\\
-$\rho_w$ & $1000$ & kg m$^{-3}$ & density of water\\
-$\rho_m$ & $550$ & kg m$^{-3}$ & critical density value\\
-$k_i$  & $2.1$ & W m$^{-1}$K$^{-1}$ & thermal conductivity of ice\\
-$c_i$  & $2009$ & J kg$^{-1}$K$^{-1}$ & heat capacity of ice\\
-$L_f$ & \SI{3.34e5} & J kg$^{-1}$ & latent heat of fusion\\
-$H_s$ & $c_i(T_w - T_0)$ & J kg$^{-1}$ &  Enthalpy of ice at $T_w$\\
+$\rho_i$ & $917$ & kg m\sups{-3} & density of ice\\
+$\rho_w$ & $1000$ & kg m\sups{-3} & density of water\\
+$\rho_m$ & $550$ & kg m\sups{-3} & critical density value\\
+$k_i$  & $2.1$ & W m\sups{-1}K\sups{-1} & thermal conductivity of ice\\
+$c_i$  & $2009$ & J kg\sups{-1}K\sups{-1} & heat capacity of ice\\
+$L_f$ & \SI{3.34e5} & J kg\sups{-1} & latent heat of fusion\\
+$H_s$ & $c_i(T_w - T_0)$ & J kg\sups{-1} &  Enthalpy of ice at $T_w$\\
 $T_w$  & $273.15$ & K & triple point of water\\
 $T_0$ & $0.0$ & K & reference temperature\\
-$k_g$ & \SI{1.3e-7} & m$^2$s$^{-1}$ & grain growth coefficient\\
-$E_c$ & \SI{60e3} & J mol$^{-1}$ & act. energy for water in ice\\
-$E_g$ & \SI{42.4e3} & J mol$^{-1}$ & act. energy for grain growth\\
+$k_g$ & \SI{1.3e-7} & m\sups{2}s\sups{-1} & grain growth coefficient\\
+$E_c$ & \SI{60e3} & J mol\sups{-1} & act. energy for water in ice\\
+$E_g$ & \SI{42.4e3} & J mol\sups{-1} & act. energy for grain growth\\
 \hline
 \end{tabular}
 \normalsize\\
@@ -430,10 +430,10 @@ $E_g$ & \SI{42.4e3} & J mol$^{-1}$ & act. energy for grain growth\\
 \hline
 Var. & Units & Description\\
 \hline
-$\rho_{si}$ & kg m$^{-3}$ & initial density at surface\\
-$\dot{b}$  & kg m$^{-2}$s$^{-1}$ & surface accumulation\\
-$A$  & mm a$^{-1}$ & surface accumulation\\
-$V_a$  & m s$^{-1}$ & mean annual wind speed\\
+$\rho_{si}$ & kg m\sups{-3} & initial density at surface\\
+$\dot{b}$  & kg m\sups{-2}s\sups{-1} & surface accumulation\\
+$A$  & mm a\sups{-1} & surface accumulation\\
+$V_a$  & m s\sups{-1} & mean annual wind speed\\
 $T_{avg}$ & K & average annual temperature\\
 $T_{s}$ & K & firn surface temperature\\
 $z_s$ & m & surface start z-location\\
@@ -453,7 +453,7 @@ $t_f$ & s & end-time\\
 %% Verification ================================================================
 \section{Verification of Program}
 
-A converging run of the program was done quickly by making $dt$ equal $spy$: this has the effect of producing a steady-state solution.  After the density-profile converged the data was saved to a text file in the \texttt{data} folder.  The script was run again with the average surface air temperature $T_{avg}$ made so   that the surface temperature peaks at $8\degree$ C if $t < 10$ years, and $0\degree$ C if $t >= 10$ years. This has the effect of halting any melting and refreezing after this time period.  For this run the method \texttt{set\_ini\_conv} was called to initialize the previous runs data and $dt$ was set to $0.0025*spy$; the results are shown in Figures 2 and 3.
+A converging run of the program was done quickly by making $dt$ equal $spy$: this has the effect of producing a steady-state solution.  After the density-profile converged the data was saved to a text file in the \texttt{data} folder.  The script was run again with the average surface air temperature $T_{avg}$ made so   that the surface temperature peaks at $8\degree$ C if $t < 10$ years, and $0\degree$ C if $t \geq 10$ years. This has the effect of halting any melting and refreezing after this time period.  For this run the method \texttt{set\_ini\_conv} was called to initialize the previous runs data and $dt$ was set to $0.0025*spy$; the results are shown in Figures 2 and 3.
 
 
 %% Interpretation ==============================================================

@@ -35,11 +35,12 @@ class firn():
   """
   Data structure to hold firn model state data.
   """
-  def __init__(self, H, T, rho, omega, w, k, c, z, index):
+  def __init__(self, H, T, rho, a, omega, w, k, c, z, index):
 
     self.H     = H
     self.T     = T 
     self.rho   = rho
+    self.a     = a
     self.omega = omega
     self.w     = w
     self.k     = k
@@ -67,6 +68,7 @@ class plot():
     T      = firn.T
     omega  = firn.omega
     rho    = firn.rho
+    a      = firn.a
     w      = firn.w * self.spy * 1e2 # cm a^-1 
     k      = firn.k
     c      = firn.c
@@ -104,11 +106,11 @@ class plot():
     kMax   = 2.2
     #kh     = kMin + 0.1*(kMax - kMin) / 2
 
-    cMin   = 2000
-    cMax   = 2250
+    cMin   = 1500
+    cMax   = 2100
     #ch     = cMin + 0.1*(cMax - cMin) / 2
 
-    self.fig   = plt.figure(figsize=(12,10))
+    self.fig   = plt.figure(figsize=(11,7.5))
     self.Tax   = self.fig.add_subplot(231)
     self.omax  = self.fig.add_subplot(232)
     self.rhoax = self.fig.add_subplot(233)
@@ -130,6 +132,7 @@ class plot():
     self.kax.grid()
     self.cax.axis([cMin, cMax, zmin, zmax])
     self.cax.grid()
+    self.cax.xaxis.set_major_formatter(FixedOrderFormatter(2))
 
     # plots :
     self.Tsurf    = self.Tax.text(Th, Tz, r'Surface Temp: %.1f $\degree$C' % Ts)
@@ -166,29 +169,29 @@ class plot():
     # formatting :
     self.fig_text = plt.figtext(.85,.95,'Time = 0.0 yr')
 
-    self.Tax.set_title('Temperature')
-    self.Tax.set_xlabel(r'$T$ $[\degree C]$')
-    self.Tax.set_ylabel(r'Depth $[m]$')
+    #self.Tax.set_title('Temperature')
+    self.Tax.set_xlabel(r'$T\ [\degree \mathrm{C}]$')
+    self.Tax.set_ylabel(r'Depth [m]')
 
-    self.omax.set_title('Water Content')
-    self.omax.set_xlabel(r'%')
-    #self.omax.set_ylabel(r'Depth $[m]$')
+    #self.omax.set_title('Water Content')
+    self.omax.set_xlabel(r'$\omega\ [\%]$')
+    #self.omax.set_ylabel(r'Depth [m]')
 
-    self.rhoax.set_title('Density')
-    self.rhoax.set_xlabel(r'$\rho$ $\left [\frac{kg}{m^3}\right ]$')
-    #self.rhoax.set_ylabel(r'Depth $[m]$')
+    #self.rhoax.set_title('Density')
+    self.rhoax.set_xlabel(r'$\rho\ \left[\frac{\mathrm{kg}}{\mathrm{m}^3}\right]$')
+    #self.rhoax.set_ylabel(r'Depth [m]')
 
-    self.wax.set_title('Velocity')
-    self.wax.set_xlabel(r'$w$ $\left [\frac{cm}{a}\right ]$')
-    self.wax.set_ylabel(r'Depth $[m]$')
+    #self.wax.set_title('Velocity')
+    self.wax.set_xlabel(r'$w\ \left[\frac{\mathrm{cm}}{\mathrm{a}}\right]$')
+    self.wax.set_ylabel(r'Depth [m]')
 
-    self.kax.set_title('Thermal Conductivity')
-    self.kax.set_xlabel(r'$k$ $\left [\frac{J}{m K s} \right ]$')
-    #self.kax.set_ylabel(r'Depth $[m]$')
+    #self.kax.set_title('Thermal Conductivity')
+    self.kax.set_xlabel(r'$k\ \left[\frac{\mathrm{J}}{\mathrm{m K s}} \right]$')
+    #self.kax.set_ylabel(r'Depth [m]')
 
-    self.cax.set_title('Specific Heat Capacity')
-    self.cax.set_xlabel(r'$c$ $\left [\frac{J}{kg K} \right ]$')
-    #self.kax.set_ylabel(r'Depth $[m]$')
+    #self.cax.set_title('Specific Heat Capacity')
+    self.cax.set_xlabel(r'$c\ \left[\frac{\mathrm{J}}{\mathrm{kg K}} \right]$')
+    #self.kax.set_ylabel(r'Depth [m]')
     
 
   def update_plot(self, firn, t):
@@ -198,6 +201,7 @@ class plot():
     T     = firn.T
     omega = firn.omega
     rho   = firn.rho
+    a     = firn.a
     w     = firn.w * self.spy * 1e2  # cm a^-1
     k     = firn.k
     c     = firn.c
@@ -305,7 +309,7 @@ class plot():
     fig_text = plt.figtext(.85,.95,'Time = 0.0 yr')
 
     Tax.set_title('Temperature')
-    Tax.set_xlabel(r'$T$ $[\degree C]$')
+    Tax.set_xlabel(r'$T$ $[\degree \mathrm{C}]$')
     Tax.set_ylabel(r'Depth $[m]$')
 
     rhoax.set_title('Density')
@@ -338,8 +342,8 @@ class plot():
     # plot the surface height information :
     plt.plot(x,               ht,     'k-',  lw=1.5, label=r'Surface Height')
     plt.plot(x[:len(origHt)], origHt, 'k--', lw=1.5, label=r'Original Surface')
-    plt.xlabel(r'time $[a]$')
-    plt.ylabel(r'height $[m]$')
+    plt.xlabel('time [a]')
+    plt.ylabel('height [m]')
     plt.title('Surface Height Changes')
     plt.grid()
   
@@ -376,8 +380,8 @@ class plot():
       ax.plot(x, ht,     color + '-',  label=title + ' Surface Height')
       ax.plot(x, origHt, color + '--', label=title + ' Original Surface')
     
-    ax.set_xlabel(r'time $[a]$')
-    ax.set_ylabel(r'height $[m]$')
+    ax.set_xlabel('time [a]')
+    ax.set_ylabel('height [m]')
     ax.set_title('Surface Height Changes')
     ax.grid()
   

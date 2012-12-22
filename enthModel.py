@@ -11,7 +11,7 @@ from numpy import *
 import numpy as np
 from dolfin import *
 from scipy.interpolate import interp1d
-from enthPlot import *
+from plotFmic import *
 import sys
 
 
@@ -40,14 +40,14 @@ Eg    = 42.4e3                 # act. energy for grain growth ... J/mol
 n     = 10                     # num of z-positions
 freq  = 2*pi/spy               # frequency of earth rotations ... rad / s
 Tavg  = Tw - 50.0              # average temperature ............ degrees K
-cp    = 146.3 + 7.253*Tavg     # heat capacity of ice ........... J/(kg K)
-cp    = 2009.
+cp    = 152.5 + 7.122*Tavg     # heat capacity of ice ........... J/(kg K)
+#cp    = 2009.                 # constant heat capacitity of .... J/(kg K)
 zs    = 1000.                  # surface start .................. m
 zs_0  = zs                     # previous time-step surface ..... m
 zb    = 0.                     # depth .......................... m
 dz    = (zs - zb)/n            # initial z-spacing .............. m
 l     = dz*ones(n+1)           # height vector .................. m
-dt    = 0.025*spy              # time-step ...................... s
+dt    = 0.5*spy                # time-step ...................... s
 t0    = 0.0                    # begin time ..................... s
 tf    = sys.argv[1]            # end-time ....................... string
 tf    = float(tf)*spy          # end-time ....................... s
@@ -98,6 +98,7 @@ index  = argsort(z)                           # index of updated mesh
 n      = len(l)                               # new number of nodes
 rhoin  = rhoi*ones(n)                         # initial density
 omega  = zeros(n)                             # water content percent
+age    = zeros(n)                             # initial age
 
 # create function spaces :
 V      = FunctionSpace(mesh, 'Lagrange', 1)   # function space for rho, T
@@ -115,12 +116,14 @@ Tb     = Constant(Tavg)
 #rhoS  = Expression(code, Ts=Tavg, A=A, Va=Va)
 
 # experimental surface density :
-code   = 'dp*rhon + (1 - dp)*rhoi'
-rhoS   = Expression(code, rhon=rhosi, rhoi=rhoi, dp=1e-3)
+#code   = 'dp*rhon + (1 - dp)*rhoi'
+#rhoS   = Expression(code, rhon=rhosi, rhoi=rhoi, dp=1e-3)
 
 # constant surface density :
-#rhoS   = Expression('rhon', rhon=rhosi)
+rhoS   = Expression('rhon', rhon=rhosi)
 
+# surface age is always 0 :
+ageS   = Constant(0.0)
 
 # define the Dirichlet boundarys :
 def surface(x, on_boundary):
@@ -129,19 +132,22 @@ def surface(x, on_boundary):
 def base(x, on_boundary):
   return on_boundary and x[0] == zb
 
-Hbc  = DirichletBC(MV.sub(0), Hs, surface)    # enthalpy surface
-Hbc2 = DirichletBC(MV.sub(0), Tb, base)       # enthalpy base 
-Dbc  = DirichletBC(MV.sub(1), rhoS, surface)  # density surface
+Hbc   = DirichletBC(MV.sub(0), Hs, surface)      # enthalpy of surface
+Hbc2  = DirichletBC(MV.sub(0), Tb, base)         # enthalpy of base 
+Dbc   = DirichletBC(MV.sub(1), rhoS, surface)    # density of surface
+ageBc = DirichletBC(V,         ageS, surface)    # age of surface
 
 
 #===============================================================================
-# Define variational problem :
+# Define variational problem spaces :
 H_i        = interpolate(Constant(cp*(Tavg - T0)), V) # initial enthalpy vector
 rho_i      = interpolate(Constant(rhoin[0]), V)       # initial density vector
+a_i        = interpolate(Constant(1.0), V)            # initial age vector
+
 h          = Function(MV)                    # solution
 H,rho      = split(h)                        # solutions for H, rho
 h_1        = Function(MV)                    # previous solution
-h_2        = Function(MV)                    # previous previous solution
+h_2        = Function(MV)                    # 2nd previous solution
 H_1, rho_1 = split(h_1)                      # initial value functions
 H_2, rho_2 = split(h_2)                      # initial value functions
 
@@ -150,19 +156,26 @@ dH, drho   = split(dh)                       # trial functions for H, rho
 j          = TestFunction(MV)                # test function in mixed space
 psi, phi   = split(j)                        # test functions for H, rho
 
+a          = Function(V)                     # age solution / trial function
+xi         = TestFunction(V)                 # age test function
+a_1        = Function(V)                     # previous age solution
+a_2        = Function(V)                     # 2nd previous age solution
+
 h_0 = project(as_vector([H_i,rho_i]), MV)    # project inital values on space
 h.vector().set_local(h_0.vector().array())   # initalize H, rho in solution
 h_1.vector().set_local(h_0.vector().array()) # initalize H, rho in prev. sol
 h_2.vector().set_local(h_0.vector().array()) # initalize H, rho in prev. prev.
 
+a.vector().set_local(a_i.vector().array())   # initialize age in solution
+a_1.vector().set_local(a_i.vector().array()) # initialize age in prev. sol
+a_2.vector().set_local(a_i.vector().array()) # initialize age in prev. sol
 
 #===============================================================================
 # Define equations to be solved :
 w         = - acc / rho                                # vertical velocity 
 w_0       = - acc / rho                                # vertical velocity 
-#c         = (146.3 + sqrt(146.3**2 + 4*7.253*H)) / 2   # c in terms of H
-#c         = 146.3 + 7.253*T                            # c in terms of T
-c         = interpolate(Constant(cp), V)               # c constant
+#c         = interpolate(Constant(cp), V)              # c constant
+c         = (152.5 + sqrt(152.5**2 + 4*7.122*H)) / 2   # Patterson 1994
 #k         = 9.828*exp(-0.0057*T)                      # Aschwanden 2012
 k         = 2.1*(rho / rhoi)**2                        # Arthern 2008
 Tcoef     = interpolate(Constant(1.0), V)
@@ -171,6 +184,16 @@ T_1       = Tcoef * H_1 / c
 
 Kcoef     = interpolate(Constant(1.0),  V)
 
+# SUPG method :        
+vnorm     = sqrt(dot(w, w) + 1e-10)
+cellh     = CellSize(mesh)
+xihat     = xi + cellh/(2*vnorm)*dot(w, grad(xi))
+phihat    = phi + cellh/(2*vnorm)*dot(w, grad(phi))
+
+# age residual :
+a_H       = ((a_2 - 4*a_1 + 3*a)/(2*dt) + w*grad(a) - 1) * xi*dx
+
+# enthalpy residual :
 f_H       = rho*(H_2 - 4*H_1 + 3*H)/(2*dt)*psi*dx + \
             k/c*Kcoef*inner(grad(H), grad(psi))*dx + \
             rho*w*grad(H)*psi*dx
@@ -179,11 +202,6 @@ f_H       = rho*(H_2 - 4*H_1 + 3*H)/(2*dt)*psi*dx + \
 rhoCoef   = interpolate(Constant(kcHh), V)
 drhodt    = (acc*g*rhoCoef/kg)*exp( -Ec/(R*T) + Eg/(R*Tavg) )*(rhoi - rho)
 drho_1dt  = (acc*g*rhoCoef/kg)*exp( -Ec/(R*T_1) + Eg/(R*Tavg) )*(rhoi - rho_1)
-
-# SUPG method (unused) :        
-vnorm     = sqrt(dot(w, w) + 1e-10)
-cellh     = CellSize(mesh)
-phihat    = phi + cellh/(2*vnorm)*dot(w, grad(phi))
 
 # material derivative :        second difference :
 #  dr   pr     pr               pr   r_{k-2} - 4*r_{k-1} + 3*r_{k}
@@ -194,6 +212,8 @@ phihat    = phi + cellh/(2*vnorm)*dot(w, grad(phi))
 # theta scheme (1=Backwards-Euler, 0.667=Galerkin, 0.878=Liniger, 
 #               0.5=Crank-Nicolson, 0=Forward-Euler) :
 theta     = 1.000
+
+# density residual :
 f_rho     = (rho_2 - 4*rho_1 + 3*rho)/(2*dt)*phi*dx - \
             theta*(drhodt - w*grad(rho))*phihat*dx - \
             (1-theta)*(drho_1dt - w_0*grad(rho_1))*phihat*dx
@@ -210,7 +230,7 @@ df        = derivative(f, h, dh) # jacobian
 def set_ini_conv():
   rhoin   = genfromtxt("data/enthalpy/rho.txt")
   zTemp   = genfromtxt("data/enthalpy/z.txt")
-  zs_0    = zTemp[index][-1]
+  zs_0    = zTemp[-1]
   #mesh.coordinates()[:,0] = zTemp  FIXME why wouldn't this work?
 
   rho_i.vector().set_local(rhoin)
@@ -227,6 +247,7 @@ zs_0 = set_ini_conv()
 hplot   = project(H, V).vector().array()
 tplot   = project(T, V).vector().array()
 rhoplot = project(rho, V).vector().array()
+aplot   = a.vector().array()
 
 # calculate other data :
 wplot   = project(w, V).vector().array()
@@ -234,7 +255,7 @@ kplot   = project(k, V).vector().array()
 cplot   = project(c, V).vector().array()
 
 plt.ion()   # interactive mode on
-firn = firn(hplot, tplot, rhoplot, omega, wplot, kplot, cplot, z, index)
+firn = firn(hplot, tplot, rhoplot, aplot, omega, wplot, kplot, cplot, z, index)
 plot = plot(firn)
 
 
@@ -248,10 +269,15 @@ while t <= tf:
   # newton's iterative method :
   solve(f == 0, h, [Hbc, Dbc], J=df)
 
+  # solve for age :
+  solve(a_H == 0, a, ageBc)
+
   # find vector of T, rho :
   firn.H   = project(H, V).vector().array()
   firn.rho = project(rho, V).vector().array()
- 
+  firn.a   = a.vector().array()
+  print t/spy, '\t', min(firn.a), '\t', max(firn.a)
+
   # calculate other data :
   firn.w   = project(w, V).vector().array()  # m s^-1
   firn.k   = project(k, V).vector().array()  # Arthern 2008
@@ -354,12 +380,14 @@ while t <= tf:
   t += dt
   h_2.assign(h_1)
   h_1.assign(h)
+  a_2.assign(a_1)
+  a_1.assign(a)
   zs_0 = firn.z[-1]
   
   # update boundary conditions :
   Hs.t      = t
   Hs.c      = firn.c[-1]
-  rhoS.rhoi = firn.rho[-1]
+  #rhoS.rhoi = firn.rho[-1]
   #if firn.Ts > Tw:
   #  if domega[-1] > 0:
   #    if rhoS.rhon < rhoi:
