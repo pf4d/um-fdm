@@ -78,7 +78,7 @@ class plot():
     origZ  = firn.origZ
 
     zmax   = zs + (zs - zb) / 5                   # max z-coord
-    zmin   = zb                                   # min z-coord
+    zmin   = zs - zb                                   # min z-coord
 
     Tmin   = -65                                  # T x-coord min
     Tmax   = -35                                  # T x-coord max
