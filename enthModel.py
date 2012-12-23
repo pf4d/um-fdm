@@ -254,9 +254,9 @@ wplot   = project(w, V).vector().array()
 kplot   = project(k, V).vector().array()
 cplot   = project(c, V).vector().array()
 
-plt.ion()   # interactive mode on
+#plt.ion()   # interactive mode on
 firn = firn(hplot, tplot, rhoplot, aplot, omega, wplot, kplot, cplot, z, index)
-plot = plot(firn)
+#plot = plot(firn)
 
 
 #===============================================================================
@@ -276,7 +276,7 @@ while t <= tf:
   firn.H   = project(H, V).vector().array()
   firn.rho = project(rho, V).vector().array()
   firn.a   = a.vector().array()
-  print t/spy, '\t', min(firn.a), '\t', max(firn.a)
+  print t/spy, '\t', min(firn.a)/spy, '\t', max(firn.a)/spy
 
   # calculate other data :
   firn.w   = project(w, V).vector().array()  # m s^-1
@@ -374,7 +374,7 @@ while t <= tf:
   firn.Ts  = firn.H[-1] / firn.c[-1]
 
   # update the plotting parameters :
-  plot.update_plot(firn, t/spy)
+  #plot.update_plot(firn, t/spy)
 
   # update model parameters :
   t += dt
@@ -401,13 +401,20 @@ while t <= tf:
   #rhoS.dp = dnew/ltop
   #rhoS.Ts = firn.T[-1]
 
-  plt.draw()  # update the graph
+  #plt.draw()  # update the graph
 
-plt.ioff()
-plt.show()
+#plot.update_plot(firn, t/spy)
+#plt.draw()
+#plt.ioff()
+#plt.show()
+
+savetxt('data/enthalpy/a.txt', firn.a)
+savetxt('data/enthalpy/z.txt', firn.z)
+savetxt('data/enthalpy/rho.txt', firn.rho)
+savetxt('data/enthalpy/l.txt', l)
 
 # plot the surface height trend :
 x = linspace(0, t/spy, len(ht))
-plot.plot_height(x, ht, origHt)
+#plot.plot_height(x, ht, origHt)
 
 
