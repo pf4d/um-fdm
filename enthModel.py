@@ -191,7 +191,7 @@ xihat     = xi + cellh/(2*vnorm)*dot(w, grad(xi))
 phihat    = phi + cellh/(2*vnorm)*dot(w, grad(phi))
 
 # age residual :
-a_H       = ((a_2 - 4*a_1 + 3*a)/(2*dt) + w*grad(a) - 1) * xi*dx
+a_H       = ((a_2 - 4*a_1 + 3*a)/(2*dt) + w*grad(a) - 1) * xihat*dx
 
 # enthalpy residual :
 f_H       = rho*(H_2 - 4*H_1 + 3*H)/(2*dt)*psi*dx + \
@@ -230,15 +230,18 @@ df        = derivative(f, h, dh) # jacobian
 def set_ini_conv():
   rhoin   = genfromtxt("data/enthalpy/rho.txt")
   zTemp   = genfromtxt("data/enthalpy/z.txt")
+  ain     = genfromtxt("data/enthalpy/a.txt")
   zs_0    = zTemp[-1]
   #mesh.coordinates()[:,0] = zTemp  FIXME why wouldn't this work?
 
   rho_i.vector().set_local(rhoin)
+  a_i.vector().set_local(ain)
   h_0 = project(as_vector([H_i,rho_i]), MV)    # project inital values on space
   h.vector().set_local(h_0.vector().array())   # initalize T, rho in solution
   h_1.vector().set_local(h_0.vector().array()) # initalize T, rho in prev. sol
   h_2.vector().set_local(h_0.vector().array()) # initalize T, rho in prev. sol
-  
+  a_1.vector().set_local(ain)
+  a_2.vector().set_local(ain)
   return zs_0
 
 zs_0 = set_ini_conv()
