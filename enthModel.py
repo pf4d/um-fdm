@@ -196,6 +196,8 @@ a_H       = (a_2 - 4*a_1 + 3*a)/(2*dt) * xi*dx + \
             theta * (w*grad(a) - 1) * xihat*dx + \
             (1 - theta) * (w_1*grad(a_1) - 1) * xihat*dx
 
+a_H       = (w*grad(a) - 1) * xihat*dx
+
 #a_mid     = 0.5*(a + a_1)
 #a_H       = (a_2 - 4*a_1 + 3*a)/(2*dt) * xi*dx + \
 #            (w*grad(a_mid) - 1) * xihat*dx 
@@ -246,9 +248,9 @@ def set_ini_conv():
   h.vector().set_local(h_0.vector().array())   # initalize T, rho in solution
   h_1.vector().set_local(h_0.vector().array()) # initalize T, rho in prev. sol
   h_2.vector().set_local(h_0.vector().array()) # initalize T, rho in prev. sol
-  #a.vector().set_local(ain)
-  #a_1.vector().set_local(ain)
-  #a_2.vector().set_local(ain)
+  a.vector().set_local(ain)
+  a_1.vector().set_local(ain)
+  a_2.vector().set_local(ain)
   return zs_0
 
 zs_0 = set_ini_conv()
