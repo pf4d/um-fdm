@@ -173,7 +173,7 @@ a_2.vector().set_local(a_i.vector().array()) # initialize age in prev. sol
 #===============================================================================
 # Define equations to be solved :
 w         = - acc / rho                                # vertical velocity 
-w_0       = - acc / rho                                # vertical velocity 
+w_1       = - acc / rho_1                              # vertical velocity 
 #c         = interpolate(Constant(cp), V)              # c constant
 c         = (152.5 + sqrt(152.5**2 + 4*7.122*H)) / 2   # Patterson 1994
 #k         = 9.828*exp(-0.0057*T)                      # Aschwanden 2012
@@ -191,7 +191,14 @@ xihat     = xi + cellh/(2*vnorm)*dot(w, grad(xi))
 phihat    = phi + cellh/(2*vnorm)*dot(w, grad(phi))
 
 # age residual :
-a_H       = ((a_2 - 4*a_1 + 3*a)/(2*dt) + w*grad(a) - 1) * xihat*dx
+theta     = 1.000
+a_H       = (a_2 - 4*a_1 + 3*a)/(2*dt) * xi*dx + \
+            theta * (w*grad(a) - 1) * xihat*dx + \
+            (1 - theta) * (w_1*grad(a_1) - 1) * xihat*dx
+
+#a_mid     = 0.5*(a + a_1)
+#a_H       = (a_2 - 4*a_1 + 3*a)/(2*dt) * xi*dx + \
+#            (w*grad(a_mid) - 1) * xihat*dx 
 
 # enthalpy residual :
 f_H       = rho*(H_2 - 4*H_1 + 3*H)/(2*dt)*psi*dx + \
@@ -216,7 +223,7 @@ theta     = 1.000
 # density residual :
 f_rho     = (rho_2 - 4*rho_1 + 3*rho)/(2*dt)*phi*dx - \
             theta*(drhodt - w*grad(rho))*phihat*dx - \
-            (1-theta)*(drho_1dt - w_0*grad(rho_1))*phihat*dx
+            (1-theta)*(drho_1dt - w_1*grad(rho_1))*phihat*dx
 
 # equation to be minimzed :
 f         = f_H + f_rho
