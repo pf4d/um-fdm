@@ -47,7 +47,7 @@ zs_0  = zs                     # previous time-step surface ..... m
 zb    = 0.                     # depth .......................... m
 dz    = (zs - zb)/n            # initial z-spacing .............. m
 l     = dz*ones(n+1)           # height vector .................. m
-dt    = 0.5*spy                # time-step ...................... s
+dt    = 0.25*spy                # time-step ...................... s
 t0    = 0.0                    # begin time ..................... s
 tf    = sys.argv[1]            # end-time ....................... string
 tf    = float(tf)*spy          # end-time ....................... s
@@ -105,11 +105,11 @@ V      = FunctionSpace(mesh, 'Lagrange', 1)   # function space for rho, T
 MV     = V*V                                  # mixed function space
 
 # enthalpy surface condition with cyclical 2-meter air temperature :
-code   = 'c*( (Tavg + 10.0*(sin(2*omega*t) + 0.3*sin(4*omega*t)))  - T0 )'
-Hs     = Expression(code, c=cp, Tavg=Tavg, omega=pi/spy, t=t0, T0=T0)
+#code   = 'c*( (Tavg + 10.0*(sin(2*omega*t) + 0.3*sin(4*omega*t)))  - T0 )'
+#Hs     = Expression(code, c=cp, Tavg=Tavg, omega=pi/spy, t=t0, T0=T0)
 
-# temperature of base of firn :
-Tb     = Constant(Tavg)
+code   = 'c*( Tavg - T0 )'
+Hs     = Expression(code, c=cp, Tavg=Tavg, omega=pi/spy, t=t0, T0=T0)
 
 # variable surface density by S.R.M. Ligtenberg et all 2011 :
 #code  = '-151.94 + 1.4266*(73.6 + 1.06*Ts + 0.0669*A + 4.77*Va)'
@@ -133,7 +133,6 @@ def base(x, on_boundary):
   return on_boundary and x[0] == zb
 
 Hbc   = DirichletBC(MV.sub(0), Hs, surface)      # enthalpy of surface
-Hbc2  = DirichletBC(MV.sub(0), Tb, base)         # enthalpy of base 
 Dbc   = DirichletBC(MV.sub(1), rhoS, surface)    # density of surface
 ageBc = DirichletBC(V,         ageS, surface)    # age of surface
 
@@ -196,7 +195,7 @@ a_H       = (a_2 - 4*a_1 + 3*a)/(2*dt) * xi*dx + \
             theta * (w*grad(a) - 1) * xihat*dx + \
             (1 - theta) * (w_1*grad(a_1) - 1) * xihat*dx
 
-a_H       = (w*grad(a) - 1) * xihat*dx
+#a_H       = (w*grad(a) - 1) * xihat*dx
 
 #a_mid     = 0.5*(a + a_1)
 #a_H       = (a_2 - 4*a_1 + 3*a)/(2*dt) * xi*dx + \
@@ -248,9 +247,9 @@ def set_ini_conv():
   h.vector().set_local(h_0.vector().array())   # initalize T, rho in solution
   h_1.vector().set_local(h_0.vector().array()) # initalize T, rho in prev. sol
   h_2.vector().set_local(h_0.vector().array()) # initalize T, rho in prev. sol
-  a.vector().set_local(ain)
-  a_1.vector().set_local(ain)
-  a_2.vector().set_local(ain)
+  #a.vector().set_local(ain)
+  #a_1.vector().set_local(ain)
+  #a_2.vector().set_local(ain)
   return zs_0
 
 zs_0 = set_ini_conv()
