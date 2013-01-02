@@ -47,7 +47,7 @@ zs_0  = zs                     # previous time-step surface ..... m
 zb    = 0.                     # depth .......................... m
 dz    = (zs - zb)/n            # initial z-spacing .............. m
 l     = dz*ones(n+1)           # height vector .................. m
-dt    = 1.0*spy                # time-step ...................... s
+dt    = 100.0*spy                # time-step ...................... s
 t0    = 0.0                    # begin time ..................... s
 tf    = sys.argv[1]            # end-time ....................... string
 tf    = float(tf)*spy          # end-time ....................... s
@@ -146,9 +146,7 @@ a_i        = interpolate(Constant(1.0), V)            # initial age vector
 h          = Function(MV)                    # solution
 H,rho      = split(h)                        # solutions for H, rho
 h_1        = Function(MV)                    # previous solution
-h_2        = Function(MV)                    # 2nd previous solution
 H_1, rho_1 = split(h_1)                      # initial value functions
-H_2, rho_2 = split(h_2)                      # initial value functions
 
 dh         = TrialFunction(MV)               # trial function for solution
 dH, drho   = split(dh)                       # trial functions for H, rho
@@ -156,31 +154,26 @@ j          = TestFunction(MV)                # test function in mixed space
 psi, phi   = split(j)                        # test functions for H, rho
 
 a          = Function(V)                     # age solution / trial function
+da         = TrialFunction(V)                # trial function for age
 xi         = TestFunction(V)                 # age test function
 a_1        = Function(V)                     # previous age solution
-a_2        = Function(V)                     # 2nd previous age solution
 
 h_0 = project(as_vector([H_i,rho_i]), MV)    # project inital values on space
 h.vector().set_local(h_0.vector().array())   # initalize H, rho in solution
 h_1.vector().set_local(h_0.vector().array()) # initalize H, rho in prev. sol
-h_2.vector().set_local(h_0.vector().array()) # initalize H, rho in prev. prev.
 
 a.vector().set_local(a_i.vector().array())   # initialize age in solution
 a_1.vector().set_local(a_i.vector().array()) # initialize age in prev. sol
-a_2.vector().set_local(a_i.vector().array()) # initialize age in prev. sol
 
 #===============================================================================
 # Define equations to be solved :
 w         = - acc / rho                                # vertical velocity 
-w_1       = - acc / rho_1                              # vertical velocity 
 #c         = interpolate(Constant(cp), V)              # c constant
 c         = (152.5 + sqrt(152.5**2 + 4*7.122*H)) / 2   # Patterson 1994
 #k         = 9.828*exp(-0.0057*T)                      # Aschwanden 2012
 k         = 2.1*(rho / rhoi)**2                        # Arthern 2008
 Tcoef     = interpolate(Constant(1.0), V)
 T         = Tcoef * H / c
-T_1       = Tcoef * H_1 / c
-
 Kcoef     = interpolate(Constant(1.0),  V)
 
 # SUPG method :        
@@ -189,47 +182,39 @@ cellh     = CellSize(mesh)
 xihat     = xi + cellh/(2*vnorm)*dot(w, grad(xi))
 phihat    = phi + cellh/(2*vnorm)*dot(w, grad(phi))
 
+# Taylor-Galerkin upwinding :
+#xihat     = xi + dt/2.*w*grad(xi)
+
 # age residual :
-theta     = 1.000
-a_H       = (a_2 - 4*a_1 + 3*a)/(2*dt) * xi*dx + \
-            theta * (w*grad(a) - 1) * xihat*dx + \
-            (1 - theta) * (w_1*grad(a_1) - 1) * xihat*dx
-
-#a_H       = (w*grad(a) - 1) * xihat*dx
-
-#a_mid     = 0.5*(a + a_1)
-#a_H       = (a_2 - 4*a_1 + 3*a)/(2*dt) * xi*dx + \
-#            (w*grad(a_mid) - 1) * xihat*dx 
+# theta scheme (1=Backwards-Euler, 0.667=Galerkin, 0.878=Liniger, 
+#               0.5=Crank-Nicolson, 0=Forward-Euler) :
+theta     = 0.5 
+a_mid     = theta*a + (1-theta)*a_1
+f_a       = (a - a_1)/dt*xi*dx + w*grad(a_mid)*xihat*dx - 1.*xihat*dx
 
 # enthalpy residual :
-f_H       = rho*(H_2 - 4*H_1 + 3*H)/(2*dt)*psi*dx + \
-            k/c*Kcoef*inner(grad(H), grad(psi))*dx + \
-            rho*w*grad(H)*psi*dx
+H_mid     = theta*H + (1 - theta)*H_1
+f_H       = rho*(H - H_1)/(dt)*psi*dx + \
+            k/c*Kcoef*inner(grad(H_mid), grad(psi))*dx + \
+            rho*w*grad(H_mid)*psi*dx
 
 # total derivative drhodt from Arthern 2010 :
 rhoCoef   = interpolate(Constant(kcHh), V)
 drhodt    = (acc*g*rhoCoef/kg)*exp( -Ec/(R*T) + Eg/(R*Tavg) )*(rhoi - rho)
-drho_1dt  = (acc*g*rhoCoef/kg)*exp( -Ec/(R*T_1) + Eg/(R*Tavg) )*(rhoi - rho_1)
-
-# material derivative :        second difference :
-#  dr   pr     pr               pr   r_{k-2} - 4*r_{k-1} + 3*r_{k}
-#  -- = -- + w --               -- = -----------------------------
-#  dt   pt     pz               pt                dt
-#f_rho     = ((rho-rho_0)/dt - (drhodt - w*grad(rho)))*phi*dx
-
-# theta scheme (1=Backwards-Euler, 0.667=Galerkin, 0.878=Liniger, 
-#               0.5=Crank-Nicolson, 0=Forward-Euler) :
-theta     = 1.000
 
 # density residual :
-f_rho     = (rho_2 - 4*rho_1 + 3*rho)/(2*dt)*phi*dx - \
-            theta*(drhodt - w*grad(rho))*phihat*dx - \
-            (1-theta)*(drho_1dt - w_1*grad(rho_1))*phihat*dx
+# material derivative :
+#  dr   pr     pr
+#  -- = -- + w --
+#  dt   pt     pz
+rho_mid   = theta*rho + (1 - theta)*rho_1
+f_rho     = (rho - rho_1)/(dt)*phi*dx - \
+            (drhodt - w*grad(rho_mid))*phihat*dx 
 
 # equation to be minimzed :
 f         = f_H + f_rho
-df        = derivative(f, h, dh) # jacobian
-
+df        = derivative(f, h, dh)   # temp/density jacobian
+df_a      = derivative(f_a, a, da) # age jacobian
 
 #===============================================================================
 # initialize data structures :
@@ -246,10 +231,8 @@ def set_ini_conv():
   h_0 = project(as_vector([H_i,rho_i]), MV)    # project inital values on space
   h.vector().set_local(h_0.vector().array())   # initalize T, rho in solution
   h_1.vector().set_local(h_0.vector().array()) # initalize T, rho in prev. sol
-  h_2.vector().set_local(h_0.vector().array()) # initalize T, rho in prev. sol
   #a.vector().set_local(ain)
   #a_1.vector().set_local(ain)
-  #a_2.vector().set_local(ain)
   return zs_0
 
 zs_0 = set_ini_conv()
@@ -265,9 +248,9 @@ wplot   = project(w, V).vector().array()
 kplot   = project(k, V).vector().array()
 cplot   = project(c, V).vector().array()
 
-#plt.ion()   # interactive mode on
+plt.ion()   # interactive mode on
 firn = firn(hplot, tplot, rhoplot, aplot, omega, wplot, kplot, cplot, z, index)
-#plot = plot(firn)
+plot = plot(firn)
 
 
 #===============================================================================
@@ -281,7 +264,7 @@ while t <= tf:
   solve(f == 0, h, [Hbc, Dbc], J=df)
 
   # solve for age :
-  solve(a_H == 0, a, ageBc)
+  solve(f_a == 0, a, ageBc)
 
   # find vector of T, rho :
   firn.H   = project(H, V).vector().array()
@@ -385,13 +368,11 @@ while t <= tf:
   firn.Ts  = firn.H[-1] / firn.c[-1]
 
   # update the plotting parameters :
-  #plot.update_plot(firn, t/spy)
+  plot.update_plot(firn, t/spy)
 
   # update model parameters :
   t += dt
-  h_2.assign(h_1)
   h_1.assign(h)
-  a_2.assign(a_1)
   a_1.assign(a)
   zs_0 = firn.z[-1]
   
@@ -412,20 +393,20 @@ while t <= tf:
   #rhoS.dp = dnew/ltop
   #rhoS.Ts = firn.T[-1]
 
-  #plt.draw()  # update the graph
+  plt.draw()  # update the graph
 
 #plot.update_plot(firn, t/spy)
 #plt.draw()
-#plt.ioff()
-#plt.show()
+plt.ioff()
+plt.show()
 
-savetxt('data/enthalpy/a.txt', firn.a)
-savetxt('data/enthalpy/z.txt', firn.z)
-savetxt('data/enthalpy/rho.txt', firn.rho)
-savetxt('data/enthalpy/l.txt', l)
+#savetxt('data/enthalpy/a.txt', firn.a)
+#savetxt('data/enthalpy/z.txt', firn.z)
+#savetxt('data/enthalpy/rho.txt', firn.rho)
+#savetxt('data/enthalpy/l.txt', l)
 
 # plot the surface height trend :
 x = linspace(0, t/spy, len(ht))
-#plot.plot_height(x, ht, origHt)
+plot.plot_height(x, ht, origHt)
 
 
