@@ -12,6 +12,7 @@ import numpy as np
 from dolfin import *
 from scipy.interpolate import interp1d
 from plotFmic import *
+from fmicData import *
 import sys
 
 
@@ -25,7 +26,8 @@ rhoi  = 917.                   # density of ice ................. kg/m^3
 rhosi = 360.                   # initial density at surface ..... kg/m^3
 rhow  = 1000.                  # density of water ............... kg/m^3
 rhom  = 550.                   # density at 15 m ................ kg/m^3
-acc   = 91.7 / spy             # surface accumulation ........... kg/(m^2 s)
+adot  = 0.1                    # accumulation rate .............. m/a
+acc   = rhoi * adot / spy      # surface accumulation ........... kg/(m^2 s)
 A     = spy*acc/rhosi*1e3      # surface accumulation ........... mm/a
 Va    = 6.64                   # mean annual wind speed ......... m/s
 ki    = 2.1                    # thermal conductivity of ice .... W/(m K)
@@ -47,7 +49,7 @@ zs_0  = zs                     # previous time-step surface ..... m
 zb    = 0.                     # depth .......................... m
 dz    = (zs - zb)/n            # initial z-spacing .............. m
 l     = dz*ones(n+1)           # height vector .................. m
-dt    = 100.0*spy                # time-step ...................... s
+dt    = 1.0*spy                # time-step ...................... s
 t0    = 0.0                    # begin time ..................... s
 tf    = sys.argv[1]            # end-time ....................... string
 tf    = float(tf)*spy          # end-time ....................... s
@@ -66,6 +68,10 @@ mesh  = IntervalMesh(n, zb, zs)
 z     = mesh.coordinates()[:,0]              # initial z-coord
 
 def refine_mesh(mesh, z, l, dz, i, m):
+  """
+  splits the mesh 10 times.
+
+  """
   
   if m > 10 :
     return z, l, mesh
@@ -167,6 +173,7 @@ a_1.vector().set_local(a_i.vector().array()) # initialize age in prev. sol
 
 #===============================================================================
 # Define equations to be solved :
+acc       = interpolate(Constant(rhoi * adot / spy), V)
 w         = - acc / rho                                # vertical velocity 
 #c         = interpolate(Constant(cp), V)              # c constant
 c         = (152.5 + sqrt(152.5**2 + 4*7.122*H)) / 2   # Patterson 1994
@@ -179,11 +186,11 @@ Kcoef     = interpolate(Constant(1.0),  V)
 # SUPG method :        
 vnorm     = sqrt(dot(w, w) + 1e-10)
 cellh     = CellSize(mesh)
-xihat     = xi + cellh/(2*vnorm)*dot(w, grad(xi))
+#xihat     = xi + cellh/(2*vnorm)*dot(w, grad(xi))
 phihat    = phi + cellh/(2*vnorm)*dot(w, grad(phi))
 
 # Taylor-Galerkin upwinding :
-#xihat     = xi + dt/2.*w*grad(xi)
+xihat     = xi + dt/2.*w*grad(xi)
 
 # age residual :
 # theta scheme (1=Backwards-Euler, 0.667=Galerkin, 0.878=Liniger, 
@@ -193,8 +200,9 @@ a_mid     = theta*a + (1-theta)*a_1
 f_a       = (a - a_1)/dt*xi*dx + w*grad(a_mid)*xihat*dx - 1.*xihat*dx
 
 # enthalpy residual :
+theta     = 0.5
 H_mid     = theta*H + (1 - theta)*H_1
-f_H       = rho*(H - H_1)/(dt)*psi*dx + \
+f_H       = rho*(H - H_1)/dt*psi*dx + \
             k/c*Kcoef*inner(grad(H_mid), grad(psi))*dx + \
             rho*w*grad(H_mid)*psi*dx
 
@@ -207,8 +215,9 @@ drhodt    = (acc*g*rhoCoef/kg)*exp( -Ec/(R*T) + Eg/(R*Tavg) )*(rhoi - rho)
 #  dr   pr     pr
 #  -- = -- + w --
 #  dt   pt     pz
+theta     = 1.0
 rho_mid   = theta*rho + (1 - theta)*rho_1
-f_rho     = (rho - rho_1)/(dt)*phi*dx - \
+f_rho     = (rho - rho_1)/dt*phi*dx - \
             (drhodt - w*grad(rho_mid))*phihat*dx 
 
 # equation to be minimzed :
@@ -238,10 +247,11 @@ def set_ini_conv():
 zs_0 = set_ini_conv()
 
 # find vector of T, rho :
-hplot   = project(H, V).vector().array()
-tplot   = project(T, V).vector().array()
-rhoplot = project(rho, V).vector().array()
-aplot   = a.vector().array()
+hplot      = project(H, V).vector().array()
+tplot      = project(T, V).vector().array()
+rhoplot    = project(rho, V).vector().array()
+drhodtplot = project(drhodt, V).vector().array()
+aplot      = a.vector().array()
 
 # calculate other data :
 wplot   = project(w, V).vector().array()
@@ -249,8 +259,10 @@ kplot   = project(k, V).vector().array()
 cplot   = project(c, V).vector().array()
 
 plt.ion()   # interactive mode on
-firn = firn(hplot, tplot, rhoplot, aplot, omega, wplot, kplot, cplot, z, index)
+firn = firn(hplot, tplot, rhoplot, drhodtplot, aplot, 
+            omega, wplot, kplot, cplot, z, index)
 plot = plot(firn)
+fmic = FmicData(firn.a, firn.z, firn.rho, firn.T, firn.drhodt, por, rho815)
 
 
 #===============================================================================
@@ -267,10 +279,10 @@ while t <= tf:
   solve(f_a == 0, a, ageBc)
 
   # find vector of T, rho :
-  firn.H   = project(H, V).vector().array()
-  firn.rho = project(rho, V).vector().array()
-  firn.a   = a.vector().array()
-  print t/spy, '\t', min(firn.a)/spy, '\t', max(firn.a)/spy
+  firn.H      = project(H, V).vector().array()
+  firn.rho    = project(rho, V).vector().array()
+  firn.drhodt = project(drhodt, V).vector().array()
+  firn.a      = a.vector().array()
 
   # calculate other data :
   firn.w   = project(w, V).vector().array()  # m s^-1
@@ -290,13 +302,7 @@ while t <= tf:
   if t == 0.0:
     firn.origZ = firn.z[-1]
     zs_0       = firn.z[-1]
-  #if t >= 10 * spy:
-  #  Hs.Tavg = Tw - 10.0
-  #if t > 25 * spy:
-  #  Hs.Tavg = Tw - 5.0
-  #if t > 35 * spy:
-  #  Hs.Tavg = Tw - 10.0
-
+  
   # track the current height of the firn :
   ht.append(firn.z[-1])
   
@@ -370,11 +376,52 @@ while t <= tf:
   # update the plotting parameters :
   plot.update_plot(firn, t/spy)
 
+  # update fmic data :
+  #if t % 1 == 0:
+  #  por    = 
+  #  rho815 = 
+  #  fmic.append_815(t, firn)
+  
+  elif t < 100.0 * spy and t % 10 == 0:
+    fmic.append_state(t, firn)
+
+  elif t == 100.0 * spy:
+    Hs.Tavg = Tw - 45.0
+
+  elif t > 100.0 * spy and t < 150.0 * spy and t % 1 == 0:
+    fmic.append_state(t, firn)
+    
+  elif t >= 150.0 * spy and t < 250.0 * spy and t % 5 == 0:
+    fmic.append_state(t, firn)
+
+  elif t >= 250.0 * spy and t <= 2000.0 * spy and t % 10 == 0:
+    fmic.append_state(t, firn)
+  
+  #if t >= 100 * spy and t <= 101 * spy:
+  #  Hs.Tavg = Tw - 35.0
+  #if t >= 100 * spy and t <= 101 * spy:
+  #  Hs.Tavg = Tw - 25.0
+  
+  # vary the accumulation :
+  #if t >= 100 * spy and t <= 101 * spy:
+  #  adot = 0.20
+  #  accNew = ones(n)*(rhoi * adot / spy)
+  #  acc.vector().set_local(accNew)
+  #if t >= 100 * spy and t <= 101 * spy:
+  #  adot = 0.20
+  #  accNew = ones(n)*(rhoi * adot / spy)
+  #  acc.vector().set_local(accNew)
+  #if t >= 100 * spy and t <= 101 * spy:
+  #  adot = 0.30
+  #  accNew = ones(n)*(rhoi * adot / spy)
+  #  acc.vector().set_local(accNew)
+
   # update model parameters :
   t += dt
   h_1.assign(h)
   a_1.assign(a)
   zs_0 = firn.z[-1]
+  print t/spy, '\t', min(firn.a)/spy, '\t', max(firn.a)/spy
   
   # update boundary conditions :
   Hs.t      = t
@@ -395,15 +442,8 @@ while t <= tf:
 
   plt.draw()  # update the graph
 
-#plot.update_plot(firn, t/spy)
-#plt.draw()
 plt.ioff()
 plt.show()
-
-#savetxt('data/enthalpy/a.txt', firn.a)
-#savetxt('data/enthalpy/z.txt', firn.z)
-#savetxt('data/enthalpy/rho.txt', firn.rho)
-#savetxt('data/enthalpy/l.txt', l)
 
 # plot the surface height trend :
 x = linspace(0, t/spy, len(ht))

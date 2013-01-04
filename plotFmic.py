@@ -35,22 +35,26 @@ class firn():
   """
   Data structure to hold firn model state data.
   """
-  def __init__(self, H, T, rho, a, omega, w, k, c, z, index):
+  def __init__(self, H, T, rho, drhodt, rho815, a, 
+               por, omega, w, k, c, z, index):
 
-    self.H     = H
-    self.T     = T 
-    self.rho   = rho
-    self.a     = a
-    self.omega = omega
-    self.w     = w
-    self.k     = k
-    self.c     = c
-    self.z     = z[index]
-    self.index = index
-    self.zb    = z[index][0]
-    self.zs    = z[index][-1]
-    self.origZ = self.zs
-    self.Ts    = H[-1] / c[-1]
+    self.H      = H
+    self.T      = T 
+    self.rho    = rho
+    self.drhodt = drhodt
+    self.rho815 = rho815
+    self.a      = a
+    self.por    = por
+    self.omega  = omega
+    self.w      = w
+    self.k      = k
+    self.c      = c
+    self.z      = z[index]
+    self.index  = index
+    self.zb     = z[index][0]
+    self.zs     = z[index][-1]
+    self.origZ  = self.zs
+    self.Ts     = H[-1] / c[-1]
 
 
 class plot():
