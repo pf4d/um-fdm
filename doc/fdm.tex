@@ -215,33 +215,53 @@ Here we have integrated the enthalpy equation over the entire domain, $\Omega$, 
   $$
     - \int_{\Omega} {\rho \frac{\partial H}{\partial t}} \psi\ d \Omega.
   $$
-We can discretize the enthalpy time-differential with the second-order accurate backward-difference formula
-  $$\frac{\partial H}{\partial t} = \frac{H^{k-2} - 4H^{k-1} + 3H^k}{2dt},$$
-with superscripts referring to time index.  This equation can be represented in FEniCS as:\par
+We can discretize the enthalpy time-differential with the second-order accurate formula
+  $$\frac{\partial H}{\partial t} = \frac{H - H^{k-1}}{\Delta t} = \theta H^{k}  + (1-\theta) H^{k-1}$$
+with superscripts referring to time index.  Using a $\theta$-scheme as given by \emph{Logg et al.} [2011], $H_{mid} = \theta H^{k}  + (1-\theta) H^{k-1}$, where $\theta \in [0,1]$ is a weighting factor choosen from: 
+  $$
+    \theta = 
+    \begin{cases}
+      1,       & \text{Backwards-Euler}\\
+      0.667,   & \text{Galerkin}\\
+      0.878,   & \text{Liniger}\\
+      0.5,     & \text{Crank-Nicolson}\\
+      0,       & \text{Forward-Euler}\\
+    \end{cases}
+  $$
+The entire enthaply residual can be represented in FEniCS as:\par
 \footnotesize
 \begin{alltt}
-f_H = rho*(H_2 - 4*H_1 + 3*H)/(2*dt)*psi*dx
-      + k/c*Kcoef*inner(grad(H), grad(psi))*dx
-      + rho*w*grad(H)*psi*dx
+theta = 0.5
+H_mid = theta*H + (1 - theta)*H_1
+f_H   = rho*(H - H_1)/dt*psi*dx + 
+        k/c*Kcoef*
+        inner(grad(H_mid), grad(psi))*dx + 
+        rho*w*grad(H_mid)*psi*dx
 \end{alltt}
 \normalsize
 The variable \texttt{Kcoef} is a coefficient vector which will be updated dynamically depending on the temperature of firn (either $1.0$ or $0.1$ corresponding to $K_i$ and $K_0$).
 
-The weak form for density is found similarly:
+The weak form for density is found similarly, with a upwinding necessarry to elimiate artifacts due to the sudden increase in density where ice lenses formed.  The method used here is the Streamline Upwind Petrov-Galerkin (SUPG) method:
+  $$
+    \hat{\phi} = \phi + \frac{h}{2||w||} w \cdot \nabla{\phi},
+  $$
+where $h$ is the cellsize.  The density residual after integration by parts becomes:
   $$
   f_{\rho} = 
     \int_{\Omega} \frac{\partial \rho}{\partial t}\phi\ d \Omega + 
-    \int_{\Omega} w\nabla \rho \phi\ d \Omega -
-    \int_{\Omega}\frac{d \rho}{dt}\phi\ d \Omega.
+    \int_{\Omega} w\nabla \rho \hat{\phi}\ d \Omega -
+    \int_{\Omega}\frac{d \rho}{dt}\hat{\phi}\ d \Omega.
   $$
 With the partial-time differential of density defined identically to the enthalpy equation, this can be represented in FEniCS including the \emph{Arthern et al.} [2010] densification equation as:\par
 \footnotesize
 \begin{alltt}
-c      = b*g*rhoCoef/kg * 
-         exp(-Ec/(R*T) + Eg/(R*Tavg))
-drhodt = c*(rhoi - rho)
-f_rho  = ((rho_2 - 4*rho_1 + 3*rho)/(2*dt) 
-         - drhodt + w*grad(rho))*phi*dx 
+c       = b*g*rhoCoef/kg * 
+          exp(-Ec/(R*T) + Eg/(R*Tavg))
+drhodt  = c*(rhoi - rho)
+theta   = 1.0
+rho_mid = theta*rho + (1 - theta)*rho_1
+f_rho   = (rho - rho_1)/dt*phi*dx - 
+          (drhodt - w*grad(rho_mid))*phihat*dx
 \end{alltt}
 \normalsize
 The variable \texttt{rhoCoef} is another dynamically-updated-coefficient vector and is either $k_{c0}$ or $k_{c1}$ depending upon the density at the node.
@@ -420,7 +440,6 @@ $E_g$ & \SI{42.4e3} & J mol\sups{-1} & act. energy for grain growth\\
 \normalsize\\
 \end{center}
 
-\newpage
 \noindent Variables used by the model can be specified to suit simulation requirements:\\
 
 \noindent\textbf{Model Specific :}
@@ -465,7 +484,6 @@ Testing with real-world temperature and accumulation data-sets is required to va
 
 Above the ice lens in Figure 2 you will see numerical distortion: this is caused by the sudden rise in density where the lens begins.  This distortion is a source of inaccuracies and needs also to be corrected.
 
-\newpage
 %% Current Work ================================================================
 \section{Work in Progress}
 At its current state of development the model does not take into account water transport through the firn column, describable with the Darcy flow equations:
@@ -483,13 +501,13 @@ which may be used with the expression for permeability from \emph{Bozhinskiy \& 
     k = k_0 \exp(m \phi)\left( \frac{S - S_0}{\phi - S_0} \right)^2,
   $$
 where $S$ is the relative water content and $k$ \& $m$ are empirical constants.
+\newpage
 
 
 %% Conclusion ==================================================================
 \section{Concluding Remarks}
 This model is a good start towards accurately modeling the densification of firn: it uses the work of many established models and has the potential to expand;  The simulation is able to assimilate data easily, is mathematically easy to interpret, and runs efficiently.  This subject is a worthy candidate for further study.  
 
-\newpage 
 \begin{figure}[H]
 	\centering
 		\includegraphics[width=0.42\textwidth]{images/40yrDen.png}
@@ -510,7 +528,7 @@ This model is a good start towards accurately modeling the densification of firn
 \begin{thebibliography}{1}
 
   \bibitem{asch12}Aschwanden, A., Bueler, E., Khroulev, C., and Blatter, H. 2012. An enthalpy formulation for glaciers and ice sheets. \textit{J. Glaciol.} \textbf{58}(209), 441\mbox{-}457.
-  \bibitem{pat94}Paterson, W.S.B. 1994. \textit{The physics of glaciers}, 3rd edn. Elsevier, Oxford
+  \bibitem{pat94}Paterson, W.S.B. 1994. \textit{The physics of glaciers}, 3rd edn. Elsevier, Oxford.
   \bibitem{arth10}Arthern, R.J., Vaughan, D.G., Rankin, A.M., Mulvaney, R., and Thomas, E.R. 2010. In situ measurements of Antarctic snow compaction compared with predictions of models. \textit{J. Geophys. Res., 115}, FO3011, doi:10.1029/2009JF001306.
   \bibitem{reeh08}Reeh, N. 2008. A nonsteady\mbox{-}state firn\mbox{-}densification model for the percolation zone of a glacier. \textit{J. Geophys. Res., 113}, F03023, doi:10.1029/2007JF000746.
   \bibitem{zwa02}Zwally, H. and J. Li. 2002. Seasonal and interannual variations of firn densification and ice\mbox{-}sheet surface elevation at the Greenland summit. \textit{J. Glaciol.} \textbf{48}(161), 199\mbox{-}207.
@@ -519,6 +537,7 @@ This model is a good start towards accurately modeling the densification of firn
   \bibitem{herr80}Herron, M. and Langway, C. 1980. Firn densification: an empirical model. \textit{J. Glaciol.} \textbf{25}(93), 373\mbox{-}385.
   \bibitem{wald02}Waldner, P.A., Schneebeli, M., Schultze \mbox{-} Zimmermann, U., and Fl\"{u}hler, H. 2002. Effect of snow structure on water flow and solute transport. \textit{Hydrol. Process.}, DOI: 10.1002/hyp.1401
   \bibitem{bozh89}Bozhinskiy, A.N. and Krass, M.S. 1989. A mathematical model of snowmelt and water percolation processes in snow and firn. \textit{Snow Cover and Glacier Variations}. IAHS publ. no. 183.
+  \bibitem{logg11}Logg, A., Mardal, K., and Wells, G.N. 2011. \textit{Automated Solution of Differential Equations by the Finite Element Method}, The FEniCS Project.
 \end{thebibliography}
 
 \end{document}
