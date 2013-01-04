@@ -166,7 +166,7 @@ where
   $$\rho_{\dot{b}}^{n+1} = \rho_{\dot{b}}^{n-1} + \Delta \omega_s \rho_{\dot{b}}^n,$$
   $$\Delta \omega_s = \omega_s^{n} - \omega_s^{n-1},$$ 
   $$d_p = \frac{d_n}{l_s},$$
-  $$d_n = w_sdt,\text{ and}$$
+  $$d_n = w_s\Delta t,\text{ and}$$
   \begin{center}$l_s$ is the length of the surface node.\end{center}
 If $T_s \geq T_w$, the density of surface snow while taking into account re-freezing is simulated making
   $$
@@ -378,7 +378,7 @@ mesh.coordinates()[:,0][index] = firn.z
 The variable \texttt{index} is an array of positions corresponding to the correct ordering of the nodes, necessary after mesh refinement.  
 
 The height $s$ at time index $n$ of the original surface may be calculated as follows:
-  $$s^{n} = (z_s^0 - z_b) \frac{s^{n-1} - z_b}{z_s^{n-1} - z_b} + w_s dt.$$
+  $$s^{n} = (z_s^0 - z_b) \frac{s^{n-1} - z_b}{z_s^{n-1} - z_b} + w_s \Delta t.$$
 This maintains the relative location of the original surface to the current surface and moves downward proportional to $w$.  This is accomplished in Python with\par
 \footnotesize
 \begin{alltt}
@@ -402,13 +402,13 @@ firn(H, T, rho, omega, w, k, c, z, index)
 \normalsize
 with \texttt{z} the node z-positions as defined above, \texttt{index} the index of re-ordered mesh locations, and all other variables as described earlier in the paper.
 
-The variables for accumulation and surface temperature are the main driving forces in the simulation, and data from a specific site may be used in the model by interpolating the data in increments of $dt$ and inserting the values into the equations.  This may be accomplished with the \texttt{set\_local(n)} method of the \texttt{vector} class, which takes as input a NumPy array \texttt{n} with indexes corresponding to node positions within the \texttt{mesh} object.  If the variable is used in the surface boundary condition, this may be updated within the FEniCS \texttt{Expression} object with the dot operator.
+The variables for accumulation and surface temperature are the main driving forces in the simulation, and data from a specific site may be used in the model by interpolating the data in increments of $\Delta t$ and inserting the values into the equations.  This may be accomplished with the \texttt{set\_local(n)} method of the \texttt{vector} class, which takes as input a NumPy array \texttt{n} with indexes corresponding to node positions within the \texttt{mesh} object.  If the variable is used in the surface boundary condition, this may be updated within the FEniCS \texttt{Expression} object with the dot operator.
 
 A function has been provided (\texttt{set\_ini\_conv}) which initializes the density to a previously derived density.  The density may also be initialized to a set of real-world data if desired, and is demonstrated in the temperature equation model, \texttt{objModel.py}.
 
 The \texttt{plot.py} file contains the class \texttt{firn} and the previously undescribed \texttt{plot} class.  This class uses the plotting package MatPlotLib to display the data contained in the \texttt{firn} object.  The method \texttt{plot\_all\_height()} plots the height history for a group of simulations and is useful for comparing the effects of model parameters. 
 
-Another version of \texttt{enthModel}, the main simulation class, has been created which uses collected data for density and surface temperature.  When using this version, it is important to make $dt$ less than or equal to the time interval of recorded events so all data points are included. 
+Another version of \texttt{enthModel}, the main simulation class, has been created which uses collected data for density and surface temperature.  When using this version, it is important to make $\Delta t$ less than or equal to the time interval of recorded events so all data points are included. 
 
 
 %% Variable Definition =========================================================
@@ -463,7 +463,7 @@ $z_b$ & m & firn base z-location\\
 $z_{s0}$ & m & previous time-step's surface\\
 $dz$ & m & initial z-spacing\\
 $l$ & m & vector of node heights\\
-$dt$ & s & time-step\\
+$\Delta t$ & s & time-step\\
 $t_0$ & s & begin time\\
 $t_f$ & s & end-time\\
 \hline
@@ -475,7 +475,7 @@ $t_f$ & s & end-time\\
 %% Verification ================================================================
 \section{Verification of Program}
 
-A converging run of the program was done quickly by making $dt$ equal $spy$: this has the effect of producing a steady-state solution.  After the density-profile converged the data was saved to a text file in the \texttt{data} folder.  The script was run again with the average surface air temperature $T_{avg}$ made so   that the surface temperature peaks at $8\degree$ C if $t < 10$ years, and $0\degree$ C if $t \geq 10$ years. This has the effect of halting any melting and refreezing after this time period.  For this run the method \texttt{set\_ini\_conv} was called to initialize the previous runs data and $dt$ was set to $0.0025*spy$; the results are shown in Figures 2 and 3.
+A converging run of the program was done quickly by making $\Delta t$ equal $spy$: this has the effect of producing a steady-state solution.  After the density-profile converged the data was saved to a text file in the \texttt{data} folder.  The script was run again with the average surface air temperature $T_{avg}$ made so   that the surface temperature peaks at $8\degree$ C if $t < 10$ years, and $0\degree$ C if $t \geq 10$ years. This has the effect of halting any melting and refreezing after this time period.  For this run the method \texttt{set\_ini\_conv} was called to initialize the previous runs data and $\Delta t$ was set to $0.0025*spy$; the results are shown in Figures 2 and 3.
 
 
 %% Interpretation ==============================================================
