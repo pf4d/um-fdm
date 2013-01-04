@@ -255,6 +255,9 @@ where $h$ is the cellsize.  The density residual after integration by parts beco
 With the partial-time differential of density defined identically to the enthalpy equation, this can be represented in FEniCS including the \emph{Arthern et al.} [2010] densification equation as:\par
 \footnotesize
 \begin{alltt}
+vnorm   = sqrt(dot(w, w) + 1e-10)
+cellh   = CellSize(mesh)
+phihat  = phi + cellh/(2*vnorm)*dot(w, grad(phi))
 c       = b*g*rhoCoef/kg * 
           exp(-Ec/(R*T) + Eg/(R*Tavg))
 drhodt  = c*(rhoi - rho)
