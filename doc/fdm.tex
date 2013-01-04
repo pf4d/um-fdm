@@ -297,7 +297,7 @@ psi, phi = split(j)
 \normalsize
 The variable \texttt{zb} is the z-position of the base of the firn column which does not change and \texttt{n} is the number of nodes; the \texttt{mesh} variable defines the spacial dimensions of the system to be solved and is here created in one dimension.  The mesh may also be created in three dimensions if desired, or made to fit a custom grid.  The variables \texttt{dH} and \texttt{drho} are the trial functions for the enthalpy and density functions and are not utilized in this code, but are included for reference later on.
 
-We define the entire function as 
+We define the entire residual as 
   $$
     f = f_H + f_{\rho}.
   $$
