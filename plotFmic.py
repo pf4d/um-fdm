@@ -70,6 +70,7 @@ class plot():
     # x-values :
     T      = firn.T
     rho    = firn.rho
+    w      = firn.w * self.spy * 1e2 # cm/a
     a      = firn.a/self.spy
     Ts     = firn.Ts - 273.15
 
@@ -92,15 +93,20 @@ class plot():
     rhoMin = 300                                  # rho x-coord min
     rhoMax = 1000                                 # rho x-coord max
     #rhoh   = rhoMin + 0.1*(rhoMax - rhoMin) / 2  # rho height x-coord
+    
+    wMin   = -28
+    wMax   = 0
+    wh     = wMin + 0.1*(wMax - wMin) / 2
 
     aMin   = 0.0
     aMax   = 10000.0
     #kh     = kMin + 0.1*(kMax - kMin) / 2
 
-    self.fig   = plt.figure(figsize=(11,6))
-    self.Tax   = self.fig.add_subplot(131)
-    self.rhoax = self.fig.add_subplot(132)
-    self.aax   = self.fig.add_subplot(133)
+    self.fig   = plt.figure(figsize=(15,6))
+    self.Tax   = self.fig.add_subplot(141)
+    self.rhoax = self.fig.add_subplot(142)
+    self.wax   = self.fig.add_subplot(143)
+    self.aax   = self.fig.add_subplot(144)
 
     # format : [xmin, xmax, ymin, ymax]
     self.Tax.axis([Tmin, Tmax, zmin, zmax])
@@ -108,6 +114,8 @@ class plot():
     self.rhoax.axis([rhoMin, rhoMax, zmin, zmax])
     self.rhoax.grid()
     self.rhoax.xaxis.set_major_formatter(FixedOrderFormatter(2))
+    self.wax.axis([wMin, wMax, zmin, zmax])
+    self.wax.grid()
     self.aax.axis([aMin, aMax, zmin, zmax])
     self.aax.xaxis.set_major_formatter(FixedOrderFormatter(3))
     self.aax.grid()
@@ -124,8 +132,13 @@ class plot():
     #self.phrhoS_0,= self.rhoax.plot(rhoh, origZ, 'ko')
     #self.phrhoSp, = self.rhoax.plot(rhoh*np.ones(len(z)), z, 'r+')
 
+    self.phw,     = self.wax.plot(w, z, '0.3', lw=1.2)
+    self.phwS,    = self.wax.plot([wMin, wMax], [zs, zs], 'k-', lw=2)
+    #self.phws_0,  = self.wax.plot(wh, origZ, 'ko')
+    #self.phwsp,   = self.wax.plot(wh*np.ones(len(z)), z, 'r+')
+    
     self.pha,     = self.aax.plot(a, z, '0.3', lw=1.2)
-    self.phas,    = self.aax.plot([aMin, aMax], [zs, zs], 'k-', lw=2)
+    self.phaS,    = self.aax.plot([aMin, aMax], [zs, zs], 'k-', lw=2)
     #self.phks_0,  = self.kax.plot(kh, origZ, 'ko')
     #self.phksp,   = self.kax.plot(kh*np.ones(len(z)), z, 'r+')
 
@@ -134,13 +147,16 @@ class plot():
 
     self.Tax.set_title('Temperature')
     self.Tax.set_xlabel(r'$T\ [\degree \mathrm{C}]$')
-    self.Tax.set_ylabel(r'Depth [m]')
+    self.Tax.set_ylabel('Depth [m]')
 
     self.rhoax.set_title('Density')
     self.rhoax.set_xlabel(r'$\rho\ \left[\frac{\mathrm{kg}}{\mathrm{m}^3}\right]$')
+    
+    self.wax.set_title('Velocity')
+    self.wax.set_xlabel(r'$w\ \left[\frac{\mathrm{cm}}{\mathrm{a}}\right]$')
 
     self.aax.set_title('Age')
-    self.aax.set_xlabel('$a\ [\mathrm{a}]$')
+    self.aax.set_xlabel(r'$a\ [\mathrm{a}]$')
     
 
   def update_plot(self, firn, t):
@@ -149,6 +165,7 @@ class plot():
     """    
     T     = firn.T
     rho   = firn.rho
+    w     = firn.w * self.spy * 1e2
     a     = firn.a/self.spy
     z     = firn.z
     origZ = firn.origZ
@@ -166,10 +183,14 @@ class plot():
     self.phrho.set_xdata(rho)
     self.phrho.set_ydata(z)
     self.phrhoS.set_ydata(z[-1])
+    
+    self.phw.set_xdata(w)
+    self.phw.set_ydata(z)
+    self.phwS.set_ydata(z[-1])
    
     self.pha.set_xdata(a)
     self.pha.set_ydata(z)
-    self.phas.set_ydata(z[-1])
+    self.phaS.set_ydata(z[-1])
     
 
   def plot_all(self, firns, titles, colors):

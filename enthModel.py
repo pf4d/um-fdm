@@ -23,13 +23,13 @@ g     = 9.81                   # gravitational acceleration ..... m/s^2
 R     = 8.3144621              # gas constant ................... J/(mol K)
 spy   = 31556926.0             # seconds per year ............... s/a
 rhoi  = 917.                   # density of ice ................. kg/m^3
-rhosi = 360.                   # initial density at surface ..... kg/m^3
+rhos  = 360.                   # initial density at surface ..... kg/m^3
 rhoin = rhoi                   # initial density of column ...... kg/m^3
 rhow  = 1000.                  # density of water ............... kg/m^3
 rhom  = 550.                   # density at 15 m ................ kg/m^3
-adot  = 0.1                    # accumulation rate .............. m/a
+adot  = 0.02                   # accumulation rate .............. m/a
 acc   = rhoi * adot / spy      # surface accumulation ........... kg/(m^2 s)
-A     = spy*acc/rhosi*1e3      # surface accumulation ........... mm/a
+A     = spy*acc/rhos*1e3       # surface accumulation ........... mm/a
 Va    = 6.64                   # mean annual wind speed ......... m/s
 ki    = 2.1                    # thermal conductivity of ice .... W/(m K)
 Tw    = 273.15                 # triple point water ............. degrees K
@@ -50,7 +50,7 @@ zs_0  = zs                     # previous time-step surface ..... m
 zb    = 0.                     # depth .......................... m
 dz    = (zs - zb)/n            # initial z-spacing .............. m
 l     = dz*ones(n+1)           # height vector .................. m
-dt    = 1.0*spy                # time-step ...................... s
+dt    = 10.0*spy                # time-step ...................... s
 t0    = 0.0                    # begin time ..................... s
 tf    = sys.argv[1]            # end-time ....................... string
 tf    = float(tf)*spy          # end-time ....................... s
@@ -74,7 +74,7 @@ def refine_mesh(mesh, z, l, dz, i, m):
 
   """
   
-  if m > 10 :
+  if m > 5 :
     return z, l, mesh
   
   else :
@@ -109,7 +109,7 @@ age    = zeros(n)                             # initial age
 
 # create function spaces :
 V      = FunctionSpace(mesh, 'Lagrange', 1)   # function space for rho, T
-MV     = V*V                                  # mixed function space
+MV     = MixedFunctionSpace([V, V, V])        # mixed function space
 
 # enthalpy surface condition with cyclical 2-meter air temperature :
 #code   = 'c*( (Tavg + 10.0*(sin(2*omega*t) + 0.3*sin(4*omega*t)))  - T0 )'
@@ -120,13 +120,17 @@ Hs     = Expression(code, c=cp, Tavg=Tavg, omega=pi/spy, t=t0, T0=T0)
 
 # experimental surface density :
 #code   = 'dp*rhon + (1 - dp)*rhoi'
-#rhoS   = Expression(code, rhon=rhosi, rhoi=rhoi, dp=1e-3)
+#rhoS   = Expression(code, rhon=rhos, rhoi=rhoi, dp=1e-3)
 
 # constant surface density :
-rhoS   = Expression('rhon', rhon=rhosi)
+rhoS   = Expression('rhon', rhon=rhos)
 
 # surface age is always 0 :
 ageS   = Constant(0.0)
+
+# velocity of surface :
+code   = '- rhoi * adot / spy / rhos'
+wS     = Expression(code, rhoi=rhoi, adot=adot, spy=spy, rhos=rhos)
 
 # define the Dirichlet boundarys :
 def surface(x, on_boundary):
@@ -135,8 +139,9 @@ def surface(x, on_boundary):
 def base(x, on_boundary):
   return on_boundary and x[0] == zb
 
-Hbc   = DirichletBC(MV.sub(0), Hs, surface)      # enthalpy of surface
+Hbc   = DirichletBC(MV.sub(0), Hs,   surface)    # enthalpy of surface
 Dbc   = DirichletBC(MV.sub(1), rhoS, surface)    # density of surface
+wbc   = DirichletBC(MV.sub(2), wS,   surface)    # velocity of surface
 ageBc = DirichletBC(V,         ageS, surface)    # age of surface
 
 
@@ -145,36 +150,34 @@ ageBc = DirichletBC(V,         ageS, surface)    # age of surface
 H_i        = interpolate(Constant(cp*(Tavg - T0)), V) # initial enthalpy vector
 rho_i      = interpolate(Constant(rhoin[0]), V)       # initial density vector
 a_i        = interpolate(Constant(1.0), V)            # initial age vector
+w_i        = interpolate(Constant(-adot/spy), V)      # initial age vector
 
-h          = Function(MV)                    # solution
-H,rho      = split(h)                        # solutions for H, rho
-h_1        = Function(MV)                    # previous solution
-H_1, rho_1 = split(h_1)                      # initial value functions
+h               = Function(MV)                # solution
+H, rho, w       = split(h)                    # solutions for H, rho
+h_1             = Function(MV)                # previous solution
+H_1, rho_1, w_1 = split(h_1)                  # initial value functions
 
-dh         = TrialFunction(MV)               # trial function for solution
-dH, drho   = split(dh)                       # trial functions for H, rho
-j          = TestFunction(MV)                # test function in mixed space
-psi, phi   = split(j)                        # test functions for H, rho
+dh              = TrialFunction(MV)           # trial function for solution
+dH, drho, dw    = split(dh)                   # trial functions for H, rho
+j               = TestFunction(MV)            # test function in mixed space
+psi, phi, eta   = split(j)                    # test functions for H, rho
 
-a          = Function(V)                     # age solution / trial function
-da         = TrialFunction(V)                # trial function for age
-xi         = TestFunction(V)                 # age test function
-a_1        = Function(V)                     # previous age solution
+a          = Function(V)                      # age solution / trial function
+da         = TrialFunction(V)                 # trial function for age
+xi         = TestFunction(V)                  # age test function
+a_1        = Function(V)                      # previous age solution
 
-h_0 = project(as_vector([H_i,rho_i]), MV)    # project inital values on space
-h.vector().set_local(h_0.vector().array())   # initalize H, rho in solution
-h_1.vector().set_local(h_0.vector().array()) # initalize H, rho in prev. sol
+h_0 = project(as_vector([H_i,rho_i,w_i]), MV) # project inital values on space
+h.vector().set_local(h_0.vector().array())    # initalize H, rho in solution
+h_1.vector().set_local(h_0.vector().array())  # initalize H, rho in prev. sol
 
-a.vector().set_local(a_i.vector().array())   # initialize age in solution
-a_1.vector().set_local(a_i.vector().array()) # initialize age in prev. sol
+a.vector().set_local(a_i.vector().array())    # initialize age in solution
+a_1.vector().set_local(a_i.vector().array())  # initialize age in prev. sol
 
 #===============================================================================
 # Define equations to be solved :
 acc       = interpolate(Constant(rhoi * adot / spy), V)
-w         = - acc / rho                                # vertical velocity 
-#c         = interpolate(Constant(cp), V)              # c constant
 c         = (152.5 + sqrt(152.5**2 + 4*7.122*H)) / 2   # Patterson 1994
-#k         = 9.828*exp(-0.0057*T)                      # Aschwanden 2012
 k         = 2.1*(rho / rhoi)**2                        # Arthern 2008
 Tcoef     = interpolate(Constant(1.0), V)
 T         = Tcoef * H / c
@@ -183,11 +186,12 @@ Kcoef     = interpolate(Constant(1.0),  V)
 # SUPG method :        
 vnorm     = sqrt(dot(w, w) + 1e-10)
 cellh     = CellSize(mesh)
-#xihat     = xi + cellh/(2*vnorm)*dot(w, grad(xi))
+#xihat     = xi  + cellh/(2*vnorm)*dot(w, grad(xi))
 phihat    = phi + cellh/(2*vnorm)*dot(w, grad(phi))
 
 # Taylor-Galerkin upwinding :
-xihat     = xi + dt/2.*w*grad(xi)
+xihat     = xi  + dt/2 * w*grad(xi)
+etahat    = eta + dt/2 * w*grad(eta)
 
 # age residual :
 # theta scheme (1=Backwards-Euler, 0.667=Galerkin, 0.878=Liniger, 
@@ -203,10 +207,6 @@ f_H       = rho*(H - H_1)/dt*psi*dx + \
             k/c*Kcoef*inner(grad(H_mid), grad(psi))*dx + \
             rho*w*grad(H_mid)*psi*dx
 
-# total derivative drhodt from Arthern 2010 :
-rhoCoef   = interpolate(Constant(kcHh), V)
-drhodt    = (acc*g*rhoCoef/kg)*exp( -Ec/(R*T) + Eg/(R*Tavg) )*(rhoi - rho)
-
 # density residual :
 # material derivative :
 #  dr   pr     pr
@@ -214,11 +214,20 @@ drhodt    = (acc*g*rhoCoef/kg)*exp( -Ec/(R*T) + Eg/(R*Tavg) )*(rhoi - rho)
 #  dt   pt     pz
 theta     = 1.0
 rho_mid   = theta*rho + (1 - theta)*rho_1
+rhoCoef   = interpolate(Constant(kcHh), V)
+drhodt    = (acc*g*rhoCoef/kg)*exp( -Ec/(R*T) + Eg/(R*Tavg) )*(rhoi - rho)
 f_rho     = (rho - rho_1)/dt*phi*dx - \
             (drhodt - w*grad(rho_mid))*phihat*dx 
 
+# velocity residual :
+theta     = 1.0
+w_mid     = theta*w + (1 - theta)*w_1
+f_w       = (w - w_1)/dt*eta*dx + \
+            (1/rho)*drhodt*etahat*dx + \
+            grad(w_mid)*etahat*dx
+
 # equation to be minimzed :
-f         = f_H + f_rho
+f         = f_H + f_rho + f_w
 df        = derivative(f, h, dh)   # temp/density jacobian
 df_a      = derivative(f_a, a, da) # age jacobian
 
@@ -231,7 +240,6 @@ def set_ini_conv():
   zTemp   = genfromtxt("data/enthalpy/z.txt")
   ain     = genfromtxt("data/enthalpy/a.txt")
   zs_0    = zTemp[-1]
-  #mesh.coordinates()[:,0] = zTemp  FIXME why wouldn't this work?
 
   rho_i.vector().set_local(rhoin)
   h_0 = project(as_vector([H_i,rho_i]), MV)    # project inital values on space
@@ -241,7 +249,7 @@ def set_ini_conv():
   #a_1.vector().set_local(ain)
   return zs_0
 
-zs_0 = set_ini_conv()
+#zs_0 = set_ini_conv()
 
 # find vector of T, rho :
 hplot      = project(H, V).vector().array()
@@ -270,7 +278,7 @@ origHt = []
 set_log_active(False)
 while t <= tf:
   # newton's iterative method :
-  solve(f == 0, h, [Hbc, Dbc], J=df)
+  solve(f == 0, h, [Hbc, Dbc, wbc], J=df)
 
   # solve for age :
   solve(f_a == 0, a, ageBc)
@@ -286,14 +294,13 @@ while t <= tf:
   firn.k   = project(k, V).vector().array()  # Arthern 2008
 
   # calculate height of each interval (conservation of mass) :
-  lnew     = l*rhoin / firn.rho
-  zSum     = zb
-  zTemp    = zeros(n)
-  for i in range(n)[1:]:
-    zTemp[i] = zSum + lnew[i]
-    zSum    += lnew[i]
-  firn.z   = zTemp
-  mesh.coordinates()[:,0][index] = firn.z
+  #lnew     = l*rhoin / firn.rho
+  #zSum     = zb
+  #zTemp    = zeros(n)
+  #for i in range(n)[1:]:
+  #  zTemp[i] = zSum + lnew[i]
+  #  zSum    += lnew[i]
+  #firn.z   = zTemp
 
   # correct original height with initial surface conditions :
   if t == 0.0:
@@ -358,7 +365,8 @@ while t <= tf:
   # update the dolfin vectors :
   rho_i.vector().set_local(firn.rho)
   H_i.vector().set_local(Hnew)
-  h_0 = project(as_vector([H_i, rho_i]), MV)
+  w_i.vector().set_local(firn.w)
+  h_0 = project(as_vector([H_i, rho_i, w_i]), MV)
   h.vector().set_local(h_0.vector().array())
   Kcoef.vector().set_local(KcoefNew)  #FIXME: erratic 
   Tcoef.vector().set_local(TcoefNew)
@@ -400,10 +408,11 @@ while t <= tf:
   #  Hs.Tavg = Tw - 25.0
   
   # vary the accumulation :
-  if t >= 100 * spy and t <= 101 * spy:
-    adot = 0.20
+  if t >= 10000 * spy and t <= 10001 * spy:
+    adot = 0.07
     accNew = ones(n)*(rhoi * adot / spy)
-    acc.vector().set_local(accNew)
+    #acc.vector().set_local(accNew)
+    wS.adot = adot
   #if t >= 100 * spy and t <= 101 * spy:
   #  adot = 0.20
   #  accNew = ones(n)*(rhoi * adot / spy)
@@ -431,7 +440,7 @@ while t <= tf:
   #  else:
   #    rhoS.rhon = rhoS.rhon + domega[-1]*83.0
   #else:
-  #  rhoS.rhon = rhosi
+  #  rhoS.rhon = rhos
   #ltop      = lnew[-1]
   #dnew      = -firn.w[-1]*dt
   #rhoS.dp = dnew/ltop
