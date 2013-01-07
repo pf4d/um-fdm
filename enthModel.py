@@ -8,11 +8,11 @@ FEniCS solution to firn enthalpy / density profile.
 """
 
 from numpy import *
+from fmicData import *
 import numpy as np
 from dolfin import *
 from scipy.interpolate import interp1d
 from plotFmic import *
-from fmicData import *
 import sys
 
 
@@ -24,6 +24,7 @@ R     = 8.3144621              # gas constant ................... J/(mol K)
 spy   = 31556926.0             # seconds per year ............... s/a
 rhoi  = 917.                   # density of ice ................. kg/m^3
 rhosi = 360.                   # initial density at surface ..... kg/m^3
+rhoin = rhoi                   # initial density of column ...... kg/m^3
 rhow  = 1000.                  # density of water ............... kg/m^3
 rhom  = 550.                   # density at 15 m ................ kg/m^3
 adot  = 0.1                    # accumulation rate .............. m/a
@@ -102,7 +103,7 @@ z, l, mesh = refine_mesh(mesh, z, l, l[-1], 2, 1)
 
 index  = argsort(z)                           # index of updated mesh
 n      = len(l)                               # new number of nodes
-rhoin  = rhoi*ones(n)                         # initial density
+rhoin  = rhoin*ones(n)                        # initial density
 omega  = zeros(n)                             # water content percent
 age    = zeros(n)                             # initial age
 
@@ -116,10 +117,6 @@ MV     = V*V                                  # mixed function space
 
 code   = 'c*( Tavg - T0 )'
 Hs     = Expression(code, c=cp, Tavg=Tavg, omega=pi/spy, t=t0, T0=T0)
-
-# variable surface density by S.R.M. Ligtenberg et all 2011 :
-#code  = '-151.94 + 1.4266*(73.6 + 1.06*Ts + 0.0669*A + 4.77*Va)'
-#rhoS  = Expression(code, Ts=Tavg, A=A, Va=Va)
 
 # experimental surface density :
 #code   = 'dp*rhon + (1 - dp)*rhoi'
@@ -259,10 +256,10 @@ kplot   = project(k, V).vector().array()
 cplot   = project(c, V).vector().array()
 
 plt.ion()   # interactive mode on
-firn = firn(hplot, tplot, rhoplot, drhodtplot, aplot, 
-            omega, wplot, kplot, cplot, z, index)
+firn = firn(hplot, tplot, rhoplot, drhodtplot, 0, aplot, 
+            0, omega, wplot, kplot, cplot, z, index)
 plot = plot(firn)
-fmic = FmicData(firn.a, firn.z, firn.rho, firn.T, firn.drhodt, por, rho815)
+fmic = FmicData(firn)
 
 
 #===============================================================================
@@ -382,20 +379,20 @@ while t <= tf:
   #  rho815 = 
   #  fmic.append_815(t, firn)
   
-  elif t < 100.0 * spy and t % 10 == 0:
-    fmic.append_state(t, firn)
+  #elif t < 100.0 * spy and t % 10 == 0:
+  #  fmic.append_state(t, firn)
 
-  elif t == 100.0 * spy:
-    Hs.Tavg = Tw - 45.0
+  #elif t == 100.0 * spy:
+  #  Hs.Tavg = Tw - 45.0
 
-  elif t > 100.0 * spy and t < 150.0 * spy and t % 1 == 0:
-    fmic.append_state(t, firn)
+  #elif t > 100.0 * spy and t < 150.0 * spy and t % 1 == 0:
+  #  fmic.append_state(t, firn)
     
-  elif t >= 150.0 * spy and t < 250.0 * spy and t % 5 == 0:
-    fmic.append_state(t, firn)
+  #elif t >= 150.0 * spy and t < 250.0 * spy and t % 5 == 0:
+  #  fmic.append_state(t, firn)
 
-  elif t >= 250.0 * spy and t <= 2000.0 * spy and t % 10 == 0:
-    fmic.append_state(t, firn)
+  #elif t >= 250.0 * spy and t <= 2000.0 * spy and t % 10 == 0:
+  #  fmic.append_state(t, firn)
   
   #if t >= 100 * spy and t <= 101 * spy:
   #  Hs.Tavg = Tw - 35.0
@@ -403,10 +400,10 @@ while t <= tf:
   #  Hs.Tavg = Tw - 25.0
   
   # vary the accumulation :
-  #if t >= 100 * spy and t <= 101 * spy:
-  #  adot = 0.20
-  #  accNew = ones(n)*(rhoi * adot / spy)
-  #  acc.vector().set_local(accNew)
+  if t >= 100 * spy and t <= 101 * spy:
+    adot = 0.20
+    accNew = ones(n)*(rhoi * adot / spy)
+    acc.vector().set_local(accNew)
   #if t >= 100 * spy and t <= 101 * spy:
   #  adot = 0.20
   #  accNew = ones(n)*(rhoi * adot / spy)
