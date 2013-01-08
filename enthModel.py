@@ -27,6 +27,7 @@ rhos  = 360.                   # initial density at surface ..... kg/m^3
 rhoin = rhoi                   # initial density of column ...... kg/m^3
 rhow  = 1000.                  # density of water ............... kg/m^3
 rhom  = 550.                   # density at 15 m ................ kg/m^3
+rhoc  = 815.                   # density at critical value ...... kg/m^3
 adot  = 0.02                   # accumulation rate .............. m/a
 acc   = rhoi * adot / spy      # surface accumulation ........... kg/(m^2 s)
 A     = spy*acc/rhos*1e3       # surface accumulation ........... mm/a
@@ -40,7 +41,7 @@ Ec    = 60e3                   # act. energy for water in ice ... J/mol
 Eg    = 42.4e3                 # act. energy for grain growth ... J/mol
 
 # model variables :
-n     = 10                     # num of z-positions
+n     = 75                     # num of z-positions
 freq  = 2*pi/spy               # frequency of earth rotations ... rad / s
 Tavg  = Tw - 50.0              # average temperature ............ degrees K
 cp    = 152.5 + 7.122*Tavg     # heat capacity of ice ........... J/(kg K)
@@ -68,13 +69,13 @@ omega = zeros(n+1)
 mesh  = IntervalMesh(n, zb, zs)
 z     = mesh.coordinates()[:,0]              # initial z-coord
 
-def refine_mesh(mesh, z, l, dz, i, m):
+def refine_mesh(mesh, z, l, divs, dz, i, m):
   """
   splits the mesh 10 times.
 
   """
   
-  if m > 5 :
+  if m > divs :
     return z, l, mesh
   
   else :
@@ -96,10 +97,10 @@ def refine_mesh(mesh, z, l, dz, i, m):
     l      = l[:-numNew]                          # remove split heights
     l      = append(l, dz/2 * ones(numNew * 2))   # append new split heights
     
-    return refine_mesh(mesh, z, l, l[-1], i*1.15, m+1)
+    return refine_mesh(mesh, z, l, divs, l[-1], i*1.25, m+1)
 
 
-z, l, mesh = refine_mesh(mesh, z, l, l[-1], 2, 1)
+z, l, mesh = refine_mesh(mesh, z, l, 0, l[-1], 1.5, 1)
 
 index  = argsort(z)                           # index of updated mesh
 n      = len(l)                               # new number of nodes
@@ -128,8 +129,8 @@ rhoS   = Expression('rhon', rhon=rhos)
 # surface age is always 0 :
 ageS   = Constant(0.0)
 
-# velocity of surface :
-code   = '- rhoi * adot / spy / rhos'
+# velocity of surface (-acc / rhos) :
+code   = '- (rhoi * adot / spy) / rhos'
 wS     = Expression(code, rhoi=rhoi, adot=adot, spy=spy, rhos=rhos)
 
 # define the Dirichlet boundarys :
@@ -150,7 +151,7 @@ ageBc = DirichletBC(V,         ageS, surface)    # age of surface
 H_i        = interpolate(Constant(cp*(Tavg - T0)), V) # initial enthalpy vector
 rho_i      = interpolate(Constant(rhoin[0]), V)       # initial density vector
 a_i        = interpolate(Constant(1.0), V)            # initial age vector
-w_i        = interpolate(Constant(-adot/spy), V)      # initial age vector
+w_i        = interpolate(Constant(acc), V)            # initial velocity vector
 
 h               = Function(MV)                # solution
 H, rho, w       = split(h)                    # solutions for H, rho
@@ -183,21 +184,13 @@ Tcoef     = interpolate(Constant(1.0), V)
 T         = Tcoef * H / c
 Kcoef     = interpolate(Constant(1.0),  V)
 
-# SUPG method :        
-vnorm     = sqrt(dot(w, w) + 1e-10)
-cellh     = CellSize(mesh)
-xihat     = xi  + cellh/(2*vnorm)*dot(w, grad(xi))
-phihat    = phi + cellh/(2*vnorm)*dot(w, grad(phi))
-etahat    = eta + cellh/(2*vnorm)*dot(w, grad(eta))
-
-# Taylor-Galerkin upwinding :
-xihat     = xi  + dt/2 * w*grad(xi)
-#etahat    = eta + dt/2 * w*grad(eta)
-
 # age residual :
 # theta scheme (1=Backwards-Euler, 0.667=Galerkin, 0.878=Liniger, 
 #               0.5=Crank-Nicolson, 0=Forward-Euler) :
-theta     = 1.0 
+# Taylor-Galerkin upwinding xihat :
+xihat     = xi  + dt/2 * w*grad(xi)
+
+theta     = 0.5 
 a_mid     = theta*a + (1-theta)*a_1
 f_a       = (a - a_1)/dt*xi*dx + w*grad(a_mid)*xihat*dx - 1.*xihat*dx
 
@@ -213,19 +206,22 @@ f_H       = rho*(H - H_1)/dt*psi*dx + \
 #  dr   pr     pr
 #  -- = -- + w --
 #  dt   pt     pz
+# SUPG method phihat :        
+vnorm     = sqrt(dot(w, w) + 1e-10)
+cellh     = CellSize(mesh)
+phihat    = phi + cellh/(2*vnorm)*dot(w, grad(phi))
+
 theta     = 1.0
 rho_mid   = theta*rho + (1 - theta)*rho_1
 rhoCoef   = interpolate(Constant(kcHh), V)
-drhodt    = (acc*g*rhoCoef/kg)*exp( -Ec/(R*T) + Eg/(R*Tavg) )*(rhoi - rho)
+drhodt    = (acc*g*rhoCoef/kg)*exp( -Ec/(R*T) + Eg/(R*Tavg) )*(rhoi - rho_mid)
 f_rho     = (rho - rho_1)/dt*phi*dx - \
             (drhodt - w*grad(rho_mid))*phihat*dx 
 
 # velocity residual :
 theta     = 1.0
 w_mid     = theta*w + (1 - theta)*w_1
-f_w       = (w - w_1)/dt*eta*dx + \
-            (1/rho)*drhodt*etahat*dx + \
-            grad(w_mid)*etahat*dx
+f_w       = rho*grad(w_mid)*eta*dx + drhodt*eta*dx
 
 # equation to be minimzed :
 f         = f_H + f_rho + f_w
@@ -238,19 +234,56 @@ df_a      = derivative(f_a, a, da) # age jacobian
 # load initialization data :
 def set_ini_conv():
   rhoin   = genfromtxt("data/enthalpy/rho.txt")
+  win     = genfromtxt("data/enthalpy/w.txt")
   zTemp   = genfromtxt("data/enthalpy/z.txt")
   ain     = genfromtxt("data/enthalpy/a.txt")
   zs_0    = zTemp[-1]
 
   rho_i.vector().set_local(rhoin)
-  h_0 = project(as_vector([H_i,rho_i]), MV)    # project inital values on space
-  h.vector().set_local(h_0.vector().array())   # initalize T, rho in solution
-  h_1.vector().set_local(h_0.vector().array()) # initalize T, rho in prev. sol
-  #a.vector().set_local(ain)
-  #a_1.vector().set_local(ain)
+  w_i.vector().set_local(win)
+  h_0 = project(as_vector([H_i,rho_i,w_i]), MV) # project inital values on space
+  h.vector().set_local(h_0.vector().array())    # initalize T, rho in solution
+  h_1.vector().set_local(h_0.vector().array())  # initalize T, rho in prev. sol
+  a.vector().set_local(ain)
+  a_1.vector().set_local(ain)
   return zs_0
 
 #zs_0 = set_ini_conv()
+
+def calc_fmic_variables(firn):
+  """
+  porosity calculations
+  """
+  rho815p  = where(firn.rho >  rhoc)[0]
+  rho815m  = where(firn.rho <= rhoc)[0]
+  ia       = rho815m[-1]
+  ib       = rho815p[0]
+  
+  za       = firn.z[ia]
+  zb       = firn.z[ib]
+  ztot     = za - zb
+  
+  rhoa     = firn.rho[ia]
+  rhob     = firn.rho[ib]
+  
+  agea     = firn.a[ia]
+  ageb     = firn.a[ib]
+  agetot   = agea - ageb
+  
+  drhom    = rhoc - rhoa
+  drhop    = rhob - rhoc
+  drhotot  = rhob - rhoa
+
+  porAll   = sum(firn.rho/rhoi)
+  por815   = sum(firn.rho[rho815p]/rhoi) + drhom/rhoi
+  z815     = zb + ztot * (drhop/drhotot)
+  age815   = ageb + agetot * (drhop/drhotot)
+  
+  firn.porAll = porAll
+  firn.por815 = por815
+  firn.z815   = z815
+  firn.age815 = age815
+
 
 # find vector of T, rho :
 hplot      = project(H, V).vector().array()
@@ -264,9 +297,10 @@ wplot   = project(w, V).vector().array()
 kplot   = project(k, V).vector().array()
 cplot   = project(c, V).vector().array()
 
-plt.ion()   # interactive mode on
-firn = firn(hplot, tplot, rhoplot, drhodtplot, 0, aplot, 
-            0, omega, wplot, kplot, cplot, z, index)
+firn = firn(hplot, tplot, rhoplot, drhodtplot, 0, 0, 0, 0, 
+            aplot, omega, wplot, kplot, cplot, z, index)
+
+plt.ion() 
 plot = plot(firn)
 fmic = FmicData(firn)
 
@@ -277,7 +311,7 @@ t      = 0.0
 ht     = []
 origHt = []
 set_log_active(False)
-while t <= tf:
+while t <= tf - dt:
   # newton's iterative method :
   solve(f == 0, h, [Hbc, Dbc, wbc], J=df)
 
@@ -379,14 +413,21 @@ while t <= tf:
   firn.c   = project(c, V).vector().array()
   firn.Ts  = firn.H[-1] / firn.c[-1]
 
+  # update model parameters :
+  t += dt
+  h_1.assign(h)
+  a_1.assign(a)
+  zs_0 = firn.z[-1]
+  
   # update the plotting parameters :
   plot.update_plot(firn, t/spy)
 
+  # calculate the fmic data and update the firn object :
+  calc_fmic_variables(firn)
+
   # update fmic data :
-  #if t % 1 == 0:
-  #  por    = 
-  #  rho815 = 
-  #  fmic.append_815(t, firn)
+  if t % 1 == 0:
+    fmic.append_815(t/spy, firn)
   
   #elif t < 100.0 * spy and t % 10 == 0:
   #  fmic.append_state(t, firn)
@@ -409,11 +450,11 @@ while t <= tf:
   #  Hs.Tavg = Tw - 25.0
   
   # vary the accumulation :
-  #if t >= 1000 * spy and t <= 1001 * spy:
-    #adot = 0.07
-    #accNew = ones(n)*(rhoi * adot / spy)
+  if t >= 1000 * spy and t <= 1001 * spy:
+    adot = 0.07
+    accNew = ones(n)*(rhoi * adot / spy)
     #acc.vector().set_local(accNew)
-    #wS.adot = 0.07#adot
+    wS.adot = adot
   #if t >= 100 * spy and t <= 101 * spy:
   #  adot = 0.20
   #  accNew = ones(n)*(rhoi * adot / spy)
@@ -422,13 +463,6 @@ while t <= tf:
   #  adot = 0.30
   #  accNew = ones(n)*(rhoi * adot / spy)
   #  acc.vector().set_local(accNew)
-
-  # update model parameters :
-  t += dt
-  h_1.assign(h)
-  a_1.assign(a)
-  zs_0 = firn.z[-1]
-  print t/spy, '\t', min(firn.a)/spy, '\t', max(firn.a)/spy
   
   # update boundary conditions :
   Hs.t      = t
