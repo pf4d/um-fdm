@@ -186,17 +186,18 @@ Kcoef     = interpolate(Constant(1.0),  V)
 # SUPG method :        
 vnorm     = sqrt(dot(w, w) + 1e-10)
 cellh     = CellSize(mesh)
-#xihat     = xi  + cellh/(2*vnorm)*dot(w, grad(xi))
+xihat     = xi  + cellh/(2*vnorm)*dot(w, grad(xi))
 phihat    = phi + cellh/(2*vnorm)*dot(w, grad(phi))
+etahat    = eta + cellh/(2*vnorm)*dot(w, grad(eta))
 
 # Taylor-Galerkin upwinding :
 xihat     = xi  + dt/2 * w*grad(xi)
-etahat    = eta + dt/2 * w*grad(eta)
+#etahat    = eta + dt/2 * w*grad(eta)
 
 # age residual :
 # theta scheme (1=Backwards-Euler, 0.667=Galerkin, 0.878=Liniger, 
 #               0.5=Crank-Nicolson, 0=Forward-Euler) :
-theta     = 0.5 
+theta     = 1.0 
 a_mid     = theta*a + (1-theta)*a_1
 f_a       = (a - a_1)/dt*xi*dx + w*grad(a_mid)*xihat*dx - 1.*xihat*dx
 
@@ -408,11 +409,11 @@ while t <= tf:
   #  Hs.Tavg = Tw - 25.0
   
   # vary the accumulation :
-  if t >= 10000 * spy and t <= 10001 * spy:
-    adot = 0.07
-    accNew = ones(n)*(rhoi * adot / spy)
+  #if t >= 1000 * spy and t <= 1001 * spy:
+    #adot = 0.07
+    #accNew = ones(n)*(rhoi * adot / spy)
     #acc.vector().set_local(accNew)
-    wS.adot = adot
+    #wS.adot = 0.07#adot
   #if t >= 100 * spy and t <= 101 * spy:
   #  adot = 0.20
   #  accNew = ones(n)*(rhoi * adot / spy)
