@@ -41,7 +41,7 @@ Ec    = 60e3                   # act. energy for water in ice ... J/mol
 Eg    = 42.4e3                 # act. energy for grain growth ... J/mol
 
 # model variables :
-n     = 10                     # num of z-positions
+n     = 100                    # num of z-positions
 freq  = 2*pi/spy               # frequency of earth rotations ... rad / s
 Tavg  = Tw - 50.0              # average temperature ............ degrees K
 cp    = 152.5 + 7.122*Tavg     # heat capacity of ice ........... J/(kg K)
@@ -114,7 +114,7 @@ def refine_mesh(mesh, z, l, divs, dz, i, k,  m=1):
     return refine_mesh(mesh, z, l, divs, l[-1], i*k, k, m=m+1)
 
 
-z, l, mesh = refine_mesh(mesh, z, l, divs=4, dz=l[-1], i=1.5, k=1.05)
+#z, l, mesh = refine_mesh(mesh, z, l, divs=4, dz=l[-1], i=1.5, k=1.05)
 
 index  = argsort(z)                           # index of updated mesh
 n      = len(l)                               # new number of nodes
@@ -208,6 +208,9 @@ xihat     = xi  + dt/2 * w*grad(xi)
 theta     = 0.5 
 a_mid     = theta*a + (1-theta)*a_1
 f_a       = (a - a_1)/dt*xi*dx + w*grad(a_mid)*xihat*dx - 1.*xihat*dx
+f_a       = (a - a_1)/dt*xi*dx - 1.*xi*dx \
+                               + w*grad(a_mid)*xi*dx \
+                               + w*grad(a_mid)*dt/2*grad(w)*grad(xi)*dx
 
 # enthalpy residual :
 theta     = 0.5
@@ -396,7 +399,6 @@ while t <= tf - dt:
   firn.H   = project(H, V).vector().array()
   firn.T   = project(T, V).vector().array()
   firn.c   = project(c, V).vector().array()
-  firn.w   = project(w, V).vector().array()
   firn.Ts  = firn.H[-1] / firn.c[-1]
 
   # update model parameters :
@@ -404,7 +406,8 @@ while t <= tf - dt:
   h_1.assign(h)
   a_1.assign(a)
   zs_0 = firn.z[-1]
-  
+  print t/spy, min(firn.a)/spy, max(firn.a)/spy
+   
   # update the plotting parameters :
   plot.update_plot(firn, t/spy)
 

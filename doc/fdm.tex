@@ -79,6 +79,11 @@ The vertical velocity of ice $w$ can be described with the differential equation
   $$
   \frac{\partial w}{\partial z} = \frac{1}{\rho} \frac{d \rho}{dt}.
   $$
+
+
+%% Density =====================================================================
+\section{Density Solution}
+
 The densification process is defined with the material derivative
   $$\frac{d \rho}{dt} = \frac{\partial \rho}{\partial t} + 
     w\frac{\partial \rho}{\partial z}.$$
@@ -154,7 +159,7 @@ where $L_f$ is the latent heat of fusion and $\omega$ represents the water conte
   $$\omega L_f = H - c_i(T_w - T_0).$$
 Temperature may be derived from enthalpy easily:
   $$T = \frac{H}{c_i}.$$
-The densification equations remain the same as in the temperature solution, but the density of the firn column changes with the percentage of water content:
+The density of the firn column changes with the percentage of water content:
   $$
   \rho^n = 
   \begin{cases}
@@ -187,6 +192,71 @@ but when $T_s < T_w$, $\rho_{\dot{b}}^n$ is simply made to be $\rho_{si}$.
 	\label{fig:500 year orbit}
 	\caption{Evolution of surface node density}
 \end{figure}
+
+
+%% Age =========================================================================
+\section{Age Solution}
+
+The age of firn is described with the equation
+  $$
+  \frac{\partial a}{\partial t} = 1 - w \nabla{a}.
+  $$
+Because this equation is purely advective, upwinding is needed.  The Taylor series expansion of $w$ is
+  $$
+  a^{k+1} = a^{k} + \frac{\partial a^k}{\partial t}\Delta t + 
+            \frac{1}{2}\frac{\partial^2 a^{k+\theta}}{\partial t^2}\Delta t^2 + 
+            \mathrm{O} (\Delta t^3).
+  $$
+Replacing the time partials with the previous equation and eliminating the $\Delta t^3$ term, we have
+  $$
+  a^{k+1} = a^{k} + \left[1 - w \nabla{a}^k \right] \Delta t
+            - \frac{1}{2}\frac{\partial}{\partial t}
+              \left[1 - w \nabla{a}^{k+\theta} \right] \Delta t^2. 
+  $$
+Rearranging and simplifying,
+  $$
+  \frac{a^{k+1} - a^{k}}{\Delta t} = 1 - w \nabla{a}^k
+        - \frac{w \Delta t}{2} 
+          \left( \nabla \frac{\partial a^{k+\theta}}{\partial t} \right).
+  $$
+The time differential in the last term can again be replaced, 
+  $$
+  \frac{a^{k+1} - a^{k}}{\Delta t} = 1 - w \nabla{a}^k
+        - \frac{w \Delta t}{2} 
+          \left( \nabla [1 - w \nabla a^{k+\theta}] \right),
+  $$
+and reduced to
+  $$
+  \frac{a^{k+1} - a^{k}}{\Delta t} = 1 - w \nabla{a}^k
+        + \frac{w \Delta t}{2} 
+          \left( \nabla w \nabla^2 a^{k+\theta} \right).
+  $$
+With $\theta=0$ and factoring,
+  $$
+  \frac{a^{k+1} - a^{k}}{\Delta t} = 1 + w \nabla{a}^k 
+     \left(\frac{\Delta t}{2} \nabla w \nabla a^{k} - 1 \right).
+  $$
+Multiplying by the test function $\xi$ and integrating over $\Omega$ we have
+  $$
+  0 = \int_{\Omega} \frac{a^{k+1} - a^{k}}{\Delta t}\xi\ d\Omega - 
+      \int_{\Omega} 1\xi\ d\Omega +
+  $$
+  $$ 
+      \int_{\Omega} w \nabla{a}^k \xi\ d\Omega
+      - \int_{\Omega} \frac{w \Delta t}{2} 
+      \left( \nabla w \nabla^2 a^{k+\theta} \right)\xi\ d\Omega.
+  $$
+Integrating the last term by parts and disregarding the boundary term results in
+  $$
+  0 = \int_{\Omega} \frac{a^{k+1} - a^{k}}{\Delta t}\xi\ d\Omega - 
+      \int_{\Omega} 1\xi\ d\Omega
+  $$
+  $$ 
+  + \int_{\Omega} w \nabla{a}^k \xi\ d\Omega
+      + \int_{\Omega} \frac{w \Delta t}{2} 
+      \left( \nabla w \nabla a^{k+\theta} \right)\nabla \xi\ d\Omega.
+  $$
+
 
 %% Method ======================================================================
 \section{Finite Element Method}
