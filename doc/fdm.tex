@@ -66,16 +66,20 @@ and
   \frac{\partial k_i}{\partial T} = 
     \frac{4.2}{\rho_i^2} \left( \frac{\partial \rho}{\partial T} \right).
   $$
-\emph{Patterson} [2001] defined $\rho$ in terms of $T$ and from this can be derived
+\emph{Patterson} [2001] defined the heat capacity $c_i$ of firn with the equation
+  $$
+  c_i = 152.5 + 7.122 T,
+  $$
+and also defined $\rho$ in terms of $T$ which leads to the equation:
   $$
   \frac{\partial \rho}{\partial T} = 
     (\SI{5.6e-2}) \exp ((\SI{-5.7e-3})T).
   $$
-The vertical velocity of ice, $w$, is directly proportional to the accumulation, $\dot{b}$,
+The vertical velocity of ice $w$ can be described with the differential equation
   $$
-  w = -\frac{\dot{b}}{\rho}
+  \frac{\partial w}{\partial z} = \frac{1}{\rho} \frac{d \rho}{dt}.
   $$
-with $\dot{b}$ in units of kg m\sups{-2} s\sups{-1}.  The densification process is defined with the material derivative
+The densification process is defined with the material derivative
   $$\frac{d \rho}{dt} = \frac{\partial \rho}{\partial t} + 
     w\frac{\partial \rho}{\partial z}.$$
 \emph{Arthern et al.} [2010] described this derivative differently for density values above and below a critical value, $\rho_m$:  
@@ -91,7 +95,7 @@ with $\dot{b}$ in units of kg m\sups{-2} s\sups{-1}.  The densification process 
   \dot{b} \beta(T)\left(\frac{\rho_i}{\rho_w}\right)
   K_{0G}(T)\exp \left( -\frac{E(T)}{RT} \right),
   $$
-with $K_{0G}(T) \exp(-E(T)/(RT)) = 8.36T^{-2.061}$ as described in \emph{Reeh} [2008], and $\beta(T)$ a smoothing function to match a desired density rate.  \emph{Arthern et al} [2010] developed a semi-empirical formula by coupling the rate equations for Nabarro-Herring creep and normal grain-growth: 
+with $K_{0G}(T) \exp(-E(T)/(RT)) = 8.36T^{-2.061}$ as described in \emph{Reeh} [2008], accumulation rate $\dot{b}$ in units of kg m\sups{-2} s\sups{-1}, and $\beta(T)$ a unit-less smoothing function to match a desired density rate.  \emph{Arthern et al} [2010] developed a semi-empirical formula by coupling the rate equations for Nabarro-Herring creep and normal grain-growth: 
   $$
   \begin{cases}
     c_0 = M_0 \dot{b}g\frac{k_{c0}}{k_g}\exp\left(-\frac{E_c}{RT} + 
@@ -217,7 +221,7 @@ Here we have integrated the enthalpy equation over the entire domain, $\Omega$, 
   $$
 We can discretize the enthalpy time-differential with the second-order accurate formula
   $$\frac{\partial H}{\partial t} = \frac{H - H^{k-1}}{\Delta t} = \theta H^{k}  + (1-\theta) H^{k-1}$$
-with superscripts referring to time index.  Using a $\theta$-scheme as given by \emph{Logg et al.} [2011], $H_{mid} = \theta H^{k}  + (1-\theta) H^{k-1}$, where $\theta \in [0,1]$ is a weighting factor choosen from: 
+with superscripts referring to time index.  Using a $\theta$-scheme as given by \emph{Logg et al.} [2011], $H_{mid} = \theta H^{k}  + (1-\theta) H^{k-1}$, where $\theta \in [0,1]$ is a weighting factor chosen from: 
   $$
     \theta = 
     \begin{cases}
@@ -228,7 +232,7 @@ with superscripts referring to time index.  Using a $\theta$-scheme as given by 
       0,       & \text{Forward-Euler}\\
     \end{cases}
   $$
-The entire enthaply residual can be represented in FEniCS as:\par
+The entire enthalpy residual can be represented in FEniCS as:\par
 \footnotesize
 \begin{alltt}
 theta = 0.5
@@ -241,7 +245,7 @@ f_H   = rho*(H - H_1)/dt*psi*dx +
 \normalsize
 The variable \texttt{Kcoef} is a coefficient vector which will be updated dynamically depending on the temperature of firn (either $1.0$ or $0.1$ corresponding to $K_i$ and $K_0$).
 
-The weak form for density is found similarly, with a upwinding necessarry to elimiate artifacts due to the sudden increase in density where ice lenses formed.  The method used here is the Streamline Upwind Petrov-Galerkin (SUPG) method:
+The weak form for density is found similarly, with a upwinding necessary to eliminate artifacts due to the sudden increase in density where ice lenses formed.  The method used here is the Streamline Upwind Petrov-Galerkin (SUPG) method:
   $$
     \hat{\phi} = \phi + \frac{h}{2||w||} w \cdot \nabla{\phi},
   $$
@@ -267,48 +271,64 @@ f_rho   = (rho - rho_1)/dt*phi*dx -
           (drhodt - w*grad(rho_mid))*phihat*dx
 \end{alltt}
 \normalsize
-The variable \texttt{rhoCoef} is another dynamically-updated-coefficient vector and is either $k_{c0}$ or $k_{c1}$ depending upon the density at the node.
+The variable \texttt{rhoCoef} is another dynamically-updated-coefficient vector and is either $k_{c0}$ or $k_{c1}$ depending upon the density at the node.  We have chosen $\theta = 1$ corresponding to the Backwards-Euler method due to the jump condition at $\rho_m$.
+
+In order to find the vertical velocity the differential equation must be solved.  The weak formulation is:
+  $$
+  f_{w} = 
+    \int_{\Omega} \rho \nabla{w} \eta\ d\Omega + \frac{d\rho}{dt} \eta\ d\Omega,
+  $$
+and is created with FEniCS by:
+\footnotesize
+\begin{alltt}
+theta     = 1.0
+w_mid     = theta*w + (1 - theta)*w_1
+f_w       = rho*grad(w_mid)*eta*dx + drhodt*eta*dx
+\end{alltt}
+\normalsize
+We chose $\theta=1$ again due to the jump discontinuity at $\rho_m$.
+
 
 We can define the function space for the entire non-linear problem as 
   $$
-    U = \Omega \times \Omega,
+    U = \Omega \times \Omega \times \Omega,
   $$
 with corresponding trial and test functions respectively defined as
   $$
-    v, u \subset U.
+    d_h, j \subset U.
   $$
 The test functions for each function can now be described as
   $$
-    \psi, \phi \subset u.
+    \psi, \phi, \eta \subset j.
   $$
 In FEniCS these spaces can be defined by this:
 \footnotesize
 \begin{alltt}
-mesh     = Interval(n, zb, zs)
-V        = FunctionSpace(mesh, 'Lagrange', 1)
-MV       = V*V
-h        = Function(MV)
-H,rho    = split(h)    
-dh       = TrialFunction(MV)
-dH, drho = split(dh)
-j        = TestFunction(MV)
-psi, phi = split(j)
+mesh        = IntervalMesh(n, zb, zs)
+V           = FunctionSpace(mesh, 'Lagrange', 1)
+MV          = MixedFunctionSpace([V, V, V])
+h           = Function(MV)
+H,rho,w     = split(h)    
+dh          = TrialFunction(MV)
+dH,drho,dw  = split(dh)
+j           = TestFunction(MV)
+psi,phi,eta = split(j)
 \end{alltt}
 \normalsize
 The variable \texttt{zb} is the z-position of the base of the firn column which does not change and \texttt{n} is the number of nodes; the \texttt{mesh} variable defines the spacial dimensions of the system to be solved and is here created in one dimension.  The mesh may also be created in three dimensions if desired, or made to fit a custom grid.  The variables \texttt{dH} and \texttt{drho} are the trial functions for the enthalpy and density functions and are not utilized in this code, but are included for reference later on.
 
-We define the entire residual as 
+We define the complete non-linear residual as 
   $$
-    f = f_H + f_{\rho}.
+    f = f_H + f_{\rho} + f_w.
   $$
 Solving this system can be accomplished with \emph{Newton's Method} which requires derivation of the Jacobian:
   $$
-    J = \frac{\partial f}{\partial v}.
+    J = \frac{\partial f}{\partial d_h}.
   $$
 In FEniCS this is done with:
 \footnotesize
 \begin{alltt}
-f  = f_H + f_rho
+f  = f_H + f_rho + f_w
 J  = derivative(f, h, dh)
 \end{alltt}
 \normalsize
@@ -493,7 +513,7 @@ At its current state of development the model does not take into account water t
   $$
     q = \frac{-k}{\mu}\nabla P, \ \  v = \frac{q}{\phi},
   $$
-where $k$ is permeability, $\mu =$ \SI{1.787e-3} Pa$\cdot$s is the viscosity of water at $0\degree$ C, $\nabla P$ is the pressure gradient vector, and $\phi = \rho/\rho_i$ is porosity.
+where $k$ is permeability, $\mu =$ \SI{1.787e-3} Pa$\cdot$s is the viscosity of water at $0\degree$ C, $\nabla P$ is the pressure gradient vector, and $\phi = 1- \rho/\rho_i$ is porosity.
 
 \emph{Waldner et al.} [2002] introduces this issue and provides references to numerous models which simulate this phenomenon.  \emph{Coleou et al.} [1998] supplies an equation for the irreducible water content of snow
   $$
@@ -504,7 +524,6 @@ which may be used with the expression for permeability from \emph{Bozhinskiy \& 
     k = k_0 \exp(m \phi)\left( \frac{S - S_0}{\phi - S_0} \right)^2,
   $$
 where $S$ is the relative water content and $k$ \& $m$ are empirical constants.
-\newpage
 
 
 %% Conclusion ==================================================================

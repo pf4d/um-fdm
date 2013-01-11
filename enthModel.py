@@ -28,7 +28,7 @@ rhoin = rhoi                   # initial density of column ...... kg/m^3
 rhow  = 1000.                  # density of water ............... kg/m^3
 rhom  = 550.                   # density at 15 m ................ kg/m^3
 rhoc  = 815.                   # density at critical value ...... kg/m^3
-adot  = 0.02                   # accumulation rate .............. m/a
+adot  = 0.10                   # accumulation rate .............. m/a
 acc   = rhoi * adot / spy      # surface accumulation ........... kg/(m^2 s)
 A     = spy*acc/rhos*1e3       # surface accumulation ........... mm/a
 Va    = 6.64                   # mean annual wind speed ......... m/s
@@ -41,17 +41,17 @@ Ec    = 60e3                   # act. energy for water in ice ... J/mol
 Eg    = 42.4e3                 # act. energy for grain growth ... J/mol
 
 # model variables :
-n     = 75                     # num of z-positions
+n     = 10                     # num of z-positions
 freq  = 2*pi/spy               # frequency of earth rotations ... rad / s
 Tavg  = Tw - 50.0              # average temperature ............ degrees K
 cp    = 152.5 + 7.122*Tavg     # heat capacity of ice ........... J/(kg K)
-#cp    = 2009.                 # constant heat capacitity of .... J/(kg K)
+cpi   = 2009.                  # const. heat capacitity of ice .. J/(kg K)
 zs    = 1000.                  # surface start .................. m
 zs_0  = zs                     # previous time-step surface ..... m
 zb    = 0.                     # depth .......................... m
 dz    = (zs - zb)/n            # initial z-spacing .............. m
 l     = dz*ones(n+1)           # height vector .................. m
-dt    = 10.0*spy                # time-step ...................... s
+dt    = 10.0*spy               # time-step ...................... s
 t0    = 0.0                    # begin time ..................... s
 tf    = sys.argv[1]            # end-time ....................... string
 tf    = float(tf)*spy          # end-time ....................... s
@@ -65,13 +65,27 @@ omega = zeros(n+1)
 
 
 #===============================================================================
-# create mesh and define function space :
+# create mesh :
 mesh  = IntervalMesh(n, zb, zs)
-z     = mesh.coordinates()[:,0]              # initial z-coord
+z     = mesh.coordinates()[:,0]
 
-def refine_mesh(mesh, z, l, divs, dz, i, m):
+def refine_mesh(mesh, z, l, divs, dz, i, k,  m=1):
   """
-  splits the mesh 10 times.
+  splits the mesh a given number of times.
+
+  INPUTS:
+    mesh - mesh to refine
+    z    - z coordinates of mesh
+    l    - cell height vector
+    divs - number of times to split mesh
+    dz   - cell size of surface node
+    i    - fraction of the mesh from the surface to split
+    k    - multiple to increase i by each step to reduce the distance from the
+           surface to split
+    m    - counter used to keep track of calls
+  OUTPUTS:
+   tuple (z, l, mesh) - refined z-coordinates, cell height vector, and mesh 
+                        respectively
 
   """
   
@@ -97,10 +111,10 @@ def refine_mesh(mesh, z, l, divs, dz, i, m):
     l      = l[:-numNew]                          # remove split heights
     l      = append(l, dz/2 * ones(numNew * 2))   # append new split heights
     
-    return refine_mesh(mesh, z, l, divs, l[-1], i*1.25, m+1)
+    return refine_mesh(mesh, z, l, divs, l[-1], i*k, k, m=m+1)
 
 
-z, l, mesh = refine_mesh(mesh, z, l, 0, l[-1], 1.5, 1)
+z, l, mesh = refine_mesh(mesh, z, l, divs=4, dz=l[-1], i=1.5, k=1.05)
 
 index  = argsort(z)                           # index of updated mesh
 n      = len(l)                               # new number of nodes
@@ -113,9 +127,10 @@ V      = FunctionSpace(mesh, 'Lagrange', 1)   # function space for rho, T
 MV     = MixedFunctionSpace([V, V, V])        # mixed function space
 
 # enthalpy surface condition with cyclical 2-meter air temperature :
-#code   = 'c*( (Tavg + 10.0*(sin(2*omega*t) + 0.3*sin(4*omega*t)))  - T0 )'
-#Hs     = Expression(code, c=cp, Tavg=Tavg, omega=pi/spy, t=t0, T0=T0)
+code   = 'c*( (Tavg + 10.0*(cos(2*omega*t) + 0.3*cos(4*omega*t)))  - T0 )'
+Hs     = Expression(code, c=cp, Tavg=Tavg, omega=pi/spy, t=t0, T0=T0)
 
+# simplified enthalpy surface condition :
 code   = 'c*( Tavg - T0 )'
 Hs     = Expression(code, c=cp, Tavg=Tavg, omega=pi/spy, t=t0, T0=T0)
 
@@ -233,13 +248,18 @@ df_a      = derivative(f_a, a, da) # age jacobian
 
 # load initialization data :
 def set_ini_conv():
+  """
+  sets the firn model's initial state based on files in data/enthalpy folder.
+  """
   rhoin   = genfromtxt("data/enthalpy/rho.txt")
   win     = genfromtxt("data/enthalpy/w.txt")
   zTemp   = genfromtxt("data/enthalpy/z.txt")
   ain     = genfromtxt("data/enthalpy/a.txt")
+  Hin     = genfromtxt("data/enthalpy/H.txt")
   zs_0    = zTemp[-1]
 
   rho_i.vector().set_local(rhoin)
+  H_i.vector().set_local(Hin)
   w_i.vector().set_local(win)
   h_0 = project(as_vector([H_i,rho_i,w_i]), MV) # project inital values on space
   h.vector().set_local(h_0.vector().array())    # initalize T, rho in solution
@@ -249,41 +269,6 @@ def set_ini_conv():
   return zs_0
 
 #zs_0 = set_ini_conv()
-
-def calc_fmic_variables(firn):
-  """
-  porosity calculations
-  """
-  rho815p  = where(firn.rho >  rhoc)[0]
-  rho815m  = where(firn.rho <= rhoc)[0]
-  ia       = rho815m[-1]
-  ib       = rho815p[0]
-  
-  za       = firn.z[ia]
-  zb       = firn.z[ib]
-  ztot     = za - zb
-  
-  rhoa     = firn.rho[ia]
-  rhob     = firn.rho[ib]
-  
-  agea     = firn.a[ia]
-  ageb     = firn.a[ib]
-  agetot   = agea - ageb
-  
-  drhom    = rhoc - rhoa
-  drhop    = rhob - rhoc
-  drhotot  = rhob - rhoa
-
-  porAll   = sum(firn.rho/rhoi)
-  por815   = sum(firn.rho[rho815p]/rhoi) + drhom/rhoi
-  z815     = zb + ztot * (drhop/drhotot)
-  age815   = ageb + agetot * (drhop/drhotot)
-  
-  firn.porAll = porAll
-  firn.por815 = por815
-  firn.z815   = z815
-  firn.age815 = age815
-
 
 # find vector of T, rho :
 hplot      = project(H, V).vector().array()
@@ -411,6 +396,7 @@ while t <= tf - dt:
   firn.H   = project(H, V).vector().array()
   firn.T   = project(T, V).vector().array()
   firn.c   = project(c, V).vector().array()
+  firn.w   = project(w, V).vector().array()
   firn.Ts  = firn.H[-1] / firn.c[-1]
 
   # update model parameters :
@@ -423,38 +409,39 @@ while t <= tf - dt:
   plot.update_plot(firn, t/spy)
 
   # calculate the fmic data and update the firn object :
-  calc_fmic_variables(firn)
+  fmic.calc_fmic_variables(firn)
 
   # update fmic data :
-  if t % 1 == 0:
-    fmic.append_815(t/spy, firn)
+  #if t/spy % 1 == 0.0:
+  #  fmic.append_815(t/spy, firn)
   
-  #elif t < 100.0 * spy and t % 10 == 0:
-  #  fmic.append_state(t, firn)
+  #if t <= 100.0 * spy and t/spy % 10 == 0.0:
+  #  print 'dt: ' + str(t/spy) + '\t=>\tSAVED'
+  #  fmic.append_state(t/spy, firn)
 
-  #elif t == 100.0 * spy:
+  #if t == 100.0 * spy:
   #  Hs.Tavg = Tw - 45.0
 
-  #elif t > 100.0 * spy and t < 150.0 * spy and t % 1 == 0:
+  #elif t > 100.0*spy and t < 150.0*spy and t/spy % 1 == 0.0:
   #  fmic.append_state(t, firn)
     
-  #elif t >= 150.0 * spy and t < 250.0 * spy and t % 5 == 0:
+  #elif t >= 150.0*spy and t < 250.0*spy and t/spy % 5 == 0.0:
   #  fmic.append_state(t, firn)
 
-  #elif t >= 250.0 * spy and t <= 2000.0 * spy and t % 10 == 0:
+  #elif t >= 250.0*spy and t <= 2000.0*spy and t/spy % 10 == 0.0:
   #  fmic.append_state(t, firn)
   
-  #if t >= 100 * spy and t <= 101 * spy:
+  #if t >= 100*spy and t <= 101*spy:
   #  Hs.Tavg = Tw - 35.0
-  #if t >= 100 * spy and t <= 101 * spy:
+  #if t >= 100*spy and t <= 101*spy:
   #  Hs.Tavg = Tw - 25.0
   
   # vary the accumulation :
-  if t >= 1000 * spy and t <= 1001 * spy:
-    adot = 0.07
-    accNew = ones(n)*(rhoi * adot / spy)
-    #acc.vector().set_local(accNew)
-    wS.adot = adot
+  #if t >= 1000 * spy and t <= 1001 * spy:
+  #  adot = 0.07
+  #  accNew = ones(n)*(rhoi * adot / spy)
+  #  #acc.vector().set_local(accNew)
+  #  wS.adot = adot
   #if t >= 100 * spy and t <= 101 * spy:
   #  adot = 0.20
   #  accNew = ones(n)*(rhoi * adot / spy)

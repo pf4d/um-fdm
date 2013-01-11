@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.1415926-1.40.10 (TeX Live 2009/Debian) (format=pdflatex 2012.5.16)  4 JAN 2013 14:37
+This is pdfTeX, Version 3.1415926-1.40.10 (TeX Live 2009/Debian) (format=pdflatex 2012.5.16)  10 JAN 2013 18:02
 entering extended mode
  %&-line parsing enabled.
 **fdm.tex
@@ -386,7 +386,13 @@ a-tion model based
  []
 
 
-Overfull \hbox (7.30093pt too wide) detected at line 118
+Overfull \hbox (8.6698pt too wide) in paragraph at lines 81--83
+\OT1/ptm/m/n/10 The den-si-fi-ca-tion pro-cess is de-fined with the ma-te-rial 
+deriva-
+ []
+
+
+Overfull \hbox (7.30093pt too wide) detected at line 122
 \OML/cmm/m/it/10 ^^Z[] \OT1/cmr/m/n/10 = \OMS/cmsy/m/n/10 ^^@\OT1/cmr/m/n/10 15
 1\OML/cmm/m/it/10 :\OT1/cmr/m/n/10 94 + 1\OML/cmm/m/it/10 :\OT1/cmr/m/n/10 4266
 (73\OML/cmm/m/it/10 :\OT1/cmr/m/n/10 6 + 1\OML/cmm/m/it/10 :\OT1/cmr/m/n/10 06\
@@ -398,7 +404,7 @@ m/m/it/10 V[]\OT1/cmr/m/n/10 )\OML/cmm/m/it/10 :
 [2
 
 ]
-Overfull \hbox (5.17043pt too wide) in paragraph at lines 152--154
+Overfull \hbox (5.17043pt too wide) in paragraph at lines 156--158
 \OT1/ptm/m/n/10 per-a-ture so-lu-tion, but the den-sity of the firn col-umn cha
 nges
  []
@@ -407,51 +413,61 @@ nges
 File: images/surfaceDensity.png Graphic file (type png)
 
 <use images/surfaceDensity.png> [3 <./images/surfaceDensity.png>]
-Overfull \hbox (3.6022pt too wide) in paragraph at lines 219--221
+Overfull \hbox (3.6022pt too wide) in paragraph at lines 223--225
 \OT1/ptm/m/n/10 with su-per-scripts re-fer-ring to time in-dex. Us-ing a $\OML/
 cmm/m/it/10 ^^R$\OT1/ptm/m/n/10 -scheme
  []
 
-LaTeX Font Info:    Try loading font information for OT1+pcr on input line 233.
+LaTeX Font Info:    Try loading font information for OT1+pcr on input line 237.
 
 (/usr/share/texmf-texlive/tex/latex/psnfss/ot1pcr.fd
 File: ot1pcr.fd 2001/06/04 font definitions for OT1/pcr.
 )
-Overfull \hbox (7.68018pt too wide) in paragraph at lines 244--245
+Overfull \hbox (7.68018pt too wide) in paragraph at lines 248--249
 \OT1/ptm/m/n/10 method used here is the Stream-line Up-wind Petrov-Galerkin
  []
 
 
-Overfull \hbox (5.32265pt too wide) in paragraph at lines 260--260
+Overfull \hbox (5.32265pt too wide) in paragraph at lines 264--264
 []\OT1/pcr/m/n/8 phihat  = phi + cellh/(2*vnorm)*dot(w, grad(phi))[] 
  []
 
+
+Overfull \hbox (10.12265pt too wide) in paragraph at lines 286--286
+[]\OT1/pcr/m/n/8 f_w       = rho*grad(w_mid)*eta*dx + drhodt*eta*dx[] 
+ []
+
+
+Overfull \hbox (0.52264pt too wide) in paragraph at lines 308--308
+[]\OT1/pcr/m/n/8 V           = FunctionSpace(mesh, 'Lagrange', 1)[] 
+ []
+
 [4]
-Overfull \hbox (0.92126pt too wide) in paragraph at lines 396--397
+Overfull \hbox (0.92126pt too wide) in paragraph at lines 416--417
 \OT1/ptm/m/n/10 The sec-ond in-dex for \OT1/pcr/m/n/10 firn.z \OT1/ptm/m/n/10 r
 efers to the sur-face, \OT1/pcr/m/n/10 [-1]\OT1/ptm/m/n/10 ,
  []
 
 
-Overfull \hbox (2.98103pt too wide) in paragraph at lines 407--408
+Overfull \hbox (2.98103pt too wide) in paragraph at lines 427--428
 []\OT1/ptm/m/n/10 A func-tion has been pro-vided (\OT1/pcr/m/n/10 set[]ini[]con
 v\OT1/ptm/m/n/10 ) which
  []
 
 [5]
-Underfull \hbox (badness 10000) in paragraph at lines 417--418
+Underfull \hbox (badness 10000) in paragraph at lines 437--438
 
  []
 
 LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <10> not available
-(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 419.
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 439.
 
-Overfull \hbox (0.7556pt too wide) in paragraph at lines 422--443
+Overfull \hbox (0.7556pt too wide) in paragraph at lines 442--463
  [] 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 446--447
+Underfull \hbox (badness 10000) in paragraph at lines 466--467
 
  []
 
@@ -462,25 +478,25 @@ File: images/40yrDen.png Graphic file (type png)
 File: images/40yrHt.png Graphic file (type png)
 
 <use images/40yrHt.png>
-LaTeX Font Info:    Try loading font information for OMS+ptm on input line 531.
+LaTeX Font Info:    Try loading font information for OMS+ptm on input line 550.
 
  (/usr/share/texmf-texlive/tex/latex/psnfss/omsptm.fd
 File: omsptm.fd 
 )
 LaTeX Font Info:    Font shape `OMS/ptm/m/n' in size <10> not available
-(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 531.
+(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 550.
 
-Underfull \hbox (badness 2088) in paragraph at lines 538--539
+Underfull \hbox (badness 2088) in paragraph at lines 557--558
 []\OT1/ptm/m/n/10 Ligtenberg, S.R.M., Helsen, M.M., and van den
  []
 
 
-Underfull \hbox (badness 2418) in paragraph at lines 538--539
+Underfull \hbox (badness 2418) in paragraph at lines 557--558
 \OT1/ptm/m/n/10 Broeke, M.R. 2011. An im-proved semi[]empirical
  []
 
 
-Underfull \hbox (badness 1424) in paragraph at lines 538--539
+Underfull \hbox (badness 1424) in paragraph at lines 557--558
 \OT1/ptm/m/n/10 model for the den-si-fi-ca-tion of Antarc-tic firn. \OT1/ptm/m/
 it/10 The
  []
@@ -497,7 +513,7 @@ Here is how much of TeX's memory you used:
  7844 multiletter control sequences out of 15000+50000
  29295 words of font info for 76 fonts, out of 3000000 for 9000
  714 hyphenation exceptions out of 8191
- 56i,14n,77p,850b,403s stack positions out of 5000i,500n,10000p,200000b,50000s
+ 56i,14n,77p,853b,403s stack positions out of 5000i,500n,10000p,200000b,50000s
 {/usr/share/texmf-texlive/fonts/enc/dvips/base/8r.enc}</usr/share/texmf-texli
 ve/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/share/texmf-texlive/fonts/ty
 pe1/public/amsfonts/cm/cmmi10.pfb></usr/share/texmf-texlive/fonts/type1/public/
@@ -515,7 +531,7 @@ pe1/public/amsfonts/cm/cmsy8.pfb></usr/share/texmf-texlive/fonts/type1/urw/cour
 ier/ucrr8a.pfb></usr/share/texmf-texlive/fonts/type1/urw/times/utmb8a.pfb></usr
 /share/texmf-texlive/fonts/type1/urw/times/utmr8a.pfb></usr/share/texmf-texlive
 /fonts/type1/urw/times/utmri8a.pfb>
-Output written on fdm.pdf (7 pages, 545621 bytes).
+Output written on fdm.pdf (7 pages, 546870 bytes).
 PDF statistics:
  112 PDF objects out of 1000 (max. 8388607)
  0 named destinations out of 1000 (max. 500000)
