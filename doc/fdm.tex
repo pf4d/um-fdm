@@ -231,18 +231,13 @@ and reduced to
         + \frac{w \Delta t}{2} 
           \left( \nabla w \nabla^2 a^{k+\theta} \right).
   $$
-With $\theta=0$ and factoring,
-  $$
-  \frac{a^{k+1} - a^{k}}{\Delta t} = 1 + w \nabla{a}^k 
-     \left(\frac{\Delta t}{2} \nabla w \nabla a^{k} - 1 \right).
-  $$
-Multiplying by the test function $\xi$ and integrating over $\Omega$ we have
+After moving all the terms to one side, multiplying by the test function $\xi$, and integrating over $\Omega$ we have
   $$
   0 = \int_{\Omega} \frac{a^{k+1} - a^{k}}{\Delta t}\xi\ d\Omega - 
-      \int_{\Omega} 1\xi\ d\Omega +
+      \int_{\Omega} 1\xi\ d\Omega
   $$
   $$ 
-      \int_{\Omega} w \nabla{a}^k \xi\ d\Omega
+  + \int_{\Omega} w \nabla{a}^k \xi\ d\Omega
       - \int_{\Omega} \frac{w \Delta t}{2} 
       \left( \nabla w \nabla^2 a^{k+\theta} \right)\xi\ d\Omega.
   $$
