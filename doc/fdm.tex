@@ -185,72 +185,13 @@ If $T_s \geq T_w$, the density of surface snow while taking into account re-free
     \rho_w\ \text{kg m\sups{-3}}, &\Delta\omega_s > 0\\
   \end{cases},
   $$
-but when $T_s < T_w$, $\rho_{\dot{b}}^n$ is simply made to be $\rho_{si}$.
+but when $T_s < T_w$, $\rho_{\dot{b}}^n$ is simply made to be $\rho_s$.
 \begin{figure}[H]
 	\centering
 		\includegraphics[width=0.42\textwidth]{images/surfaceDensity.png}
 	\label{fig:500 year orbit}
 	\caption{Evolution of surface node density}
 \end{figure}
-
-
-%% Age =========================================================================
-\section{Age Solution}
-
-The age of firn is described with the equation
-  $$
-  \frac{\partial a}{\partial t} = 1 - w \nabla{a}.
-  $$
-Because this equation is purely advective, upwinding is needed.  The Taylor series expansion of $w$ is
-  $$
-  a^{k+1} = a^{k} + \frac{\partial a^k}{\partial t}\Delta t + 
-            \frac{1}{2}\frac{\partial^2 a^{k+\theta}}{\partial t^2}\Delta t^2 + 
-            \mathrm{O} (\Delta t^3).
-  $$
-Replacing the time partials with the previous equation and eliminating the $\Delta t^3$ term, we have
-  $$
-  a^{k+1} = a^{k} + \left[1 - w \nabla{a}^k \right] \Delta t
-            - \frac{1}{2}\frac{\partial}{\partial t}
-              \left[1 - w \nabla{a}^{k+\theta} \right] \Delta t^2. 
-  $$
-Rearranging and simplifying,
-  $$
-  \frac{a^{k+1} - a^{k}}{\Delta t} = 1 - w \nabla{a}^k
-        - \frac{w \Delta t}{2} 
-          \left( \nabla \frac{\partial a^{k+\theta}}{\partial t} \right).
-  $$
-The time differential in the last term can again be replaced, 
-  $$
-  \frac{a^{k+1} - a^{k}}{\Delta t} = 1 - w \nabla{a}^k
-        - \frac{w \Delta t}{2} 
-          \left( \nabla [1 - w \nabla a^{k+\theta}] \right),
-  $$
-and reduced to
-  $$
-  \frac{a^{k+1} - a^{k}}{\Delta t} = 1 - w \nabla{a}^k
-        + \frac{w \Delta t}{2} 
-          \left( \nabla w \nabla^2 a^{k+\theta} \right).
-  $$
-After moving all the terms to one side, multiplying by the test function $\xi$, and integrating over $\Omega$ we have
-  $$
-  0 = \int_{\Omega} \frac{a^{k+1} - a^{k}}{\Delta t}\xi\ d\Omega - 
-      \int_{\Omega} 1\xi\ d\Omega
-  $$
-  $$ 
-  + \int_{\Omega} w \nabla{a}^k \xi\ d\Omega
-      - \int_{\Omega} \frac{w \Delta t}{2} 
-      \left( \nabla w \nabla^2 a^{k+\theta} \right)\xi\ d\Omega.
-  $$
-Integrating the last term by parts and disregarding the boundary term results in
-  $$
-  0 = \int_{\Omega} \frac{a^{k+1} - a^{k}}{\Delta t}\xi\ d\Omega - 
-      \int_{\Omega} 1\xi\ d\Omega
-  $$
-  $$ 
-  + \int_{\Omega} w \nabla{a}^k \xi\ d\Omega
-      + \int_{\Omega} \frac{w \Delta t}{2} 
-      \left( \nabla w \nabla a^{k+\theta} \right)\nabla \xi\ d\Omega.
-  $$
 
 
 %% Method ======================================================================
@@ -399,6 +340,75 @@ J  = derivative(f, h, dh)
 \normalsize
 
 
+%% Age =========================================================================
+\section{Age Solution}
+
+The age of firn is described with the equation
+  $$
+  \frac{\partial a}{\partial t} = 1 - w \nabla{a}.
+  $$
+Because this equation is purely advective, upwinding is needed.  The Taylor series expansion of $w$ is
+  $$
+  a^{k+1} = a^{k} + \frac{\partial a^k}{\partial t}\Delta t + 
+            \frac{1}{2}\frac{\partial^2 a^{k+\theta}}{\partial t^2}\Delta t^2 + 
+            \mathrm{O} (\Delta t^3).
+  $$
+Replacing the time partials with the previous equation and eliminating the $\Delta t^3$ term, we have
+  $$
+  a^{k+1} = a^{k} + \left[1 - w \nabla{a}^k \right] \Delta t
+            - \frac{1}{2}\frac{\partial}{\partial t}
+              \left[1 - w \nabla{a}^{k+\theta} \right] \Delta t^2. 
+  $$
+Rearranging and simplifying,
+  $$
+  \frac{a^{k+1} - a^{k}}{\Delta t} = 1 - w \nabla{a}^k
+        - \frac{w \Delta t}{2} 
+          \left( \nabla \frac{\partial a^{k+\theta}}{\partial t} \right).
+  $$
+The time differential in the last term can again be replaced, 
+  $$
+  \frac{a^{k+1} - a^{k}}{\Delta t} = 1 - w \nabla{a}^k
+        - \frac{w \Delta t}{2} 
+          \left( \nabla [1 - w \nabla a^{k+\theta}] \right),
+  $$
+reduced to
+  \begin{align*}
+  \frac{a^{k+1} - a^{k}}{\Delta t} &= 1 - w \nabla{a}^k
+        + \frac{w \Delta t}{2} 
+          \left( \nabla [w \nabla a^{k+\theta}] \right),
+  \end{align*}
+and finally evauated using the product rule as
+  \begin{align*}
+  \frac{a^{k+1} - a^{k}}{\Delta t} = &1 - w \nabla{a}^k\\
+        &+ \frac{w \Delta t}{2} 
+          \left( w \nabla^2 a^{k+\theta} + \nabla w \nabla a^{k+\theta} \right).
+  \end{align*}
+After moving all the terms to one side, multiplying by the test function $\xi$, and integrating over $\Omega$ we have
+  $$
+  0 = \int_{\Omega} \frac{a^{k+1} - a^{k}}{\Delta t}\xi\ d\Omega - 
+      \int_{\Omega} 1\xi\ d\Omega
+  + \int_{\Omega} w \nabla{a}^k \xi\ d\Omega
+  $$
+  $$ 
+  - \int_{\Omega} \frac{w^2 \Delta t}{2} 
+    \nabla^2 a^{k+\theta} \xi\ d\Omega.
+  - \int_{\Omega} \frac{w \Delta t}{2} 
+    \nabla w \nabla a^{k+\theta} \xi\ d\Omega.
+  $$
+Integrating the second to last term by parts and disregarding the boundary term results in
+  $$
+  0 = \int_{\Omega} \frac{a^{k+1} - a^{k}}{\Delta t}\xi\ d\Omega - 
+      \int_{\Omega} 1\xi\ d\Omega
+  + \int_{\Omega} w \nabla{a}^k \xi\ d\Omega
+  $$
+  $$ 
+  + \int_{\Omega} \frac{w^2 \Delta t}{2} 
+    \nabla a^{k+\theta} \cdot \nabla \xi\ d\Omega.
+  - \int_{\Omega} \frac{w \Delta t}{2} 
+    \nabla w \nabla a^{k+\theta} \xi\ d\Omega.
+  $$
+
+
 %% Boundary Conditions =========================================================
 \section{Boundary Conditions}
 
@@ -413,7 +423,13 @@ where $\alpha$ is the amplitude of temperature variation and $\omega = 2\pi / sp
   $$
     \rho_s^{n+1} = \rho_{\dot{b}}^{n+1} d_p + \rho_s^{n} (1 - d_p).
   $$
-Both of these can be created with FEniCS by
+The velocity of the surface can be described as 
+  $$
+  w_s = -\frac{\dot{b}}{\rho_s},\ \dot{b} = \rho_i \dot{a},
+  $$
+Where $\dot{a}$ is the accumulation rate in m a\sups{-1}.
+The age of the firn on the surface will always be 0.
+Each of these of these can be created with FEniCS by
 \footnotesize
 \begin{alltt}
 code = 'c*(Tavg + 9.9*sin(omega*t) - T0)'
@@ -424,22 +440,32 @@ code = 'dp*rhon + (1 - dp)*rhoi'
 rhoS = Expression(code, rhon=rhosi, 
                   rhoi=rhosi, dp=1.0)
 
+code   = '- (rhoi * adot / spy) / rhos'
+wS     = Expression(code, rhoi=rhoi, 
+                    adot=adot, spy=spy, 
+                    rhos=rhos)
+
+ageS   = Constant(0.0)
+
 def surface(x, on_boundary):
   return on_boundary and x[0] == zs
 
-Hbc  = DirichletBC(MV.sub(0), Hs, surface)
-Dbc  = DirichletBC(MV.sub(1), rhoS, surface)
+Hbc   = DirichletBC(MV.sub(0), Hs,   surface)
+Dbc   = DirichletBC(MV.sub(1), rhoS, surface)
+wbc   = DirichletBC(MV.sub(2), wS,   surface)
+ageBc = DirichletBC(V,         ageS, surface)
 \end{alltt}
 \normalsize
-Within the time-loop the variables \texttt{t}, \texttt{rhon}, \texttt{rhoi}, and \texttt{dp} can be updated as needed.
+Within the time-loop the variables in each \texttt{Expression} object can be updated as needed by utilizing the dot operator.
 
 Now all that is left is to iterate through time and call the \texttt{solve} method at each step:\par
 \footnotesize
 \begin{alltt}
-solve(f == 0, h, [Hbc, Dbc], J=J)
+solve(f == 0, h, [Hbc, Dbc, wbc], J=J)
+solve(f\_a == 0, a, ageBc)
 \end{alltt}
 \normalsize
-The use of the \texttt{solve} function in this way chooses \emph{Newton's Method} by default and minimizes the residual of \texttt{f}.  The boundary conditions are updated by specifying the list \texttt{[Hbc, Dbc]}.
+The \texttt{solve} function chooses \emph{Newton's Method} by default to solve the non-linear enthaply, density, and velocity residual by minimizing \texttt{f}.  The boundary conditions are updated with these calls by specifying the list \texttt{[Hbc, Dbc, wbc]} and \texttt{ageBc} in solver parameters.
 
 
 %% Model Parameters ============================================================
@@ -447,45 +473,49 @@ The use of the \texttt{solve} function in this way chooses \emph{Newton's Method
 
 Within the time-loop there are a number of parameters which need to be updated.  Taking into account conservation of mass, the height $l$ of each node must be re-calculated:\par
   $$l_{new} = l_{ini} \frac{\rho_{ini}}{\rho},$$
-where $\rho_{ini}$ abd $l_{ini}$ are the density and height vectors of the firn column when the system was initialized.  With the height of the nodes calculated, the z-positions may be found by iterating through the heights and setting the z vector's corresponding cell equal to the current sum.  After successful calculation the FEniCS \texttt{mesh} object must have its coordinates refreshed.  These tasks may be completed with the following code:\par
+where $\rho_{ini}$ abd $l_{ini}$ are the density and height vectors of the firn column when the system was initialized.  With the height of the nodes calculated, the z-positions may be found by iterating through the heights and setting the z vector's corresponding cell equal to the current sum.  These tasks may be completed with the following code performed by the \texttt{update\_height} function of the \texttt{firn} class:\par
 \footnotesize
 \begin{alltt}
-lnew     = l*rhoin / firn.rho
-zSum     = zb
-zTemp    = zeros(n)
-for i in range(n)[1:]:
+lnew     = self.l*self.rhoin / self.rho
+zSum     = self.zb
+zTemp    = np.zeros(self.n)
+for i in range(self.n)[1:]:
   zTemp[i] = zSum + lnew[i]
   zSum    += lnew[i]
-firn.z  = zTemp
-mesh.coordinates()[:,0][index] = firn.z
+self.z   = zTemp
 \end{alltt}
 \normalsize
 The variable \texttt{index} is an array of positions corresponding to the correct ordering of the nodes, necessary after mesh refinement.  
 
-The height $s$ at time index $n$ of the original surface may be calculated as follows:
-  $$s^{n} = (z_s^0 - z_b) \frac{s^{n-1} - z_b}{z_s^{n-1} - z_b} + w_s \Delta t.$$
-This maintains the relative location of the original surface to the current surface and moves downward proportional to $w$.  This is accomplished in Python with\par
+The height $z_o$ at time index $n$ of the original surface may be calculated as follows:
+  $$
+  z_o^{n} = (z_s^0 - z_b) \frac{z_o^{n-1} - z_b}{z_s^{n-1} - z_b}
+           + w_{z_o} \Delta t.
+  $$
+This maintains the relative location of the original surface to the current surface and moves downward proportional to $w$.  This is accomplished in the class named \texttt{firn} with\par
 \footnotesize
 \begin{alltt}
-interp     = interp1d(firn.z, 
-                      firn.w,
-                      bounds_error=False,
-                      fill_value=firn.w[0])
-zint       = array([firn.origZ])
-wOrigZ     = interp(zint)
-firn.origZ = (firn.z[-1] - zb) * 
-             (firn.origZ - zb) / 
-             (zs_0 - zb) + wOrigZ[0] * dt
+interp  = interp1d(self.z, self.w,
+                       bounds_error=False,
+                      fill_value=self.w[0])
+zint    = np.array([self.zo])
+wzo     = interp(zint)[0]
+dt      = self.dt
+zs      = self.z[-1]
+zb      = self.z[0]
+zs_1    = self.zs_1
+zo      = self.zo
+self.zo = (zs - zb) * (zo - zb) / (zs_1 - zb) 
+          + wzo * dt
 \end{alltt}
 \normalsize
-The second index for \texttt{firn.z} refers to the surface, \texttt{[-1]}, or the base, \texttt{[0]}.
-For all operations it is convenient to store all the state data from the simulation in an object for ease of access.  It was for this purpose the \texttt{firn} class was created and contains the signature\par 
+The indexes to \texttt{self.z} refers to the surface, \texttt{[-1]}, or the base, \texttt{[0]}.  For all operations it is convenient to store all the state data from the simulation in an object for ease of access.  It was for this purpose the \texttt{firn} class was created and contains the signature\par 
 \footnotesize
 \begin{alltt}
-firn(H, T, rho, omega, w, k, c, z, index)
+firn(data, z, l, index, dt)
 \end{alltt}
 \normalsize
-with \texttt{z} the node z-positions as defined above, \texttt{index} the index of re-ordered mesh locations, and all other variables as described earlier in the paper.
+with \texttt{data} a tuple containing the main variables, \texttt{z} the node z-positions as defined above, \texttt{l} the height vector of the elements, \texttt{index} the index of re-ordered mesh locations, and \texttt{dt} the time step of the program, $\Delta t$.
 
 The variables for accumulation and surface temperature are the main driving forces in the simulation, and data from a specific site may be used in the model by interpolating the data in increments of $\Delta t$ and inserting the values into the equations.  This may be accomplished with the \texttt{set\_local(n)} method of the \texttt{vector} class, which takes as input a NumPy array \texttt{n} with indexes corresponding to node positions within the \texttt{mesh} object.  If the variable is used in the surface boundary condition, this may be updated within the FEniCS \texttt{Expression} object with the dot operator.
 
@@ -537,7 +567,7 @@ $E_g$ & \SI{42.4e3} & J mol\sups{-1} & act. energy for grain growth\\
 \hline
 Var. & Units & Description\\
 \hline
-$\rho_{si}$ & kg m\sups{-3} & initial density at surface\\
+$\rho_s$ & kg m\sups{-3} & initial density at surface\\
 $\dot{b}$  & kg m\sups{-2}s\sups{-1} & surface accumulation\\
 $A$  & mm a\sups{-1} & surface accumulation\\
 $V_a$  & m s\sups{-1} & mean annual wind speed\\
@@ -545,7 +575,7 @@ $T_{avg}$ & K & average annual temperature\\
 $T_{s}$ & K & firn surface temperature\\
 $z_s$ & m & surface start z-location\\
 $z_b$ & m & firn base z-location\\
-$z_{s0}$ & m & previous time-step's surface\\
+$z_{s_1}$ & m & previous time-step's surface\\
 $dz$ & m & initial z-spacing\\
 $l$ & m & vector of node heights\\
 $\Delta t$ & s & time-step\\
@@ -566,7 +596,7 @@ A converging run of the program was done quickly by making $\Delta t$ equal $spy
 %% Interpretation ==============================================================
 \section{Interpretation}
 
-The surface-density equation has two values for new accumulation: $\rho_{si}$ and $\rho_w$ depending on the 2-meter average surface air temperature.  This is quite simplified; a better approach that models real-life circumstances can be found.  
+The surface-density equation has two values for new accumulation: $\rho_s$ and $\rho_w$ depending on the 2-meter average surface air temperature.  This is quite simplified; a better approach that models real-life circumstances can be found.  
 
 Testing with real-world temperature and accumulation data-sets is required to validate the model.  The simulation's surface-height- and density-profile outputs while using these data may then be compared against cataloged surface-height and density-profile data to verify its accuracy.
 

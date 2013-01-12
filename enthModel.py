@@ -9,9 +9,9 @@ FEniCS solution to firn enthalpy / density profile.
 
 from numpy import *
 from fmicData import *
+from modelFunctions import *
 import numpy as np
 from dolfin import *
-from scipy.interpolate import interp1d
 from plotFmic import *
 import sys
 
@@ -28,7 +28,7 @@ rhoin = rhoi                   # initial density of column ...... kg/m^3
 rhow  = 1000.                  # density of water ............... kg/m^3
 rhom  = 550.                   # density at 15 m ................ kg/m^3
 rhoc  = 815.                   # density at critical value ...... kg/m^3
-adot  = 0.10                   # accumulation rate .............. m/a
+adot  = 0.02                   # accumulation rate .............. m/a
 acc   = rhoi * adot / spy      # surface accumulation ........... kg/(m^2 s)
 A     = spy*acc/rhos*1e3       # surface accumulation ........... mm/a
 Va    = 6.64                   # mean annual wind speed ......... m/s
@@ -41,7 +41,7 @@ Ec    = 60e3                   # act. energy for water in ice ... J/mol
 Eg    = 42.4e3                 # act. energy for grain growth ... J/mol
 
 # model variables :
-n     = 100                    # num of z-positions
+n     = 75                     # num of z-positions
 freq  = 2*pi/spy               # frequency of earth rotations ... rad / s
 Tavg  = Tw - 50.0              # average temperature ............ degrees K
 cp    = 152.5 + 7.122*Tavg     # heat capacity of ice ........... J/(kg K)
@@ -69,52 +69,7 @@ omega = zeros(n+1)
 mesh  = IntervalMesh(n, zb, zs)
 z     = mesh.coordinates()[:,0]
 
-def refine_mesh(mesh, z, l, divs, dz, i, k,  m=1):
-  """
-  splits the mesh a given number of times.
-
-  INPUTS:
-    mesh - mesh to refine
-    z    - z coordinates of mesh
-    l    - cell height vector
-    divs - number of times to split mesh
-    dz   - cell size of surface node
-    i    - fraction of the mesh from the surface to split
-    k    - multiple to increase i by each step to reduce the distance from the
-           surface to split
-    m    - counter used to keep track of calls
-  OUTPUTS:
-   tuple (z, l, mesh) - refined z-coordinates, cell height vector, and mesh 
-                        respectively
-
-  """
-  
-  if m > divs :
-    return z, l, mesh
-  
-  else :
-    zs = z[-1]
-    zb = z[0]
-    
-    cell_markers = CellFunction("bool", mesh)
-    cell_markers.set_all(False)
-    origin = Point(zs)
-    for cell in cells(mesh):
-      p  = cell.midpoint()
-      if p.distance(origin) < (zs - zb) / i:
-        cell_markers[cell] = True
-    mesh = refine(mesh, cell_markers)
-    
-    # update coordinates :
-    z      = mesh.coordinates()[:,0]              # initial z-coord
-    numNew = len(z) - len(l)                      # number of split nodes
-    l      = l[:-numNew]                          # remove split heights
-    l      = append(l, dz/2 * ones(numNew * 2))   # append new split heights
-    
-    return refine_mesh(mesh, z, l, divs, l[-1], i*k, k, m=m+1)
-
-
-#z, l, mesh = refine_mesh(mesh, z, l, divs=4, dz=l[-1], i=1.5, k=1.05)
+z, l, mesh = refine_mesh(mesh, z, l, divs=3, dz=l[-1], i=1.5, k=1.05)
 
 index  = argsort(z)                           # index of updated mesh
 n      = len(l)                               # new number of nodes
@@ -202,15 +157,14 @@ Kcoef     = interpolate(Constant(1.0),  V)
 # age residual :
 # theta scheme (1=Backwards-Euler, 0.667=Galerkin, 0.878=Liniger, 
 #               0.5=Crank-Nicolson, 0=Forward-Euler) :
-# Taylor-Galerkin upwinding xihat :
-xihat     = xi  + dt/2 * w*grad(xi)
-
+# uses Taylor-Galerkin upwinding :
 theta     = 0.5 
 a_mid     = theta*a + (1-theta)*a_1
-f_a       = (a - a_1)/dt*xi*dx + w*grad(a_mid)*xihat*dx - 1.*xihat*dx
-f_a       = (a - a_1)/dt*xi*dx - 1.*xi*dx \
-                               + w*grad(a_mid)*xi*dx \
-                               + w*grad(a_mid)*dt/2*grad(w)*grad(xi)*dx
+f_a       = (a - a_1)/dt*xi*dx \
+            - 1.*xi*dx \
+            + w*grad(a_mid)*xi*dx \
+            + w**2*dt/2*inner(grad(a_mid), grad(xi))*dx \
+            - w*grad(w)*dt/2*grad(a_mid)*xi*dx
 
 # enthalpy residual :
 theta     = 0.5
@@ -250,43 +204,11 @@ df_a      = derivative(f_a, a, da) # age jacobian
 # initialize data structures :
 
 # load initialization data :
-def set_ini_conv():
-  """
-  sets the firn model's initial state based on files in data/enthalpy folder.
-  """
-  rhoin   = genfromtxt("data/enthalpy/rho.txt")
-  win     = genfromtxt("data/enthalpy/w.txt")
-  zTemp   = genfromtxt("data/enthalpy/z.txt")
-  ain     = genfromtxt("data/enthalpy/a.txt")
-  Hin     = genfromtxt("data/enthalpy/H.txt")
-  zs_0    = zTemp[-1]
+#zs_0 = set_ini_conv(H_i, rho_i, w_i, h, h_1, a, a_1)
 
-  rho_i.vector().set_local(rhoin)
-  H_i.vector().set_local(Hin)
-  w_i.vector().set_local(win)
-  h_0 = project(as_vector([H_i,rho_i,w_i]), MV) # project inital values on space
-  h.vector().set_local(h_0.vector().array())    # initalize T, rho in solution
-  h_1.vector().set_local(h_0.vector().array())  # initalize T, rho in prev. sol
-  a.vector().set_local(ain)
-  a_1.vector().set_local(ain)
-  return zs_0
-
-#zs_0 = set_ini_conv()
-
-# find vector of T, rho :
-hplot      = project(H, V).vector().array()
-tplot      = project(T, V).vector().array()
-rhoplot    = project(rho, V).vector().array()
-drhodtplot = project(drhodt, V).vector().array()
-aplot      = a.vector().array()
-
-# calculate other data :
-wplot   = project(w, V).vector().array()
-kplot   = project(k, V).vector().array()
-cplot   = project(c, V).vector().array()
-
-firn = firn(hplot, tplot, rhoplot, drhodtplot, 0, 0, 0, 0, 
-            aplot, omega, wplot, kplot, cplot, z, index)
+# project the initial functions onto the space and initialize firn object : 
+data = project_vars(V, H, T, rho, drhodt, a, w, k, c, omega)
+firn = firn(data, 0, 0, 0, 0, z, l, index, dt)
 
 plt.ion() 
 plot = plot(firn)
@@ -295,9 +217,7 @@ fmic = FmicData(firn)
 
 #===============================================================================
 # Compute solution :
-t      = 0.0
-ht     = []
-origHt = []
+t = 0.0
 set_log_active(False)
 while t <= tf - dt:
   # newton's iterative method :
@@ -309,43 +229,9 @@ while t <= tf - dt:
   # find vector of T, rho :
   firn.H      = project(H, V).vector().array()
   firn.rho    = project(rho, V).vector().array()
-  firn.drhodt = project(drhodt, V).vector().array()
-  firn.a      = a.vector().array()
-
-  # calculate other data :
-  firn.w   = project(w, V).vector().array()  # m s^-1
-  firn.k   = project(k, V).vector().array()  # Arthern 2008
 
   # calculate height of each interval (conservation of mass) :
-  #lnew     = l*rhoin / firn.rho
-  #zSum     = zb
-  #zTemp    = zeros(n)
-  #for i in range(n)[1:]:
-  #  zTemp[i] = zSum + lnew[i]
-  #  zSum    += lnew[i]
-  #firn.z   = zTemp
-
-  # correct original height with initial surface conditions :
-  if t == 0.0:
-    firn.origZ = firn.z[-1]
-    zs_0       = firn.z[-1]
-  
-  # track the current height of the firn :
-  ht.append(firn.z[-1])
-  
-  # track original height :
-  if firn.origZ > firn.z[0]:
-    origHt.append(firn.origZ)
-  
-  # calculate the new height of original surface by interpolating the 
-  # vertical speed from w and keeping the ratio intact :
-  interp      = interp1d(firn.z, firn.w, 
-                         bounds_error=False, 
-                         fill_value=firn.w[0])
-  zint        = array([firn.origZ])
-  wOrigZ      = interp(zint)
-  firn.origZ  = (firn.z[-1] - zb) * (firn.origZ - zb) / (zs_0 - zb) + \
-                wOrigZ[0] * dt
+  #firn.update_height()
 
   # update kc term in drhodt :
   # if rho >  550, kc = kcHigh
@@ -377,7 +263,6 @@ while t <= tf - dt:
   domNeg              = where(domega <= 0)[0]          # water content dec.
   rhoNotLiq           = where(firn.rho < rhow)[0]      # density < water
   rhoInc              = intersect1d(domPos, rhoNotLiq) # where rho can inc.
-  firn.omega          = omegaNew
   Hnew[Hhigh]         = firn.c[Hhigh]*(Tw - T0) + firn.omega[Hhigh]*Lf
   Hnew[Hlow]          = firn.H[Hlow]
   
@@ -388,31 +273,26 @@ while t <= tf - dt:
   # update the dolfin vectors :
   rho_i.vector().set_local(firn.rho)
   H_i.vector().set_local(Hnew)
-  w_i.vector().set_local(firn.w)
-  h_0 = project(as_vector([H_i, rho_i, w_i]), MV)
+  h_0 = project(as_vector([H_i, rho_i, w]), MV)
   h.vector().set_local(h_0.vector().array())
   Kcoef.vector().set_local(KcoefNew)  #FIXME: erratic 
   Tcoef.vector().set_local(TcoefNew)
   
-  # update firn object :
-  firn.rho = project(rho, V).vector().array()
-  firn.H   = project(H, V).vector().array()
-  firn.T   = project(T, V).vector().array()
-  firn.c   = project(c, V).vector().array()
-  firn.Ts  = firn.H[-1] / firn.c[-1]
-
   # update model parameters :
   t += dt
   h_1.assign(h)
   a_1.assign(a)
-  zs_0 = firn.z[-1]
-  print t/spy, min(firn.a)/spy, max(firn.a)/spy
-   
-  # update the plotting parameters :
-  plot.update_plot(firn, t/spy)
-
+  
+  # update firn object :
+  data = project_vars(V, H, T, rho, drhodt, a, w, k, c, omega)
+  firn.update_firn(data)
+  
   # calculate the fmic data and update the firn object :
   fmic.calc_fmic_variables(firn)
+
+  # update the plotting parameters :
+  plot.update_plot(firn, t/spy)
+  print t/spy, min(firn.a)/spy, max(firn.a)/spy
 
   # update fmic data :
   #if t/spy % 1 == 0.0:
@@ -440,11 +320,11 @@ while t <= tf - dt:
   #  Hs.Tavg = Tw - 25.0
   
   # vary the accumulation :
-  #if t >= 1000 * spy and t <= 1001 * spy:
-  #  adot = 0.07
-  #  accNew = ones(n)*(rhoi * adot / spy)
-  #  #acc.vector().set_local(accNew)
-  #  wS.adot = adot
+  if t >= 5000 * spy and t <= 5001 * spy:
+    adot = 0.07
+    accNew = ones(n)*(rhoi * adot / spy)
+    #acc.vector().set_local(accNew)
+    wS.adot = adot
   #if t >= 100 * spy and t <= 101 * spy:
   #  adot = 0.20
   #  accNew = ones(n)*(rhoi * adot / spy)
@@ -477,7 +357,7 @@ plt.ioff()
 plt.show()
 
 # plot the surface height trend :
-x = linspace(0, t/spy, len(ht))
-plot.plot_height(x, ht, origHt)
+x = linspace(0, t/spy, len(firn.ht))
+plot.plot_height(x, firn.ht, firn.origHt)
 
 

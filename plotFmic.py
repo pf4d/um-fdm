@@ -10,6 +10,7 @@ Plotting for enthalby Firn Densification Model.
 import matplotlib.pyplot as plt
 from matplotlib.ticker import ScalarFormatter, FormatStrFormatter
 from pylab import mpl
+from scipy.interpolate import interp1d
 import numpy as np
 
 mpl.rcParams['font.family'] = 'serif'
@@ -35,28 +36,116 @@ class firn():
   """
   Data structure to hold firn model state data.
   """
-  def __init__(self, H, T, rho, drhodt, porAll, por815, 
-               z815, age815, a, omega, w, k, c, z, index):
+  def __init__(self, data, porAll, por815, z815, age815, z, l, index, dt):
 
-    self.H      = H
-    self.T      = T 
-    self.rho    = rho
-    self.drhodt = drhodt
-    self.porAll = porAll
-    self.por815 = por815
-    self.z815   = z815
-    self.age815 = age815
-    self.a      = a
-    self.omega  = omega
-    self.w      = w
-    self.k      = k
-    self.c      = c
-    self.z      = z[index]
-    self.index  = index
-    self.zb     = z[index][0]
-    self.zs     = z[index][-1]
-    self.origZ  = self.zs
-    self.Ts     = H[-1] / c[-1]
+    self.H      = data[0]                      # enthalpy
+    self.T      = data[1]                      # temperature
+    self.rho    = data[2]                      # density
+    self.drhodt = data[3]                      # densification rate
+    self.a      = data[4]                      # age
+    self.w      = data[5]                      # vertical velocity
+    self.k      = data[6]                      # thermal conductivity
+    self.c      = data[7]                      # heat capacity
+    self.omega  = data[8]                      # percentage of water content
+    self.dt     = dt                           # time step
+    self.n      = len(self.H)                  # system DOF
+    self.rhoin  = self.rho                     # initial density vector
+    self.porAll = porAll                       # porosity of column
+    self.por815 = por815                       # porosity to rhoc
+    self.z815   = z815                         # depth of rhoc
+    self.age815 = age815                       # age of rhoc
+    self.z      = z[index]                     # z-coordinates of mesh
+    self.l      = l                            # height vector
+    self.index  = index                        # index of ordered, refined mesh
+    self.zb     = z[index][0]                  # base of firn
+    self.zs     = z[index][-1]                 # surface of firn
+    self.zs_1   = self.zs                      # previous time-step surface  
+    self.zo     = self.zs                      # z-coordinate of initial surface
+    self.ht     = [self.zs]                    # list of surface heights
+    self.origHt = [self.zo]                    # list of initial surface heights
+    self.Ts     = self.H[-1] / self.c[-1]      # temperature of surface
+
+
+  def update_firn(self, data):
+    """"
+    updates the main firn variables and keeps track of surface heights.
+    """
+    self.H      = data[0]
+    self.T      = data[1] 
+    self.rho    = data[2]
+    self.drhodt = data[3]
+    self.a      = data[4]
+    self.w      = data[5]
+    self.k      = data[6]
+    self.c      = data[7]
+    self.omega  = data[8]
+    self.Ts     = self.H[-1] / self.c[-1]
+    
+    # track the current height of the firn :
+    self.ht.append(self.z[-1])
+
+    # calculate the new height of original surface by interpolating the 
+    # vertical speed from w and keeping the ratio intact :
+    interp     = interp1d(self.z, self.w,
+                          bounds_error=False,
+                          fill_value=self.w[0])
+    zint       = np.array([self.zo])
+    wzo        = interp(zint)[0]
+    dt         = self.dt
+    zs         = self.z[-1]
+    zb         = self.z[0]
+    zs_1       = self.zs_1
+    zo         = self.zo
+    self.zo    = (zs - zb) * (zo - zb) / (zs_1 - zb) + wzo * dt
+    
+    # track original height :
+    if self.zo > zb:
+      self.origHt.append(self.zo)
+    
+    # update the previous time steps' surface height :
+    self.zs_1  = self.z[-1]
+
+
+  def update_height(self):
+    """
+    calculate height of each interval (conservation of mass) :
+    """
+    lnew     = self.l*self.rhoin / self.rho
+    zSum     = self.zb
+    zTemp    = np.zeros(self.n)
+    for i in range(self.n)[1:]:
+      zTemp[i] = zSum + lnew[i]
+      zSum    += lnew[i]
+    self.z   = zTemp
+
+  
+  def update_height_history(self):
+    """
+    update of firn original and current height histories.
+    """ 
+    # track the current height of the firn :
+    self.ht.append(self.z[-1])
+
+    # calculate the new height of original surface by interpolating the 
+    # vertical speed from w and keeping the ratio intact :
+    interp     = interp1d(self.z, self.w,
+                          bounds_error=False,
+                          fill_value=self.w[0])
+    zint       = np.array([self.zo])
+    wzo        = interp(zint)[0]
+    dt         = self.dt
+    zs         = self.z[-1]
+    zb         = self.z[0]
+    zs_1       = self.zs_1
+    zo         = self.zo
+    self.zo    = (zs - zb) * (zo - zb) / (zs_1 - zb) + wzo * dt
+    
+    # track original height :
+    if self.zo > zb:
+      self.origHt.append(self.zo)
+    
+    # update the previous time steps' surface height :
+    self.zs_1  = self.z[-1]
 
 
 class plot():
@@ -82,7 +171,7 @@ class plot():
     zb     = firn.zb
     
     # original surface height :
-    origZ  = firn.origZ
+    zo     = firn.zo
 
     zmax   = zs + (zs - zb) / 5                   # max z-coord
     zmin   = zb                                   # min z-coord
@@ -126,22 +215,22 @@ class plot():
     self.Tsurf    = self.Tax.text(Th, Tz, r'Surface Temp: %.1f $\degree$C' % Ts)
     self.phT,     = self.Tax.plot(T - 273.15, z, '0.3', lw=1.2)
     self.phTs,    = self.Tax.plot([Tmin, Tmax], [zs, zs], 'k-', lw=2)
-    self.phTs_0,  = self.Tax.plot(Th, origZ, 'ko')
+    self.phTs_0,  = self.Tax.plot(Th, zo, 'ko')
     self.phTsp,   = self.Tax.plot(Th*np.ones(len(z)), z, 'r+')
     
     self.phrho,   = self.rhoax.plot(rho, z, '0.3', lw=1.2)
     self.phrhoS,  = self.rhoax.plot([rhoMin, rhoMax], [zs, zs], 'k-', lw=2)
-    #self.phrhoS_0,= self.rhoax.plot(rhoh, origZ, 'ko')
+    #self.phrhoS_0,= self.rhoax.plot(rhoh, zo, 'ko')
     #self.phrhoSp, = self.rhoax.plot(rhoh*np.ones(len(z)), z, 'r+')
 
     self.phw,     = self.wax.plot(w, z, '0.3', lw=1.2)
     self.phwS,    = self.wax.plot([wMin, wMax], [zs, zs], 'k-', lw=2)
-    #self.phws_0,  = self.wax.plot(wh, origZ, 'ko')
+    #self.phws_0,  = self.wax.plot(wh, zo, 'ko')
     #self.phwsp,   = self.wax.plot(wh*np.ones(len(z)), z, 'r+')
     
     self.pha,     = self.aax.plot(a, z, '0.3', lw=1.2)
     self.phaS,    = self.aax.plot([aMin, aMax], [zs, zs], 'k-', lw=2)
-    #self.phks_0,  = self.kax.plot(kh, origZ, 'ko')
+    #self.phks_0,  = self.kax.plot(kh, zo, 'ko')
     #self.phksp,   = self.kax.plot(kh*np.ones(len(z)), z, 'r+')
 
     # formatting :
@@ -170,7 +259,7 @@ class plot():
     w     = firn.w * self.spy * 1e2
     a     = firn.a/self.spy
     z     = firn.z
-    origZ = firn.origZ
+    zo    = firn.zo
     Ts    = firn.Ts - 273.15
 
     self.fig_text.set_text('Time = %.2f yr' % t) 
@@ -179,7 +268,7 @@ class plot():
     self.phT.set_xdata(T - 273.15)
     self.phT.set_ydata(z)
     self.phTs.set_ydata(z[-1])
-    self.phTs_0.set_ydata(origZ)
+    self.phTs_0.set_ydata(zo)
     self.phTsp.set_ydata(z)
     
     self.phrho.set_xdata(rho)
