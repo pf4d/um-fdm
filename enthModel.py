@@ -16,36 +16,40 @@ from plotFmic import *
 import sys
 
 
+c = Constants()
+
 #===============================================================================
 # constants :
-pi    = 3.141592653589793      # pi
-g     = 9.81                   # gravitational acceleration ..... m/s^2
-R     = 8.3144621              # gas constant ................... J/(mol K)
-spy   = 31556926.0             # seconds per year ............... s/a
-rhoi  = 917.                   # density of ice ................. kg/m^3
-rhos  = 360.                   # initial density at surface ..... kg/m^3
-rhoin = rhoi                   # initial density of column ...... kg/m^3
-rhow  = 1000.                  # density of water ............... kg/m^3
-rhom  = 550.                   # density at 15 m ................ kg/m^3
-rhoc  = 815.                   # density at critical value ...... kg/m^3
-adot  = 0.02                   # accumulation rate .............. m/a
-acc   = rhoi * adot / spy      # surface accumulation ........... kg/(m^2 s)
-A     = spy*acc/rhos*1e3       # surface accumulation ........... mm/a
-Va    = 6.64                   # mean annual wind speed ......... m/s
-ki    = 2.1                    # thermal conductivity of ice .... W/(m K)
-Tw    = 273.15                 # triple point water ............. degrees K
-kcHh  = 3.7e-9                 # creep coefficient high ......... (m^3 s)/kg
-kcLw  = 9.2e-9                 # creep coefficient low .......... (m^3 s)/kg
-kg    = 1.3e-7                 # grain growth coefficient ....... m^2/s  
-Ec    = 60e3                   # act. energy for water in ice ... J/mol
-Eg    = 42.4e3                 # act. energy for grain growth ... J/mol
+pi    = c.pi                   # pi
+g     = c.g                    # gravitational acceleration ..... m/s^2
+R     = c.R                    # gas constant ................... J/(mol K)
+spy   = c.spy                  # seconds per year ............... s/a
+rhoi  = c.rhoi                 # density of ice ................. kg/m^3
+rhos  = c.rhos                 # initial density at surface ..... kg/m^3
+rhoin = c.rhoin                # initial density of column ...... kg/m^3
+rhow  = c.rhow                 # density of water ............... kg/m^3
+rhom  = c.rhom                 # density at 15 m ................ kg/m^3
+rhoc  = c.rhoc                 # density at critical value ...... kg/m^3
+ki    = c.ki                   # thermal conductivity of ice .... W/(m K)
+cpi   = c.cpi                  # const. heat capacitity of ice .. J/(kg K)
+kcHh  = c.kcHh                 # creep coefficient high ......... (m^3 s)/kg
+kcLw  = c.kcLw                 # creep coefficient low .......... (m^3 s)/kg
+kg    = c.kg                   # grain growth coefficient ....... m^2/s  
+Ec    = c.Ec                   # act. energy for water in ice ... J/mol
+Eg    = c.Eg                   # act. energy for grain growth ... J/mol
+Tw    = c.Tw                   # triple point water ............. degrees K
+T0    = c.T0                   # reference temperature .......... K
+beta  = c.beta                 # Clausius-Clapeyron ............. K/Pa
+Lf    = c.Lf                   # latent heat of fusion .......... J/kg
+Hsp   = c.Hsp                  # Enthalpy of ice at Tw .......... J/kg
 
 # model variables :
 n     = 75                     # num of z-positions
-freq  = 2*pi/spy               # frequency of earth rotations ... rad / s
+adot  = 0.02                   # accumulation rate .............. m/a
+acc   = rhoi * adot / spy      # surface accumulation ........... kg/(m^2 s)
+A     = spy*acc/rhos*1e3       # surface accumulation ........... mm/a
 Tavg  = Tw - 50.0              # average temperature ............ degrees K
 cp    = 152.5 + 7.122*Tavg     # heat capacity of ice ........... J/(kg K)
-cpi   = 2009.                  # const. heat capacitity of ice .. J/(kg K)
 zs    = 1000.                  # surface start .................. m
 zs_0  = zs                     # previous time-step surface ..... m
 zb    = 0.                     # depth .......................... m
@@ -55,13 +59,6 @@ dt    = 10.0*spy               # time-step ...................... s
 t0    = 0.0                    # begin time ..................... s
 tf    = sys.argv[1]            # end-time ....................... string
 tf    = float(tf)*spy          # end-time ....................... s
-
-# enthalpy-specific :
-T0    = 0.0                    # reference temperature .......... K
-beta  = 7.9e-8                 # Clausius-Clapeyron ............. K/Pa
-Lf    = 3.34e5                 # latent heat of fusion .......... J/kg
-Hsp   = cp*(Tw - T0)           # Enthalpy of ice at Tw .......... J/kg
-omega = zeros(n+1)
 
 
 #===============================================================================
@@ -208,7 +205,7 @@ df_a      = derivative(f_a, a, da) # age jacobian
 
 # project the initial functions onto the space and initialize firn object : 
 data = project_vars(V, H, T, rho, drhodt, a, w, k, c, omega)
-firn = firn(data, 0, 0, 0, 0, z, l, index, dt)
+firn = firn(c, data, z, l, index, dt)
 
 plt.ion() 
 plot = plot(firn)

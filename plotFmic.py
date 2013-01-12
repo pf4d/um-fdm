@@ -32,6 +32,36 @@ class FixedOrderFormatter(ScalarFormatter):
     self.orderOfMagnitude = self._order_of_mag
 
 
+class Constants():
+  
+  def __init__():
+    """
+    Data structure for constants.
+    """
+    self.pi    = 3.141592653589793 # pi ............................. rad
+    self.g     = 9.81              # gravitational acceleration ..... m/s^2
+    self.R     = 8.3144621         # gas constant ................... J/(mol K)
+    self.spy   = 31556926.0        # seconds per year ............... s/a
+    self.rhoi  = 917.              # density of ice ................. kg/m^3
+    self.rhos  = 360.              # initial density at surface ..... kg/m^3
+    self.rhoin = self.rhoi         # initial density of column ...... kg/m^3
+    self.rhow  = 1000.             # density of water ............... kg/m^3
+    self.rhom  = 550.              # density at 15 m ................ kg/m^3
+    self.rhoc  = 815.              # density at critical value ...... kg/m^3
+    self.ki    = 2.1               # thermal conductivity of ice .... W/(m K)
+    self.cpi   = 2009.             # const. heat capacitity of ice .. J/(kg K)
+    self.kcHh  = 3.7e-9            # creep coefficient high ......... (m^3 s)/kg
+    self.kcLw  = 9.2e-9            # creep coefficient low .......... (m^3 s)/kg
+    self.kg    = 1.3e-7            # grain growth coefficient ....... m^2/s  
+    self.Ec    = 60e3              # act. energy for water in ice ... J/mol
+    self.Eg    = 42.4e3            # act. energy for grain growth ... J/mol
+    self.Tw    = 273.15            # triple point water ............. degrees K
+    self.T0    = 0.0               # reference temperature .......... K
+    self.beta  = 7.9e-8            # Clausius-Clapeyron ............. K/Pa
+    self.Lf    = 3.34e5            # latent heat of fusion .......... J/kg
+    self.Hsp   = self.cpi*self.Tw  # Enthalpy of ice at Tw .......... J/kg
+
+
 class firn():
   """
   Data structure to hold firn model state data.
