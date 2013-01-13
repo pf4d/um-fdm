@@ -6,11 +6,12 @@ Evan Cummings
 Plotting for enthalby Firn Densification Model.
 
 """
-
+from numpy import *
 import matplotlib.pyplot as plt
 from matplotlib.ticker import ScalarFormatter, FormatStrFormatter
 from pylab import mpl
 from scipy.interpolate import interp1d
+from dolfin import *
 import numpy as np
 
 mpl.rcParams['font.family'] = 'serif'
@@ -34,7 +35,7 @@ class FixedOrderFormatter(ScalarFormatter):
 
 class Constants():
   
-  def __init__():
+  def __init__(self):
     """
     Data structure for constants.
     """
@@ -66,7 +67,24 @@ class firn():
   """
   Data structure to hold firn model state data.
   """
-  def __init__(self, data, porAll, por815, z815, age815, z, l, index, dt):
+  def __init__(self, const, FEMdata, data, z, l, index, dt):
+
+    self.const  = const                        # constants
+
+    self.mesh   = FEMdata[0]                   # mesh
+    self.V      = FEMdata[1]                   # function space
+    self.MV     = FEMdata[2]                   # Mixed function space
+    self.H_i    = FEMdata[3]                   # initial enthalpy
+    self.rho_i  = FEMdata[4]                   # initial density
+    self.w_i    = FEMdata[5]                   # initial velocity
+    self.a_i    = FEMdata[6]                   # initial age
+    self.h      = FEMdata[7]                   # enthalpy, density, velocity
+    self.HF     = FEMdata[8]                   # enthalpy
+    self.rhoF   = FEMdata[9]                   # density
+    self.wF     = FEMdata[10]                  # velocity
+    self.aF     = FEMdata[11]                  # age
+    self.h_1    = FEMdata[12]                  # previous step's solution
+    self.a_1    = FEMdata[13]                  # previous step's age
 
     self.H      = data[0]                      # enthalpy
     self.T      = data[1]                      # temperature
@@ -77,13 +95,10 @@ class firn():
     self.k      = data[6]                      # thermal conductivity
     self.c      = data[7]                      # heat capacity
     self.omega  = data[8]                      # percentage of water content
+
     self.dt     = dt                           # time step
     self.n      = len(self.H)                  # system DOF
     self.rhoin  = self.rho                     # initial density vector
-    self.porAll = porAll                       # porosity of column
-    self.por815 = por815                       # porosity to rhoc
-    self.z815   = z815                         # depth of rhoc
-    self.age815 = age815                       # age of rhoc
     self.z      = z[index]                     # z-coordinates of mesh
     self.l      = l                            # height vector
     self.index  = index                        # index of ordered, refined mesh
@@ -94,6 +109,11 @@ class firn():
     self.ht     = [self.zs]                    # list of surface heights
     self.origHt = [self.zo]                    # list of initial surface heights
     self.Ts     = self.H[-1] / self.c[-1]      # temperature of surface
+
+    self.porAll = 0.0                          # porosity of column
+    self.por815 = 0.0                          # porosity to rhoc
+    self.z815   = 0.0                          # depth of rhoc
+    self.age815 = 0.0                          # age of rhoc
 
 
   def update_firn(self, data):
@@ -148,34 +168,64 @@ class firn():
       zSum    += lnew[i]
     self.z   = zTemp
 
-  
-  def update_height_history(self):
-    """
-    update of firn original and current height histories.
-    """ 
-    # track the current height of the firn :
-    self.ht.append(self.z[-1])
 
-    # calculate the new height of original surface by interpolating the 
-    # vertical speed from w and keeping the ratio intact :
-    interp     = interp1d(self.z, self.w,
-                          bounds_error=False,
-                          fill_value=self.w[0])
-    zint       = np.array([self.zo])
-    wzo        = interp(zint)[0]
-    dt         = self.dt
-    zs         = self.z[-1]
-    zb         = self.z[0]
-    zs_1       = self.zs_1
-    zo         = self.zo
-    self.zo    = (zs - zb) * (zo - zb) / (zs_1 - zb) + wzo * dt
-    
-    # track original height :
-    if self.zo > zb:
-      self.origHt.append(self.zo)
-    
-    # update the previous time steps' surface height :
-    self.zs_1  = self.z[-1]
+  def adjust_vectors(self, A, Kcoef, Tcoef, rhoCoef):
+    """
+    Adjust the vectors for enthalpy and density.
+    """
+    n    = self.n
+    kcHh = self.const.kcHh 
+    kcLw = self.const.kcLw 
+    Hsp  = self.const.Hsp  
+    Tw   = self.const.Tw   
+    T0   = self.const.T0   
+    Lf   = self.const.Lf   
+    rhow = self.const.rhow 
+
+    # find vector of T, rho :
+    self.H      = project(self.HF, self.V).vector().array()
+    self.rho    = project(self.rhoF, self.V).vector().array()
+  
+    # update kc term in drhodt :
+    # if rho >  550, kc = kcHigh
+    # if rho <= 550, kc = kcLow
+    # with parameterizations given by ligtenberg et all 2011
+    rhoCoefNew          = ones(n)
+    rhoHigh             = where(self.rho >  550)[0]
+    rhoLow              = where(self.rho <= 550)[0]
+    rhoCoefNew[rhoHigh] = kcHh*(2.366 - 0.293*np.log(A))
+    rhoCoefNew[rhoLow]  = kcLw*(1.435 - 0.151*np.log(A))
+    rhoCoef.vector().set_local(rhoCoefNew)
+  
+    # update coefficients used by enthalpy :
+    Hhigh               = where(self.H >= Hsp)[0]
+    Hlow                = where(self.H <  Hsp)[0]
+    omegaNew            = zeros(n)
+    Hnew                = zeros(n)
+    rhoNew              = zeros(n)
+    TcoefNew            = ones(n)
+    KcoefNew            = ones(n)
+  
+    KcoefNew[Hhigh]     = 1/10.0
+    TcoefNew[Hhigh]     = self.c[Hhigh] / self.H[Hhigh] * Tw
+  
+    # update enthalpy :
+    omegaNew[Hhigh]     = (self.H[Hhigh] - self.c[Hhigh]*(Tw - T0)) / Lf
+    domega              = omegaNew - self.omega          # water content chg.
+    domPos              = where(domega >  0)[0]          # water content inc.
+    domNeg              = where(domega <= 0)[0]          # water content dec.
+    rhoNotLiq           = where(self.rho < rhow)[0]      # density < water
+    rhoInc              = intersect1d(domPos, rhoNotLiq) # where rho can inc.
+    Hnew[Hhigh]         = self.c[Hhigh]*(Tw - T0) + self.omega[Hhigh]*Lf
+    Hnew[Hlow]          = self.H[Hlow]
+  
+    # update the dolfin vectors :
+    self.rho_i.vector().set_local(self.rho)
+    self.H_i.vector().set_local(Hnew)
+    h_0 = project(as_vector([self.H_i, self.rho_i, self.wF]), self.MV)
+    self.h.vector().set_local(h_0.vector().array())
+    Kcoef.vector().set_local(KcoefNew)  #FIXME: erratic 
+    Tcoef.vector().set_local(TcoefNew)
 
 
 class plot():

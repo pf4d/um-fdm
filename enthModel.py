@@ -16,32 +16,32 @@ from plotFmic import *
 import sys
 
 
-c = Constants()
+const = Constants()
 
 #===============================================================================
 # constants :
-pi    = c.pi                   # pi
-g     = c.g                    # gravitational acceleration ..... m/s^2
-R     = c.R                    # gas constant ................... J/(mol K)
-spy   = c.spy                  # seconds per year ............... s/a
-rhoi  = c.rhoi                 # density of ice ................. kg/m^3
-rhos  = c.rhos                 # initial density at surface ..... kg/m^3
-rhoin = c.rhoin                # initial density of column ...... kg/m^3
-rhow  = c.rhow                 # density of water ............... kg/m^3
-rhom  = c.rhom                 # density at 15 m ................ kg/m^3
-rhoc  = c.rhoc                 # density at critical value ...... kg/m^3
-ki    = c.ki                   # thermal conductivity of ice .... W/(m K)
-cpi   = c.cpi                  # const. heat capacitity of ice .. J/(kg K)
-kcHh  = c.kcHh                 # creep coefficient high ......... (m^3 s)/kg
-kcLw  = c.kcLw                 # creep coefficient low .......... (m^3 s)/kg
-kg    = c.kg                   # grain growth coefficient ....... m^2/s  
-Ec    = c.Ec                   # act. energy for water in ice ... J/mol
-Eg    = c.Eg                   # act. energy for grain growth ... J/mol
-Tw    = c.Tw                   # triple point water ............. degrees K
-T0    = c.T0                   # reference temperature .......... K
-beta  = c.beta                 # Clausius-Clapeyron ............. K/Pa
-Lf    = c.Lf                   # latent heat of fusion .......... J/kg
-Hsp   = c.Hsp                  # Enthalpy of ice at Tw .......... J/kg
+pi    = const.pi               # pi
+g     = const.g                # gravitational acceleration ..... m/s^2
+R     = const.R                # gas constant ................... J/(mol K)
+spy   = const.spy              # seconds per year ............... s/a
+rhoi  = const.rhoi             # density of ice ................. kg/m^3
+rhos  = const.rhos             # initial density at surface ..... kg/m^3
+rhoin = const.rhoin            # initial density of column ...... kg/m^3
+rhow  = const.rhow             # density of water ............... kg/m^3
+rhom  = const.rhom             # density at 15 m ................ kg/m^3
+rhoc  = const.rhoc             # density at critical value ...... kg/m^3
+ki    = const.ki               # thermal conductivity of ice .... W/(m K)
+cpi   = const.cpi              # const. heat capacitity of ice .. J/(kg K)
+kcHh  = const.kcHh             # creep coefficient high ......... (m^3 s)/kg
+kcLw  = const.kcLw             # creep coefficient low .......... (m^3 s)/kg
+kg    = const.kg               # grain growth coefficient ....... m^2/s  
+Ec    = const.Ec               # act. energy for water in ice ... J/mol
+Eg    = const.Eg               # act. energy for grain growth ... J/mol
+Tw    = const.Tw               # triple point water ............. degrees K
+T0    = const.T0               # reference temperature .......... K
+beta  = const.beta             # Clausius-Clapeyron ............. K/Pa
+Lf    = const.Lf               # latent heat of fusion .......... J/kg
+Hsp   = const.Hsp              # Enthalpy of ice at Tw .......... J/kg
 
 # model variables :
 n     = 75                     # num of z-positions
@@ -204,8 +204,9 @@ df_a      = derivative(f_a, a, da) # age jacobian
 #zs_0 = set_ini_conv(H_i, rho_i, w_i, h, h_1, a, a_1)
 
 # project the initial functions onto the space and initialize firn object : 
-data = project_vars(V, H, T, rho, drhodt, a, w, k, c, omega)
-firn = firn(c, data, z, l, index, dt)
+data    = project_vars(V, H, T, rho, drhodt, a, w, k, c, omega)
+FEMdata = (mesh, V, MV, H_i, rho_i, w_i, a_i, h, H, rho, w, a, h_1, a_1)
+firn    = firn(const, FEMdata, data, z, l, index, dt)
 
 plt.ion() 
 plot = plot(firn)
@@ -223,57 +224,8 @@ while t <= tf - dt:
   # solve for age :
   solve(f_a == 0, a, ageBc)
 
-  # find vector of T, rho :
-  firn.H      = project(H, V).vector().array()
-  firn.rho    = project(rho, V).vector().array()
-
-  # calculate height of each interval (conservation of mass) :
-  #firn.update_height()
-
-  # update kc term in drhodt :
-  # if rho >  550, kc = kcHigh
-  # if rho <= 550, kc = kcLow
-  # with parameterizations given by ligtenberg et all 2011
-  rhoCoefNew          = ones(n)
-  rhoHigh             = where(firn.rho >  550)[0]
-  rhoLow              = where(firn.rho <= 550)[0]
-  rhoCoefNew[rhoHigh] = kcHh*(2.366 - 0.293*np.log(A))
-  rhoCoefNew[rhoLow]  = kcLw*(1.435 - 0.151*np.log(A))
-  rhoCoef.vector().set_local(rhoCoefNew)
-  
-  # update coefficients used by enthalpy :
-  Hhigh               = where(firn.H >= Hsp)[0]
-  Hlow                = where(firn.H <  Hsp)[0]
-  omegaNew            = zeros(n)
-  Hnew                = zeros(n)
-  rhoNew              = zeros(n)
-  TcoefNew            = ones(n)
-  KcoefNew            = ones(n)
-
-  KcoefNew[Hhigh]     = 1/10.0
-  TcoefNew[Hhigh]     = firn.c[Hhigh] / firn.H[Hhigh] * Tw
-
-  # update enthalpy :
-  omegaNew[Hhigh]     = (firn.H[Hhigh] - firn.c[Hhigh]*(Tw - T0)) / Lf
-  domega              = omegaNew - firn.omega          # water content chg.
-  domPos              = where(domega >  0)[0]          # water content inc.
-  domNeg              = where(domega <= 0)[0]          # water content dec.
-  rhoNotLiq           = where(firn.rho < rhow)[0]      # density < water
-  rhoInc              = intersect1d(domPos, rhoNotLiq) # where rho can inc.
-  Hnew[Hhigh]         = firn.c[Hhigh]*(Tw - T0) + firn.omega[Hhigh]*Lf
-  Hnew[Hlow]          = firn.H[Hlow]
-  
-  # update density :
-  firn.rho[rhoInc]    = firn.rho[rhoInc] + domega[rhoInc]*rhow 
-  firn.rho[domNeg]    = firn.rho[domNeg] + domega[domNeg]*83.0
-  
-  # update the dolfin vectors :
-  rho_i.vector().set_local(firn.rho)
-  H_i.vector().set_local(Hnew)
-  h_0 = project(as_vector([H_i, rho_i, w]), MV)
-  h.vector().set_local(h_0.vector().array())
-  Kcoef.vector().set_local(KcoefNew)  #FIXME: erratic 
-  Tcoef.vector().set_local(TcoefNew)
+  # adjust the coefficient vectors :
+  firn.adjust_vectors(A, Kcoef, Tcoef, rhoCoef)
   
   # update model parameters :
   t += dt
@@ -286,6 +238,9 @@ while t <= tf - dt:
   
   # calculate the fmic data and update the firn object :
   fmic.calc_fmic_variables(firn)
+
+  # calculate height of each interval (conservation of mass) :
+  #firn.update_height()
 
   # update the plotting parameters :
   plot.update_plot(firn, t/spy)
