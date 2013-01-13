@@ -44,7 +44,6 @@ class Constants():
     self.R     = 8.3144621         # gas constant ................... J/(mol K)
     self.spy   = 31556926.0        # seconds per year ............... s/a
     self.rhoi  = 917.              # density of ice ................. kg/m^3
-    self.rhos  = 360.              # initial density at surface ..... kg/m^3
     self.rhoin = self.rhoi         # initial density of column ...... kg/m^3
     self.rhow  = 1000.             # density of water ............... kg/m^3
     self.rhom  = 550.              # density at 15 m ................ kg/m^3
@@ -67,7 +66,7 @@ class firn():
   """
   Data structure to hold firn model state data.
   """
-  def __init__(self, const, FEMdata, data, z, l, index, dt):
+  def __init__(self, const, FEMdata, data, rhos, adot, A, acc, z, l, index, dt):
 
     self.const  = const                        # constants
 
@@ -96,12 +95,17 @@ class firn():
     self.c      = data[7]                      # heat capacity
     self.omega  = data[8]                      # percentage of water content
 
-    self.dt     = dt                           # time step
-    self.n      = len(self.H)                  # system DOF
-    self.rhoin  = self.rho                     # initial density vector
+    self.rhos   = rhos                         # initial density at surface
+    self.adot   = adot                         # accumulation rate
+    self.A      = A                            # surface accumulation
+    self.acc    = acc                          # surface accumulation
     self.z      = z[index]                     # z-coordinates of mesh
     self.l      = l                            # height vector
     self.index  = index                        # index of ordered, refined mesh
+    self.dt     = dt                           # time step
+    
+    self.n      = len(self.H)                  # system DOF
+    self.rhoin  = self.rho                     # initial density vector
     self.zb     = z[index][0]                  # base of firn
     self.zs     = z[index][-1]                 # surface of firn
     self.zs_1   = self.zs                      # previous time-step surface  
@@ -130,7 +134,9 @@ class firn():
     self.c      = data[7]
     self.omega  = data[8]
     self.Ts     = self.H[-1] / self.c[-1]
-    
+    self.acc    = self.const.rhoi*self.adot/self.const.spy
+    self.A      = self.const.spy*self.acc/self.rhos*1e3
+
     # track the current height of the firn :
     self.ht.append(self.z[-1])
 
@@ -169,7 +175,7 @@ class firn():
     self.z   = zTemp
 
 
-  def adjust_vectors(self, A, Kcoef, Tcoef, rhoCoef):
+  def adjust_vectors(self, Kcoef, Tcoef, rhoCoef):
     """
     Adjust the vectors for enthalpy and density.
     """
@@ -180,7 +186,7 @@ class firn():
     Tw   = self.const.Tw   
     T0   = self.const.T0   
     Lf   = self.const.Lf   
-    rhow = self.const.rhow 
+    rhow = self.const.rhow
 
     # find vector of T, rho :
     self.H      = project(self.HF, self.V).vector().array()
@@ -193,8 +199,8 @@ class firn():
     rhoCoefNew          = ones(n)
     rhoHigh             = where(self.rho >  550)[0]
     rhoLow              = where(self.rho <= 550)[0]
-    rhoCoefNew[rhoHigh] = kcHh*(2.366 - 0.293*np.log(A))
-    rhoCoefNew[rhoLow]  = kcLw*(1.435 - 0.151*np.log(A))
+    rhoCoefNew[rhoHigh] = kcHh*(2.366 - 0.293*np.log(self.A))
+    rhoCoefNew[rhoLow]  = kcLw*(1.435 - 0.151*np.log(self.A))
     rhoCoef.vector().set_local(rhoCoefNew)
   
     # update coefficients used by enthalpy :

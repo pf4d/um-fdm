@@ -16,16 +16,16 @@ from plotFmic import *
 import sys
 
 
-const = Constants()
-
 #===============================================================================
 # constants :
+
+const = Constants()
+
 pi    = const.pi               # pi
 g     = const.g                # gravitational acceleration ..... m/s^2
 R     = const.R                # gas constant ................... J/(mol K)
 spy   = const.spy              # seconds per year ............... s/a
 rhoi  = const.rhoi             # density of ice ................. kg/m^3
-rhos  = const.rhos             # initial density at surface ..... kg/m^3
 rhoin = const.rhoin            # initial density of column ...... kg/m^3
 rhow  = const.rhow             # density of water ............... kg/m^3
 rhom  = const.rhom             # density at 15 m ................ kg/m^3
@@ -45,7 +45,8 @@ Hsp   = const.Hsp              # Enthalpy of ice at Tw .......... J/kg
 
 # model variables :
 n     = 75                     # num of z-positions
-adot  = 0.02                   # accumulation rate .............. m/a
+rhos  = 360.                   # initial density at surface ..... kg/m^3
+adot  = 0.10                   # accumulation rate .............. m/a
 acc   = rhoi * adot / spy      # surface accumulation ........... kg/(m^2 s)
 A     = spy*acc/rhos*1e3       # surface accumulation ........... mm/a
 Tavg  = Tw - 50.0              # average temperature ............ degrees K
@@ -55,7 +56,7 @@ zs_0  = zs                     # previous time-step surface ..... m
 zb    = 0.                     # depth .......................... m
 dz    = (zs - zb)/n            # initial z-spacing .............. m
 l     = dz*ones(n+1)           # height vector .................. m
-dt    = 10.0*spy               # time-step ...................... s
+dt    = 0.020*spy              # time-step ...................... s
 t0    = 0.0                    # begin time ..................... s
 tf    = sys.argv[1]            # end-time ....................... string
 tf    = float(tf)*spy          # end-time ....................... s
@@ -66,7 +67,7 @@ tf    = float(tf)*spy          # end-time ....................... s
 mesh  = IntervalMesh(n, zb, zs)
 z     = mesh.coordinates()[:,0]
 
-z, l, mesh = refine_mesh(mesh, z, l, divs=3, dz=l[-1], i=1.5, k=1.05)
+z, l, mesh = refine_mesh(mesh, z, l, divs=7, dz=l[-1], i=1.5, k=1.05)
 
 index  = argsort(z)                           # index of updated mesh
 n      = len(l)                               # new number of nodes
@@ -82,9 +83,9 @@ MV     = MixedFunctionSpace([V, V, V])        # mixed function space
 code   = 'c*( (Tavg + 10.0*(cos(2*omega*t) + 0.3*cos(4*omega*t)))  - T0 )'
 Hs     = Expression(code, c=cp, Tavg=Tavg, omega=pi/spy, t=t0, T0=T0)
 
-# simplified enthalpy surface condition :
-code   = 'c*( Tavg - T0 )'
-Hs     = Expression(code, c=cp, Tavg=Tavg, omega=pi/spy, t=t0, T0=T0)
+## simplified enthalpy surface condition :
+#code   = 'c*( Tavg - T0 )'
+#Hs     = Expression(code, c=cp, Tavg=Tavg, omega=pi/spy, t=t0, T0=T0)
 
 # experimental surface density :
 #code   = 'dp*rhon + (1 - dp)*rhoi'
@@ -144,12 +145,12 @@ a_1.vector().set_local(a_i.vector().array())  # initialize age in prev. sol
 
 #===============================================================================
 # Define equations to be solved :
-acc       = interpolate(Constant(rhoi * adot / spy), V)
-c         = (152.5 + sqrt(152.5**2 + 4*7.122*H)) / 2   # Patterson 1994
-k         = 2.1*(rho / rhoi)**2                        # Arthern 2008
-Tcoef     = interpolate(Constant(1.0), V)
-T         = Tcoef * H / c
-Kcoef     = interpolate(Constant(1.0),  V)
+bdot      = interpolate(Constant(rhoi * adot / spy), V)   # average annual acc
+c         = (152.5 + sqrt(152.5**2 + 4*7.122*H)) / 2      # Patterson 1994
+k         = 2.1*(rho / rhoi)**2                           # Arthern 2008
+Tcoef     = interpolate(Constant(1.0), V)                 # T above Tw = 0.0
+Kcoef     = interpolate(Constant(1.0),  V)                # enthalpy coef.
+T         = Tcoef * H / c                                 # temperature
 
 # age residual :
 # theta scheme (1=Backwards-Euler, 0.667=Galerkin, 0.878=Liniger, 
@@ -183,7 +184,7 @@ phihat    = phi + cellh/(2*vnorm)*dot(w, grad(phi))
 theta     = 1.0
 rho_mid   = theta*rho + (1 - theta)*rho_1
 rhoCoef   = interpolate(Constant(kcHh), V)
-drhodt    = (acc*g*rhoCoef/kg)*exp( -Ec/(R*T) + Eg/(R*Tavg) )*(rhoi - rho_mid)
+drhodt    = (bdot*g*rhoCoef/kg)*exp( -Ec/(R*T) + Eg/(R*Tavg) )*(rhoi - rho_mid)
 f_rho     = (rho - rho_1)/dt*phi*dx - \
             (drhodt - w*grad(rho_mid))*phihat*dx 
 
@@ -206,7 +207,7 @@ df_a      = derivative(f_a, a, da) # age jacobian
 # project the initial functions onto the space and initialize firn object : 
 data    = project_vars(V, H, T, rho, drhodt, a, w, k, c, omega)
 FEMdata = (mesh, V, MV, H_i, rho_i, w_i, a_i, h, H, rho, w, a, h_1, a_1)
-firn    = firn(const, FEMdata, data, z, l, index, dt)
+firn    = firn(const, FEMdata, data, rhos, adot, A, acc, z, l, index, dt)
 
 plt.ion() 
 plot = plot(firn)
@@ -223,14 +224,14 @@ while t <= tf - dt:
 
   # solve for age :
   solve(f_a == 0, a, ageBc)
-
-  # adjust the coefficient vectors :
-  firn.adjust_vectors(A, Kcoef, Tcoef, rhoCoef)
   
   # update model parameters :
   t += dt
   h_1.assign(h)
   a_1.assign(a)
+
+  # adjust the coefficient vectors :
+  firn.adjust_vectors(Kcoef, Tcoef, rhoCoef)
   
   # update firn object :
   data = project_vars(V, H, T, rho, drhodt, a, w, k, c, omega)
@@ -244,47 +245,56 @@ while t <= tf - dt:
 
   # update the plotting parameters :
   plot.update_plot(firn, t/spy)
-  print t/spy, min(firn.a)/spy, max(firn.a)/spy
-
+  #print t/spy, min(firn.a)/spy, max(firn.a)/spy
+ 
+  # for modulo arithmetic :
+  tr = round(t/spy, 2)
+  
   # update fmic data :
-  #if t/spy % 1 == 0.0:
-  #  fmic.append_815(t/spy, firn)
+  if tr % 1 == 0.0:
+    print 'dt: ' + str(tr) + '\t=>\t815 SAVED'
+    fmic.append_815(tr, firn)
   
-  #if t <= 100.0 * spy and t/spy % 10 == 0.0:
-  #  print 'dt: ' + str(t/spy) + '\t=>\tSAVED'
-  #  fmic.append_state(t/spy, firn)
+  if t <= 100.0*spy and tr % 10 == 0.0:
+    print 'dt: ' + str(tr) + '\t=>\tSAVED'
+    fmic.append_state(tr, firn)
 
-  #if t == 100.0 * spy:
-  #  Hs.Tavg = Tw - 45.0
-
-  #elif t > 100.0*spy and t < 150.0*spy and t/spy % 1 == 0.0:
-  #  fmic.append_state(t, firn)
+  elif t > 100.0*spy and t < 150.0*spy and tr % 1 == 0.0:
+    print 'dt: ' + str(tr) + '\t=>\tSAVED'
+    fmic.append_state(tr, firn)
     
-  #elif t >= 150.0*spy and t < 250.0*spy and t/spy % 5 == 0.0:
-  #  fmic.append_state(t, firn)
+  elif t >= 150.0*spy and t < 250.0*spy and tr % 5 == 0.0:
+    print 'dt: ' + str(tr) + '\t=>\tSAVED'
+    fmic.append_state(tr, firn)
 
-  #elif t >= 250.0*spy and t <= 2000.0*spy and t/spy % 10 == 0.0:
-  #  fmic.append_state(t, firn)
+  elif t >= 250.0*spy and t <= 2000.0*spy and tr % 10 == 0.0:
+    print 'dt: ' + str(tr) + '\t=>\tSAVED'
+    fmic.append_state(tr, firn)
   
-  #if t >= 100*spy and t <= 101*spy:
+  # vary the temperature :
+  if t == 100.0 * spy:
+    Hs.Tavg = Tw - 45.0
+  #if t == 100.0 * spy:
   #  Hs.Tavg = Tw - 35.0
-  #if t >= 100*spy and t <= 101*spy:
+  #if t == 100.0 * spy:
   #  Hs.Tavg = Tw - 25.0
-  
-  # vary the accumulation :
-  if t >= 5000 * spy and t <= 5001 * spy:
-    adot = 0.07
-    accNew = ones(n)*(rhoi * adot / spy)
-    #acc.vector().set_local(accNew)
-    wS.adot = adot
-  #if t >= 100 * spy and t <= 101 * spy:
-  #  adot = 0.20
-  #  accNew = ones(n)*(rhoi * adot / spy)
-  #  acc.vector().set_local(accNew)
-  #if t >= 100 * spy and t <= 101 * spy:
-  #  adot = 0.30
-  #  accNew = ones(n)*(rhoi * adot / spy)
-  #  acc.vector().set_local(accNew)
+
+  ## vary the accumulation :
+  #if t == 100 * spy:
+  #  firn.adot = 0.07
+  #  #bdotNew = ones(n)*(rhoi * firn.adot / spy)
+  #  #bdot.vector().set_local(bdotNew)
+  #  wS.adot = firn.adot
+  #if t == 100 * spy:
+  #  firn.adot = 0.20  
+  #  #bdotNew = ones(n)*(rhoi * firn.adot / spy)
+  #  #bdot.vector().set_local(bdotNew)
+  #  wS.adot = firn.adot
+  #if t == 100 * spy:
+  #  firn.adot = 0.30
+  #  #bdotNew = ones(n)*(rhoi * firn.adot / spy)
+  #  #bdot.vector().set_local(bdotNew)
+  #  wS.adot = firn.adot
   
   # update boundary conditions :
   Hs.t      = t
