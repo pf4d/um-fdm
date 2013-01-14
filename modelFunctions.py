@@ -80,7 +80,8 @@ def project_vars(V, H, T, rho, drhodt, a, w, k, c, omega):
   aplot      = a.vector().array()
   wplot      = project(w, V).vector().array()
   kplot      = project(k, V).vector().array()
-  cplot      = project(c, V).vector().array()
+  #cplot      = project(152.5 + 7.122*T, V).vector().array() 
+  cplot      = project(c, V).vector().array() 
 
   return (Hplot, Tplot, rhoplot, drhodtplot, aplot, wplot, kplot, cplot, omega)
 

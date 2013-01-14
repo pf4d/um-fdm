@@ -135,7 +135,8 @@ class firn():
     self.a      = self.aF.vector().array()
     self.w      = project(self.wF, self.V).vector().array()
     self.k      = project(self.kF, self.V).vector().array()
-    self.c      = project(self.cF, self.V).vector().array()
+    #self.cF     = project(152.5 + 7.122*self.TF, self.V)
+    #self.c      = project(self.cF, self.V).vector().array()
     
     self.Ts     = self.H[-1] / self.c[-1]
     self.acc    = self.const.rhoi*self.adot/self.const.spy

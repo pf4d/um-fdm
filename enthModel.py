@@ -80,11 +80,11 @@ age    = zeros(n)                             # initial age
 
 # create function spaces :
 V      = FunctionSpace(mesh, 'Lagrange', 1)   # function space for rho, T
-MV     = MixedFunctionSpace([V, V, V])        # mixed function space
+MV     = MixedFunctionSpace([V, V, V, V])        # mixed function space
 
 # enthalpy surface condition with cyclical 2-meter air temperature :
 code   = 'c*( Tavg + 10.0*sin(2*omega*t) )'
-Hs     = Expression(code, c=cpi, Tavg=Tavg, omega=pi/spy, t=t0, T0=T0)
+Hs     = Expression(code, c=cp, Tavg=Tavg, omega=pi/spy, t=t0, T0=T0)
 
 # experimental surface density :
 #code   = 'dp*rhon + (1 - dp)*rhoi'
@@ -115,42 +115,45 @@ ageBc = DirichletBC(V,         ageS, surface)    # age of surface
 
 #===============================================================================
 # Define variational problem spaces :
-H_i        = interpolate(Constant(cpi*(Tavg - T0)), V) # initial enthalpy vector
+H_i        = interpolate(Constant(cp*(Tavg - T0)), V) # initial enthalpy vector
 rho_i      = interpolate(Constant(rhoin[0]), V)       # initial density vector
 a_i        = interpolate(Constant(1.0), V)            # initial age vector
 w_i        = interpolate(Constant(acc), V)            # initial velocity vector
+c_i        = interpolate(Constant(cp), V)             # initial heat capacity
 
 h               = Function(MV)                # solution
-H, rho, w       = split(h)                    # solutions for H, rho
+H, rho, w, c    = split(h)                    # solutions for H, rho
 h_1             = Function(MV)                # previous solution
-H_1, rho_1, w_1 = split(h_1)                  # initial value functions
+H_1, rho_1, w_1, c_1 = split(h_1)                  # initial value functions
 
 dh              = TrialFunction(MV)           # trial function for solution
-dH, drho, dw    = split(dh)                   # trial functions for H, rho
+dH, drho, dw, dc    = split(dh)                   # trial functions for H, rho
 j               = TestFunction(MV)            # test function in mixed space
-psi, phi, eta   = split(j)                    # test functions for H, rho
+psi, phi, eta, zeta   = split(j)                    # test functions for H, rho
 
 a          = Function(V)                      # age solution / trial function
 da         = TrialFunction(V)                 # trial function for age
 xi         = TestFunction(V)                  # age test function
 a_1        = Function(V)                      # previous age solution
 
-h_0 = project(as_vector([H_i,rho_i,w_i]), MV) # project inital values on space
+h_0 = project(as_vector([H_i,rho_i,w_i,c_i]), MV) # project inital values on space
 h.vector().set_local(h_0.vector().array())    # initalize H, rho in solution
 h_1.vector().set_local(h_0.vector().array())  # initalize H, rho in prev. sol
 
 a.vector().set_local(a_i.vector().array())    # initialize age in solution
 a_1.vector().set_local(a_i.vector().array())  # initialize age in prev. sol
 
+
 #===============================================================================
 # Define equations to be solved :
 bdot      = interpolate(Constant(rhoi * adot / spy), V)   # average annual acc
 #c         = (152.5 + sqrt(152.5**2 + 4*7.122*H)) / 2      # Patterson 1994
-c         = Constant(cpi)
+#c         = project(152.5 + 7.122*Tavg, V)
 k         = 2.1*(rho / rhoi)**2                           # Arthern 2008
 Tcoef     = interpolate(Constant(1.0), V)                 # T above Tw = 0.0
 Kcoef     = interpolate(Constant(1.0),  V)                # enthalpy coef.
 T         = Tcoef * H / c                                 # temperature
+c_f       = (152.5 + 7.122*T)*zeta*dx - c*zeta*dx
 
 # age residual :
 # theta scheme (1=Backwards-Euler, 0.667=Galerkin, 0.878=Liniger, 
@@ -194,7 +197,7 @@ w_mid     = theta*w + (1 - theta)*w_1
 f_w       = rho*grad(w_mid)*eta*dx + drhodt*eta*dx
 
 # equation to be minimzed :
-f         = f_H + f_rho + f_w
+f         = f_H + f_rho + f_w + c_f
 df        = derivative(f, h, dh)   # temp/density jacobian
 df_a      = derivative(f_a, a, da) # age jacobian
 
@@ -300,7 +303,7 @@ while t <= tf:
   
   # update boundary conditions :
   Hs.t      = t
-  #Hs.c      = firn.c[-1]
+  Hs.c      = firn.c[-1]
   #rhoS.rhoi = firn.rho[-1]
   #if firn.Ts > Tw:
   #  if domega[-1] > 0:
