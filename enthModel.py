@@ -47,7 +47,7 @@ Hsp   = const.Hsp              # Enthalpy of ice at Tw .......... J/kg
 # model variables :
 n     = 75                     # num of z-positions
 rhos  = 360.                   # initial density at surface ..... kg/m^3
-adot  = 0.10                   # accumulation rate .............. m/a
+adot  = 0.30                   # accumulation rate .............. m/a
 acc   = rhoi * adot / spy      # surface accumulation ........... kg/(m^2 s)
 A     = spy*acc/rhos*1e3       # surface accumulation ........... mm/a
 Tavg  = Tw - 50.0              # average temperature ............ degrees K
@@ -57,7 +57,7 @@ zs_0  = zs                     # previous time-step surface ..... m
 zb    = 0.                     # depth .......................... m
 dz    = (zs - zb)/n            # initial z-spacing .............. m
 l     = dz*ones(n+1)           # height vector .................. m
-dt    = 0.500*spy              # time-step ...................... s
+dt    = 0.250*spy              # time-step ...................... s
 t0    = 0.0                    # begin time ..................... s
 tf    = sys.argv[1]            # end-time ....................... string
 tf    = float(tf)*spy          # end-time ....................... s
@@ -68,7 +68,7 @@ tf    = float(tf)*spy          # end-time ....................... s
 mesh  = IntervalMesh(n, zb, zs)
 z     = mesh.coordinates()[:,0]
 
-z, l, mesh = refine_mesh(mesh, z, l, divs=4, dz=l[-1], i=1.1, k=1.15)
+z, l, mesh = refine_mesh(mesh, z, l, divs=5, dz=l[-1], i=1.5, k=1.30)
 
 index  = argsort(z)                           # index of updated mesh
 n      = len(l)                               # new number of nodes
@@ -81,8 +81,10 @@ V      = FunctionSpace(mesh, 'Lagrange', 1)   # function space for rho, T
 MV     = MixedFunctionSpace([V, V, V])        # mixed function space
 
 # enthalpy surface condition with cyclical 2-meter air temperature :
-code   = 'c*( (Tavg + 10.0*(sin(2*omega*t) + 0.3*sin(4*omega*t)))  - T0 )'
+code   = 'c*( Tavg + 10.0*sin(2*omega*t) )'
 Hs     = Expression(code, c=cp, Tavg=Tavg, omega=pi/spy, t=t0, T0=T0)
+
+Hs     = Constant(Hsp)
 
 # experimental surface density :
 #code   = 'dp*rhon + (1 - dp)*rhoi'
@@ -203,17 +205,18 @@ df_a      = derivative(f_a, a, da) # age jacobian
 
 # project the initial functions onto the space and initialize firn object : 
 data    = project_vars(V, H, T, rho, drhodt, a, w, k, c, omega)
-FEMdata = (mesh, V, MV, H_i, rho_i, w_i, a_i, h, H, rho, w, a, h_1, a_1)
+FEMdata = (mesh, V, MV, H_i, rho_i, w_i, a_i, h, H, T, 
+           rho, drhodt, w, a, h_1, a_1, k, c)
 firn    = firn(const, FEMdata, data, rhos, adot, A, acc, z, l, index, dt)
 
-#plt.ion() 
-#plot = plot(firn)
+plt.ion() 
+plot = plot(firn)
 fmic = FmicData(firn)
 
 
 #===============================================================================
 # Compute solution :
-t = 0.0
+t = t0
 tstart = time.clock()
 set_log_active(False)
 while t <= tf:
@@ -223,17 +226,11 @@ while t <= tf:
   # solve for age :
   solve(f_a == 0, a, ageBc)
   
-  # update model parameters :
-  t += dt
-  h_1.assign(h)
-  a_1.assign(a)
-
   # adjust the coefficient vectors :
   firn.adjust_vectors(Kcoef, Tcoef, rhoCoef)
   
   # update firn object :
-  data = project_vars(V, H, T, rho, drhodt, a, w, k, c, omega)
-  firn.update_firn(data)
+  firn.update_vars()
   #firn.update_height_history()
   
   # calculate the fmic data and update the firn object :
@@ -243,9 +240,15 @@ while t <= tf:
   #firn.update_height()
 
   # update the plotting parameters :
-  #plot.update_plot(firn, t/spy)
+  plot.update_plot(firn, t/spy)
+  print firn.Ts - Tw, firn.c[-1]*(Tavg + 10*sin(2*pi/spy*t))/firn.c[-1] - Tw
   #print t/spy, min(firn.a)/spy, max(firn.a)/spy
  
+  # update model parameters :
+  t += dt
+  h_1.assign(h)
+  a_1.assign(a)
+
   # for modulo arithmetic :
   tr = round(t/spy, 2)
   
@@ -296,8 +299,8 @@ while t <= tf:
   #  wS.adot = firn.adot
   
   # update boundary conditions :
-  Hs.t      = t
-  Hs.c      = firn.c[-1]
+  #Hs.t      = t
+  #Hs.c      = firn.c[-1]
   #rhoS.rhoi = firn.rho[-1]
   #if firn.Ts > Tw:
   #  if domega[-1] > 0:
@@ -312,11 +315,11 @@ while t <= tf:
   #rhoS.dp = dnew/ltop
   #rhoS.Ts = firn.T[-1]
 
-  #plt.draw()  # update the graph
+  plt.draw()  # update the graph
 
 tfin = time.clock()
-#plt.ioff()
-#plt.show()
+plt.ioff()
+plt.show()
 
 ttot   = tfin - tstart
 thours = round(ttot*(12000/tf)*spy/60/60, 3)

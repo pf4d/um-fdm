@@ -68,71 +68,75 @@ class firn():
   """
   def __init__(self, const, FEMdata, data, rhos, adot, A, acc, z, l, index, dt):
 
-    self.const  = const                        # constants
+    self.const   = const                     # constants
 
-    self.mesh   = FEMdata[0]                   # mesh
-    self.V      = FEMdata[1]                   # function space
-    self.MV     = FEMdata[2]                   # Mixed function space
-    self.H_i    = FEMdata[3]                   # initial enthalpy
-    self.rho_i  = FEMdata[4]                   # initial density
-    self.w_i    = FEMdata[5]                   # initial velocity
-    self.a_i    = FEMdata[6]                   # initial age
-    self.h      = FEMdata[7]                   # enthalpy, density, velocity
-    self.HF     = FEMdata[8]                   # enthalpy
-    self.rhoF   = FEMdata[9]                   # density
-    self.wF     = FEMdata[10]                  # velocity
-    self.aF     = FEMdata[11]                  # age
-    self.h_1    = FEMdata[12]                  # previous step's solution
-    self.a_1    = FEMdata[13]                  # previous step's age
+    self.mesh    = FEMdata[0]                # mesh
+    self.V       = FEMdata[1]                # function space
+    self.MV      = FEMdata[2]                # Mixed function space
+    self.H_i     = FEMdata[3]                # initial enthalpy
+    self.rho_i   = FEMdata[4]                # initial density
+    self.w_i     = FEMdata[5]                # initial velocity
+    self.a_i     = FEMdata[6]                # initial age
+    self.h       = FEMdata[7]                # enthalpy, density, velocity
+    self.HF      = FEMdata[8]                # enthalpy
+    self.TF      = FEMdata[9]                # temperature
+    self.rhoF    = FEMdata[10]               # density
+    self.drhodtF = FEMdata[11]               # densification rate
+    self.wF      = FEMdata[12]               # velocity
+    self.aF      = FEMdata[13]               # age
+    self.h_1     = FEMdata[14]               # previous step's solution
+    self.a_1     = FEMdata[15]               # previous step's age
+    self.kF      = FEMdata[16]               # thermal conductivity
+    self.cF      = FEMdata[17]               # heat capacity
 
-    self.H      = data[0]                      # enthalpy
-    self.T      = data[1]                      # temperature
-    self.rho    = data[2]                      # density
-    self.drhodt = data[3]                      # densification rate
-    self.a      = data[4]                      # age
-    self.w      = data[5]                      # vertical velocity
-    self.k      = data[6]                      # thermal conductivity
-    self.c      = data[7]                      # heat capacity
-    self.omega  = data[8]                      # percentage of water content
+    self.H       = data[0]                   # enthalpy
+    self.T       = data[1]                   # temperature
+    self.rho     = data[2]                   # density
+    self.drhodt  = data[3]                   # densification rate
+    self.a       = data[4]                   # age
+    self.w       = data[5]                   # vertical velocity
+    self.k       = data[6]                   # thermal conductivity
+    self.c       = data[7]                   # heat capacity
+    self.omega   = data[8]                   # percentage of water content
 
-    self.rhos   = rhos                         # initial density at surface
-    self.adot   = adot                         # accumulation rate
-    self.A      = A                            # surface accumulation
-    self.acc    = acc                          # surface accumulation
-    self.z      = z[index]                     # z-coordinates of mesh
-    self.l      = l                            # height vector
-    self.index  = index                        # index of ordered, refined mesh
-    self.dt     = dt                           # time step
+    self.rhos    = rhos                      # initial density at surface
+    self.adot    = adot                      # accumulation rate
+    self.A       = A                         # surface accumulation
+    self.acc     = acc                       # surface accumulation
+    self.z       = z[index]                  # z-coordinates of mesh
+    self.l       = l                         # height vector
+    self.index   = index                     # index of ordered, refined mesh
+    self.dt      = dt                        # time step
     
-    self.n      = len(self.H)                  # system DOF
-    self.rhoin  = self.rho                     # initial density vector
-    self.zb     = z[index][0]                  # base of firn
-    self.zs     = z[index][-1]                 # surface of firn
-    self.zs_1   = self.zs                      # previous time-step surface  
-    self.zo     = self.zs                      # z-coordinate of initial surface
-    self.ht     = [self.zs]                    # list of surface heights
-    self.origHt = [self.zo]                    # list of initial surface heights
-    self.Ts     = self.H[-1] / self.c[-1]      # temperature of surface
+    self.n       = len(self.H)               # system DOF
+    self.rhoin   = self.rho                  # initial density vector
+    self.zb      = z[index][0]               # base of firn
+    self.zs      = z[index][-1]              # surface of firn
+    self.zs_1    = self.zs                   # previous time-step surface  
+    self.zo      = self.zs                   # z-coordinate of initial surface
+    self.ht      = [self.zs]                 # list of surface heights
+    self.origHt  = [self.zo]                 # list of initial surface heights
+    self.Ts      = self.H[-1] / self.c[-1]   # temperature of surface
 
-    self.porAll = 0.0                          # porosity of column
-    self.por815 = 0.0                          # porosity to rhoc
-    self.z815   = 0.0                          # depth of rhoc
-    self.age815 = 0.0                          # age of rhoc
+    self.porAll  = 0.0                       # porosity of column
+    self.por815  = 0.0                       # porosity to rhoc
+    self.z815    = 0.0                       # depth of rhoc
+    self.age815  = 0.0                       # age of rhoc
 
 
-  def update_firn(self, data):
-    """"
-    updates the main firn variables and keeps track of surface heights.
+  def update_vars(self):
     """
-    self.H      = data[0]
-    self.T      = data[1] 
-    self.rho    = data[2]
-    self.drhodt = data[3]
-    self.a      = data[4]
-    self.w      = data[5]
-    self.k      = data[6]
-    self.c      = data[7]
-    self.omega  = data[8]
+    Project the variables onto the space V and update firn object.
+    """
+    self.H      = project(self.HF, self.V).vector().array()
+    self.T      = project(self.TF, self.V).vector().array()
+    self.rho    = project(self.rhoF, self.V).vector().array()
+    self.drhodt = project(self.drhodtF, self.V).vector().array()
+    self.a      = self.aF.vector().array()
+    self.w      = project(self.wF, self.V).vector().array()
+    self.k      = project(self.kF, self.V).vector().array()
+    self.c      = project(self.cF, self.V).vector().array()
+    
     self.Ts     = self.H[-1] / self.c[-1]
     self.acc    = self.const.rhoi*self.adot/self.const.spy
     self.A      = self.const.spy*self.acc/self.rhos*1e3
