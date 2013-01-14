@@ -135,7 +135,6 @@ class firn():
     self.a      = self.aF.vector().array()
     self.w      = project(self.wF, self.V).vector().array()
     self.k      = project(self.kF, self.V).vector().array()
-    #self.cF     = project(152.5 + 7.122*self.TF, self.V)
     #self.c      = project(self.cF, self.V).vector().array()
     
     self.Ts     = self.H[-1] / self.c[-1]
@@ -198,8 +197,8 @@ class firn():
     rhow = self.const.rhow
 
     # find vector of T, rho :
-    #self.H      = project(self.HF, self.V).vector().array()
-    #self.rho    = project(self.rhoF, self.V).vector().array()
+    self.H      = project(self.HF, self.V).vector().array()
+    self.rho    = project(self.rhoF, self.V).vector().array()
   
     # update kc term in drhodt :
     # if rho >  550, kc = kcHigh

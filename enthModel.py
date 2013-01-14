@@ -68,11 +68,10 @@ tf    = float(tf)*spy          # end-time ....................... s
 mesh  = IntervalMesh(n, zb, zs)
 z     = mesh.coordinates()[:,0]
 
-z, l, mesh = refine_mesh(mesh, z, l, divs=5, dz=l[-1], i=1.5, k=1.30)
-z, l, mesh = refine_mesh(mesh, z, l, divs=1, dz=l[-1], i=4, k=1.30)
-z, l, mesh = refine_mesh(mesh, z, l, divs=1, dz=l[-1], i=66, k=1.30)
+z, l, mesh, index = refine_mesh(mesh, divs=5, i=1.5, k=1.30)
+z, l, mesh, index = refine_mesh(mesh, divs=1, i=4,   k=1.30)
+z, l, mesh, index = refine_mesh(mesh, divs=1, i=66,  k=1.30)
 
-index  = argsort(z)                           # index of updated mesh
 n      = len(l)                               # new number of nodes
 rhoin  = rhoin*ones(n)                        # initial density
 omega  = zeros(n)                             # water content percent
@@ -80,7 +79,7 @@ age    = zeros(n)                             # initial age
 
 # create function spaces :
 V      = FunctionSpace(mesh, 'Lagrange', 1)   # function space for rho, T
-MV     = MixedFunctionSpace([V, V, V, V])        # mixed function space
+MV     = MixedFunctionSpace([V, V, V])        # mixed function space
 
 # enthalpy surface condition with cyclical 2-meter air temperature :
 code   = 'c*( Tavg + 10.0*sin(2*omega*t) )'
@@ -119,24 +118,23 @@ H_i        = interpolate(Constant(cp*(Tavg - T0)), V) # initial enthalpy vector
 rho_i      = interpolate(Constant(rhoin[0]), V)       # initial density vector
 a_i        = interpolate(Constant(1.0), V)            # initial age vector
 w_i        = interpolate(Constant(acc), V)            # initial velocity vector
-c_i        = interpolate(Constant(cp), V)             # initial heat capacity
 
 h               = Function(MV)                # solution
-H, rho, w, c    = split(h)                    # solutions for H, rho
+H, rho, w       = split(h)                    # solutions for H, rho
 h_1             = Function(MV)                # previous solution
-H_1, rho_1, w_1, c_1 = split(h_1)                  # initial value functions
+H_1, rho_1, w_1 = split(h_1)                  # initial value functions
 
 dh              = TrialFunction(MV)           # trial function for solution
-dH, drho, dw, dc    = split(dh)                   # trial functions for H, rho
+dH, drho, dw    = split(dh)                   # trial functions for H, rho
 j               = TestFunction(MV)            # test function in mixed space
-psi, phi, eta, zeta   = split(j)                    # test functions for H, rho
+psi, phi, eta   = split(j)                    # test functions for H, rho
 
 a          = Function(V)                      # age solution / trial function
 da         = TrialFunction(V)                 # trial function for age
 xi         = TestFunction(V)                  # age test function
 a_1        = Function(V)                      # previous age solution
 
-h_0 = project(as_vector([H_i,rho_i,w_i,c_i]), MV) # project inital values on space
+h_0 = project(as_vector([H_i,rho_i,w_i]), MV) # project inital values on space
 h.vector().set_local(h_0.vector().array())    # initalize H, rho in solution
 h_1.vector().set_local(h_0.vector().array())  # initalize H, rho in prev. sol
 
@@ -147,13 +145,13 @@ a_1.vector().set_local(a_i.vector().array())  # initialize age in prev. sol
 #===============================================================================
 # Define equations to be solved :
 bdot      = interpolate(Constant(rhoi * adot / spy), V)   # average annual acc
-#c         = (152.5 + sqrt(152.5**2 + 4*7.122*H)) / 2      # Patterson 1994
-#c         = project(152.5 + 7.122*Tavg, V)
+c         = (152.5 + sqrt(152.5**2 + 4*7.122*H)) / 2      # Patterson 1994
+Ta        = interpolate(Constant(Tavg), V)
+c         = 152.5 + 7.122*Ta
 k         = 2.1*(rho / rhoi)**2                           # Arthern 2008
 Tcoef     = interpolate(Constant(1.0), V)                 # T above Tw = 0.0
 Kcoef     = interpolate(Constant(1.0),  V)                # enthalpy coef.
 T         = Tcoef * H / c                                 # temperature
-c_f       = (152.5 + 7.122*T)*zeta*dx - c*zeta*dx
 
 # age residual :
 # theta scheme (1=Backwards-Euler, 0.667=Galerkin, 0.878=Liniger, 
@@ -197,7 +195,7 @@ w_mid     = theta*w + (1 - theta)*w_1
 f_w       = rho*grad(w_mid)*eta*dx + drhodt*eta*dx
 
 # equation to be minimzed :
-f         = f_H + f_rho + f_w + c_f
+f         = f_H + f_rho + f_w
 df        = derivative(f, h, dh)   # temp/density jacobian
 df_a      = derivative(f_a, a, da) # age jacobian
 
@@ -246,6 +244,8 @@ while t <= tf:
   # update the plotting parameters :
   plot.update_plot(firn, t/spy)
   #print t/spy, min(firn.a)/spy, max(firn.a)/spy
+ 
+  print ( Tavg + 10.0*sin(2*pi/spy*t) ) - Tw, firn.T[-1] - Tw
  
   # update model parameters :
   t += dt

@@ -2,30 +2,34 @@ from numpy import *
 from dolfin import *
 
 
-def refine_mesh(mesh, z, l, divs, dz, i, k,  m=1):
+def refine_mesh(mesh, divs, i, k,  m=1):
   """
   splits the mesh a given number of times.
 
   INPUTS:
     mesh - mesh to refine
-    z    - z coordinates of mesh
-    l    - cell height vector
     divs - number of times to split mesh
-    dz   - cell size of surface node
     i    - fraction of the mesh from the surface to split
     k    - multiple to increase i by each step to reduce the distance from the
            surface to split
     m    - counter used to keep track of calls
   OUTPUTS:
-   tuple (z, l, mesh) - refined z-coordinates, cell height vector, and mesh 
-                        respectively
+   tuple (z, l, mesh, index) - refined z-coordinates, cell height vector, 
+                               mesh, and index of sorted mesh respectively
 
   """
 
   if m > divs :
-    return z, l, mesh
+    z     = mesh.coordinates()[:,0]
+    index = argsort(z)
+    z1    = z[index]
+    z2    = z1[1:]
+    z2    = append(z2, z2[-1])
+    l     = z2 - z1
+    return z, l, mesh, index
 
   else :
+    z  = mesh.coordinates()[:,0]
     zs = z[-1]
     zb = z[0]
 
@@ -38,13 +42,7 @@ def refine_mesh(mesh, z, l, divs, dz, i, k,  m=1):
         cell_markers[cell] = True
     mesh = refine(mesh, cell_markers)
 
-    # update coordinates :
-    z      = mesh.coordinates()[:,0]              # initial z-coord
-    numNew = len(z) - len(l)                      # number of split nodes
-    l      = l[:-numNew]                          # remove split heights
-    l      = append(l, dz/2 * ones(numNew * 2))   # append new split heights
-
-    return refine_mesh(mesh, z, l, divs, l[-1], i*k, k, m=m+1)
+    return refine_mesh(mesh, divs, i*k, k, m=m+1)
 
 
 def set_ini_conv(H_i, rho_i, w_i, h, h_1, a, a_1):
@@ -80,7 +78,6 @@ def project_vars(V, H, T, rho, drhodt, a, w, k, c, omega):
   aplot      = a.vector().array()
   wplot      = project(w, V).vector().array()
   kplot      = project(k, V).vector().array()
-  #cplot      = project(152.5 + 7.122*T, V).vector().array() 
   cplot      = project(c, V).vector().array() 
 
   return (Hplot, Tplot, rhoplot, drhodtplot, aplot, wplot, kplot, cplot, omega)
