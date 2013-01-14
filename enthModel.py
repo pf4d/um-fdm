@@ -14,6 +14,7 @@ import numpy as np
 from dolfin import *
 from plotFmic import *
 import sys
+import time
 
 
 #===============================================================================
@@ -56,7 +57,7 @@ zs_0  = zs                     # previous time-step surface ..... m
 zb    = 0.                     # depth .......................... m
 dz    = (zs - zb)/n            # initial z-spacing .............. m
 l     = dz*ones(n+1)           # height vector .................. m
-dt    = 0.020*spy              # time-step ...................... s
+dt    = 0.500*spy              # time-step ...................... s
 t0    = 0.0                    # begin time ..................... s
 tf    = sys.argv[1]            # end-time ....................... string
 tf    = float(tf)*spy          # end-time ....................... s
@@ -67,7 +68,7 @@ tf    = float(tf)*spy          # end-time ....................... s
 mesh  = IntervalMesh(n, zb, zs)
 z     = mesh.coordinates()[:,0]
 
-z, l, mesh = refine_mesh(mesh, z, l, divs=7, dz=l[-1], i=1.5, k=1.05)
+z, l, mesh = refine_mesh(mesh, z, l, divs=4, dz=l[-1], i=1.1, k=1.15)
 
 index  = argsort(z)                           # index of updated mesh
 n      = len(l)                               # new number of nodes
@@ -80,12 +81,8 @@ V      = FunctionSpace(mesh, 'Lagrange', 1)   # function space for rho, T
 MV     = MixedFunctionSpace([V, V, V])        # mixed function space
 
 # enthalpy surface condition with cyclical 2-meter air temperature :
-code   = 'c*( (Tavg + 10.0*(cos(2*omega*t) + 0.3*cos(4*omega*t)))  - T0 )'
+code   = 'c*( (Tavg + 10.0*(sin(2*omega*t) + 0.3*sin(4*omega*t)))  - T0 )'
 Hs     = Expression(code, c=cp, Tavg=Tavg, omega=pi/spy, t=t0, T0=T0)
-
-## simplified enthalpy surface condition :
-#code   = 'c*( Tavg - T0 )'
-#Hs     = Expression(code, c=cp, Tavg=Tavg, omega=pi/spy, t=t0, T0=T0)
 
 # experimental surface density :
 #code   = 'dp*rhon + (1 - dp)*rhoi'
@@ -209,16 +206,17 @@ data    = project_vars(V, H, T, rho, drhodt, a, w, k, c, omega)
 FEMdata = (mesh, V, MV, H_i, rho_i, w_i, a_i, h, H, rho, w, a, h_1, a_1)
 firn    = firn(const, FEMdata, data, rhos, adot, A, acc, z, l, index, dt)
 
-plt.ion() 
-plot = plot(firn)
+#plt.ion() 
+#plot = plot(firn)
 fmic = FmicData(firn)
 
 
 #===============================================================================
 # Compute solution :
 t = 0.0
+tstart = time.clock()
 set_log_active(False)
-while t <= tf - dt:
+while t <= tf:
   # newton's iterative method :
   solve(f == 0, h, [Hbc, Dbc, wbc], J=df)
 
@@ -236,6 +234,7 @@ while t <= tf - dt:
   # update firn object :
   data = project_vars(V, H, T, rho, drhodt, a, w, k, c, omega)
   firn.update_firn(data)
+  #firn.update_height_history()
   
   # calculate the fmic data and update the firn object :
   fmic.calc_fmic_variables(firn)
@@ -244,36 +243,36 @@ while t <= tf - dt:
   #firn.update_height()
 
   # update the plotting parameters :
-  plot.update_plot(firn, t/spy)
+  #plot.update_plot(firn, t/spy)
   #print t/spy, min(firn.a)/spy, max(firn.a)/spy
  
   # for modulo arithmetic :
   tr = round(t/spy, 2)
   
-  # update fmic data :
-  if tr % 1 == 0.0:
-    print 'dt: ' + str(tr) + '\t=>\t815 SAVED'
-    fmic.append_815(tr, firn)
-  
-  if t <= 100.0*spy and tr % 10 == 0.0:
-    print 'dt: ' + str(tr) + '\t=>\tSAVED'
-    fmic.append_state(tr, firn)
+  ## update fmic data :
+  #if tr % 1 == 0.0:
+  #  print 'dt: ' + str(tr) + '\t=>\t815 SAVED'
+  #  fmic.append_815(tr, firn)
+  #
+  #if t <= 100.0*spy and tr % 10 == 0.0:
+  #  print 'dt: ' + str(tr) + '\t=>\tSAVED'
+  #  fmic.append_state(tr, firn)
 
-  elif t > 100.0*spy and t < 150.0*spy and tr % 1 == 0.0:
-    print 'dt: ' + str(tr) + '\t=>\tSAVED'
-    fmic.append_state(tr, firn)
-    
-  elif t >= 150.0*spy and t < 250.0*spy and tr % 5 == 0.0:
-    print 'dt: ' + str(tr) + '\t=>\tSAVED'
-    fmic.append_state(tr, firn)
+  #elif t > 100.0*spy and t < 150.0*spy and tr % 1 == 0.0:
+  #  print 'dt: ' + str(tr) + '\t=>\tSAVED'
+  #  fmic.append_state(tr, firn)
+  #  
+  #elif t >= 150.0*spy and t < 250.0*spy and tr % 5 == 0.0:
+  #  print 'dt: ' + str(tr) + '\t=>\tSAVED'
+  #  fmic.append_state(tr, firn)
 
-  elif t >= 250.0*spy and t <= 2000.0*spy and tr % 10 == 0.0:
-    print 'dt: ' + str(tr) + '\t=>\tSAVED'
-    fmic.append_state(tr, firn)
+  #elif t >= 250.0*spy and t <= 2000.0*spy and tr % 10 == 0.0:
+  #  print 'dt: ' + str(tr) + '\t=>\tSAVED'
+  #  fmic.append_state(tr, firn)
   
-  # vary the temperature :
-  if t == 100.0 * spy:
-    Hs.Tavg = Tw - 45.0
+  ## vary the temperature :
+  #if t == 100.0 * spy:
+  #  Hs.Tavg = Tw - 45.0
   #if t == 100.0 * spy:
   #  Hs.Tavg = Tw - 35.0
   #if t == 100.0 * spy:
@@ -313,13 +312,18 @@ while t <= tf - dt:
   #rhoS.dp = dnew/ltop
   #rhoS.Ts = firn.T[-1]
 
-  plt.draw()  # update the graph
+  #plt.draw()  # update the graph
 
-plt.ioff()
-plt.show()
+tfin = time.clock()
+#plt.ioff()
+#plt.show()
+
+ttot   = tfin - tstart
+thours = round(ttot*(12000/tf)*spy/60/60, 3)
+print "total time to process 12,000 years:", thours, "hrs"
 
 # plot the surface height trend :
-x = linspace(0, t/spy, len(firn.ht))
-plot.plot_height(x, firn.ht, firn.origHt)
+#x = linspace(0, t/spy, len(firn.ht))
+#plot.plot_height(x, firn.ht, firn.origHt)
 
 

@@ -137,7 +137,11 @@ class firn():
     self.acc    = self.const.rhoi*self.adot/self.const.spy
     self.A      = self.const.spy*self.acc/self.rhos*1e3
 
-    # track the current height of the firn :
+
+  def update_height_history(self):
+    """
+    track the current height of the firn :
+    """
     self.ht.append(self.z[-1])
 
     # calculate the new height of original surface by interpolating the 
@@ -203,35 +207,35 @@ class firn():
     rhoCoefNew[rhoLow]  = kcLw*(1.435 - 0.151*np.log(self.A))
     rhoCoef.vector().set_local(rhoCoefNew)
   
-    # update coefficients used by enthalpy :
-    Hhigh               = where(self.H >= Hsp)[0]
-    Hlow                = where(self.H <  Hsp)[0]
-    omegaNew            = zeros(n)
-    Hnew                = zeros(n)
-    rhoNew              = zeros(n)
-    TcoefNew            = ones(n)
-    KcoefNew            = ones(n)
+    ## update coefficients used by enthalpy :
+    #Hhigh               = where(self.H >= Hsp)[0]
+    #Hlow                = where(self.H <  Hsp)[0]
+    #omegaNew            = zeros(n)
+    #Hnew                = zeros(n)
+    #rhoNew              = zeros(n)
+    #TcoefNew            = ones(n)
+    #KcoefNew            = ones(n)
   
-    KcoefNew[Hhigh]     = 1/10.0
-    TcoefNew[Hhigh]     = self.c[Hhigh] / self.H[Hhigh] * Tw
+    #KcoefNew[Hhigh]     = 1/10.0
+    #TcoefNew[Hhigh]     = self.c[Hhigh] / self.H[Hhigh] * Tw
   
-    # update enthalpy :
-    omegaNew[Hhigh]     = (self.H[Hhigh] - self.c[Hhigh]*(Tw - T0)) / Lf
-    domega              = omegaNew - self.omega          # water content chg.
-    domPos              = where(domega >  0)[0]          # water content inc.
-    domNeg              = where(domega <= 0)[0]          # water content dec.
-    rhoNotLiq           = where(self.rho < rhow)[0]      # density < water
-    rhoInc              = intersect1d(domPos, rhoNotLiq) # where rho can inc.
-    Hnew[Hhigh]         = self.c[Hhigh]*(Tw - T0) + self.omega[Hhigh]*Lf
-    Hnew[Hlow]          = self.H[Hlow]
+    ## update enthalpy :
+    #omegaNew[Hhigh]     = (self.H[Hhigh] - self.c[Hhigh]*(Tw - T0)) / Lf
+    #domega              = omegaNew - self.omega          # water content chg.
+    #domPos              = where(domega >  0)[0]          # water content inc.
+    #domNeg              = where(domega <= 0)[0]          # water content dec.
+    #rhoNotLiq           = where(self.rho < rhow)[0]      # density < water
+    #rhoInc              = intersect1d(domPos, rhoNotLiq) # where rho can inc.
+    #Hnew[Hhigh]         = self.c[Hhigh]*(Tw - T0) + self.omega[Hhigh]*Lf
+    #Hnew[Hlow]          = self.H[Hlow]
   
-    # update the dolfin vectors :
-    self.rho_i.vector().set_local(self.rho)
-    self.H_i.vector().set_local(Hnew)
-    h_0 = project(as_vector([self.H_i, self.rho_i, self.wF]), self.MV)
-    self.h.vector().set_local(h_0.vector().array())
-    Kcoef.vector().set_local(KcoefNew)  #FIXME: erratic 
-    Tcoef.vector().set_local(TcoefNew)
+    ## update the dolfin vectors :
+    #self.rho_i.vector().set_local(self.rho)
+    #self.H_i.vector().set_local(Hnew)
+    #h_0 = project(as_vector([self.H_i, self.rho_i, self.wF]), self.MV)
+    #self.h.vector().set_local(h_0.vector().array())
+    #Kcoef.vector().set_local(KcoefNew)  #FIXME: erratic 
+    #Tcoef.vector().set_local(TcoefNew)
 
 
 class plot():
