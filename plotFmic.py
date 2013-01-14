@@ -197,8 +197,8 @@ class firn():
     rhow = self.const.rhow
 
     # find vector of T, rho :
-    self.H      = project(self.HF, self.V).vector().array()
-    self.rho    = project(self.rhoF, self.V).vector().array()
+    #self.H      = project(self.HF, self.V).vector().array()
+    #self.rho    = project(self.rhoF, self.V).vector().array()
   
     # update kc term in drhodt :
     # if rho >  550, kc = kcHigh

@@ -57,7 +57,7 @@ zs_0  = zs                     # previous time-step surface ..... m
 zb    = 0.                     # depth .......................... m
 dz    = (zs - zb)/n            # initial z-spacing .............. m
 l     = dz*ones(n+1)           # height vector .................. m
-dt    = 0.250*spy              # time-step ...................... s
+dt    = 0.25*spy               # time-step ...................... s
 t0    = 0.0                    # begin time ..................... s
 tf    = sys.argv[1]            # end-time ....................... string
 tf    = float(tf)*spy          # end-time ....................... s
@@ -69,6 +69,8 @@ mesh  = IntervalMesh(n, zb, zs)
 z     = mesh.coordinates()[:,0]
 
 z, l, mesh = refine_mesh(mesh, z, l, divs=5, dz=l[-1], i=1.5, k=1.30)
+z, l, mesh = refine_mesh(mesh, z, l, divs=1, dz=l[-1], i=4, k=1.30)
+z, l, mesh = refine_mesh(mesh, z, l, divs=1, dz=l[-1], i=66, k=1.30)
 
 index  = argsort(z)                           # index of updated mesh
 n      = len(l)                               # new number of nodes
@@ -82,9 +84,7 @@ MV     = MixedFunctionSpace([V, V, V])        # mixed function space
 
 # enthalpy surface condition with cyclical 2-meter air temperature :
 code   = 'c*( Tavg + 10.0*sin(2*omega*t) )'
-Hs     = Expression(code, c=cp, Tavg=Tavg, omega=pi/spy, t=t0, T0=T0)
-
-Hs     = Constant(Hsp)
+Hs     = Expression(code, c=cpi, Tavg=Tavg, omega=pi/spy, t=t0, T0=T0)
 
 # experimental surface density :
 #code   = 'dp*rhon + (1 - dp)*rhoi'
@@ -115,7 +115,7 @@ ageBc = DirichletBC(V,         ageS, surface)    # age of surface
 
 #===============================================================================
 # Define variational problem spaces :
-H_i        = interpolate(Constant(cp*(Tavg - T0)), V) # initial enthalpy vector
+H_i        = interpolate(Constant(cpi*(Tavg - T0)), V) # initial enthalpy vector
 rho_i      = interpolate(Constant(rhoin[0]), V)       # initial density vector
 a_i        = interpolate(Constant(1.0), V)            # initial age vector
 w_i        = interpolate(Constant(acc), V)            # initial velocity vector
@@ -145,7 +145,8 @@ a_1.vector().set_local(a_i.vector().array())  # initialize age in prev. sol
 #===============================================================================
 # Define equations to be solved :
 bdot      = interpolate(Constant(rhoi * adot / spy), V)   # average annual acc
-c         = (152.5 + sqrt(152.5**2 + 4*7.122*H)) / 2      # Patterson 1994
+#c         = (152.5 + sqrt(152.5**2 + 4*7.122*H)) / 2      # Patterson 1994
+c         = Constant(cpi)
 k         = 2.1*(rho / rhoi)**2                           # Arthern 2008
 Tcoef     = interpolate(Constant(1.0), V)                 # T above Tw = 0.0
 Kcoef     = interpolate(Constant(1.0),  V)                # enthalpy coef.
@@ -241,7 +242,6 @@ while t <= tf:
 
   # update the plotting parameters :
   plot.update_plot(firn, t/spy)
-  print firn.Ts - Tw, firn.c[-1]*(Tavg + 10*sin(2*pi/spy*t))/firn.c[-1] - Tw
   #print t/spy, min(firn.a)/spy, max(firn.a)/spy
  
   # update model parameters :
@@ -299,7 +299,7 @@ while t <= tf:
   #  wS.adot = firn.adot
   
   # update boundary conditions :
-  #Hs.t      = t
+  Hs.t      = t
   #Hs.c      = firn.c[-1]
   #rhoS.rhoi = firn.rho[-1]
   #if firn.Ts > Tw:
