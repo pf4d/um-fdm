@@ -6,6 +6,9 @@
 \usepackage{siunitx}
 \usepackage{alltt}%Allows the use of verbatim (good for printing out code).
 \usepackage{graphicx}%Used to import images.
+\usepackage{minted}
+\definecolor{bg}{rgb}{0.95,0.95,0.95}
+\usemintedstyle{default}
 \usepackage{amsmath, amssymb, amscd}%Contains the AMS expanded math symbols library.
 \usepackage{algorithm, algorithmic} %pseudo-code
 %%For those who want smaller margins, you can use this:
@@ -42,96 +45,98 @@ We have re-created a number of these models and integrated them with an enthalpy
 \section{Temperature Solution}
 
 We begin with the standard heat-transport equation as explained by \emph{Patterson} [2001]
-
-  $$
+\begin{align*}
   \rho c_i \frac{\partial T}{\partial t} = 
     k_i \frac{\partial^2 T}{\partial z^2} +
     \left( \frac{dk_i}{dt} - \rho c_i w \right) \frac{\partial T}{\partial z}
-  $$
+\end{align*}
 with heat sources from the deformation of ice omitted, $\rho$ density, $c_i$ heat capacity, $k_i$ thermal conductivity, $w$ vertical velocity, and $T$ temperature of firn.  To solve the total derivative $dk_i/dt$ we must apply the chain rule
-  $$
+\begin{align*}
   \frac{dk_i}{dz} = 
   \frac{\partial k_i}{\partial \rho} \frac{\partial \rho}{\partial z} + 
   \frac{\partial k_i}{\partial T} \frac{\partial T}{\partial z}.
-  $$
+\end{align*}
 The thermal conductivity of ice is defined by \emph{Arthern et. al, 1998} as
-  $$k_i = 2.1 \left(\frac{\rho}{\rho_i}\right)^2,$$
+\begin{align*}
+  k_i = 2.1 \left(\frac{\rho}{\rho_i}\right)^2,
+\end{align*}
 from which we find
-  $$
+\begin{align*}
   \frac{\partial k_i}{\partial \rho} = 
     4.2 \frac{\rho}{\rho_i^2}
-  $$
+\end{align*}
 and
-  $$
+\begin{align*}
   \frac{\partial k_i}{\partial T} = 
     \frac{4.2}{\rho_i^2} \left( \frac{\partial \rho}{\partial T} \right).
-  $$
+\end{align*}
 \emph{Patterson} [2001] defined the heat capacity $c_i$ of firn with the equation
-  $$
+\begin{align*}
   c_i = 152.5 + 7.122 T,
-  $$
-and also defined $\rho$ in terms of $T$ which leads to the equation:
-  $$
+\end{align*}
+where we make $T=T_{avg}$ to simplify calculations.  Contained within the same literature is an expression $\rho$ in terms of $T$ which leads to the equation:
+\begin{align*}
   \frac{\partial \rho}{\partial T} = 
     (\SI{5.6e-2}) \exp ((\SI{-5.7e-3})T).
-  $$
+\end{align*}
 The vertical velocity of ice $w$ can be described with the differential equation
-  $$
+\begin{align*}
   \frac{\partial w}{\partial z} = \frac{1}{\rho} \frac{d \rho}{dt}.
-  $$
+\end{align*}
 
 
 %% Density =====================================================================
 \section{Density Solution}
 
 The densification process is defined with the material derivative
-  $$\frac{d \rho}{dt} = \frac{\partial \rho}{\partial t} + 
-    w\frac{\partial \rho}{\partial z}.$$
+\begin{align*}
+  \frac{d \rho}{dt} = \frac{\partial \rho}{\partial t} + 
+  w\frac{\partial \rho}{\partial z}.
+\end{align*}
 \emph{Arthern et al.} [2010] described this derivative differently for density values above and below a critical value, $\rho_m$:  
-  $$
+\begin{align*}
   \frac{d \rho}{dt} = 
   \begin{cases}
    c_0(\rho_i - \rho), &\rho \leq \rho_m\\
    c_1(\rho_i - \rho), &\rho > \rho_m
-  \end{cases}.$$
+  \end{cases}.
+\end{align*}
 \emph{Zwally and Li} [2002] defined a single multiplying constant $c$ with an Arrhenius-type relation
-  $$
+\begin{align*}
   c_0 = c_1 = 
   \dot{b} \beta(T)\left(\frac{\rho_i}{\rho_w}\right)
   K_{0G}(T)\exp \left( -\frac{E(T)}{RT} \right),
-  $$
-with $K_{0G}(T) \exp(-E(T)/(RT)) = 8.36T^{-2.061}$ as described in \emph{Reeh} [2008], accumulation rate $\dot{b}$ in units of kg m\sups{-2} s\sups{-1}, and $\beta(T)$ a unit-less smoothing function to match a desired density rate.  \emph{Arthern et al} [2010] developed a semi-empirical formula by coupling the rate equations for Nabarro-Herring creep and normal grain-growth: 
-  $$
+\end{align*}
+with $K_{0G}(T) \exp(-E(T)/(RT)) = 8.36T^{-2.061}$ as described in \emph{Reeh} [2008], average annual accumulation rate $\dot{b}$ in units of kg m\sups{-2} s\sups{-1}, and $\beta(T)$ a unit-less smoothing function to match a desired density rate.  \emph{Arthern et al} [2010] developed a semi-empirical formula by coupling the rate equations for Nabarro-Herring creep and normal grain-growth: 
+\begin{align*}
   \begin{cases}
     c_0 = M_0 \dot{b}g\frac{k_{c0}}{k_g}\exp\left(-\frac{E_c}{RT} + 
           \frac{E_g}{RT_{avg}}\right)\\
     c_1 = M_1 \dot{b}g\frac{k_{c1}}{k_g}\exp\left(-\frac{E_c}{RT} + 
           \frac{E_g}{RT_{avg}}\right)
   \end{cases},
-  $$
+\end{align*}
 with the creep coefficients defined as
-  $$
+\begin{align*}
   \begin{cases}
     k_{c0} = \text{\SI{9.2e-9} m\sups{3} s kg\sups{-1}} \\
     k_{c1} = \text{\SI{3.7e-9} m\sups{3} s kg\sups{-1}}  
   \end{cases}
-  $$
+\end{align*}
 and $M$ defined in \emph{Ligtenberg et al.} [2011] to better fit with observed densification rates in higher-temperature environments:
-  $$
+\begin{align*}
   \begin{cases}
     M_0 = 2.366 - 0.293\ln(\dot{b}*\SI{1e3})\\
     M_1 = 1.435 - 0.151\ln(\dot{b}*\SI{1e3})
   \end{cases}.
-  $$
-Within the same paper a firn surface-density expression from data was given:
-  $$ \rho_s = -151.94 + 1.4266(73.6 + 1.06T_s + 0.0669A + 4.77V_a).$$
+\end{align*}
 
 
 %% Enthalpy ====================================================================
 \section{Enthalpy Solution}
 
 As stated in \emph{Aschwanden et al.} [2012], we take 'enthalpy' to be synonymous with 'internal energy' due to the exclusion of work done with changing volume.  The equation used here is the shallow-enthalpy:
-	$$
+\begin{align*}
   \rho \frac{\partial H}{\partial t} = \frac{\partial}{\partial z} 
     \left( 
       \begin{Bmatrix}
@@ -140,27 +145,37 @@ As stated in \emph{Aschwanden et al.} [2012], we take 'enthalpy' to be synonymou
       \end{Bmatrix}
       \frac{\partial H}{\partial z} 
     \right) + w \rho \frac{\partial H}{\partial z}.
-  $$
+\end{align*}
 Strain heating has been neglected and the advective term $w \rho\ \partial H / \partial z$ has been added.  The coefficient for temperate ice is 
-  $$K_i = \frac{k_i}{c_i},$$
+\begin{align*}
+  K_i = \frac{k_i}{c_i},
+\end{align*}
 and the coefficient for cold ice is
-  $$K_0 = \frac{1}{10}K_i.$$
+\begin{align*}
+  K_0 = \frac{1}{10}K_i.
+\end{align*}
 Temperate firn is defined as firn with $H > H_s$, cold firn with $H \leq H_s$, where
-  $$H_s = \int_{T_0}^{T_m}{c_i(T)}dT,$$ 
+\begin{align*}
+  H_s = \int_{T_0}^{T_m}{c_i(T)}dT,
+\end{align*}
 with $T_m = 273.15$ K and $T_0 = 0.0$ K.  The enthalpy can be found with a constant heat capacity of $2009$ J kg\sups{-1} K\sups{-1} by the linear equation
-  $$
+\begin{align*}
   H = 
   \begin{cases}
     c_i(T - T_0), &\text{where } T \leq T_m\\
     c_i(T_w - T_0) + \omega L_f,  &\text{where } T > T_m
   \end{cases}
-  $$
+\end{align*}
 where $L_f$ is the latent heat of fusion and $\omega$ represents the water content percentage of firn given by
-  $$\omega L_f = H - c_i(T_w - T_0).$$
+\begin{align*}
+  \omega L_f = H - c_i(T_w - T_0).
+\end{align*}
 Temperature may be derived from enthalpy easily:
-  $$T = \frac{H}{c_i}.$$
+\begin{align*}
+  T = \frac{H}{c_i}.
+\end{align*}
 The density of the firn column changes with the percentage of water content:
-  $$
+\begin{align*}
   \rho^n = 
   \begin{cases}
     \rho^{n-1} + \Delta\omega(\rho_w - \rho_i)\ \text{kg m\sups{-3}},  
@@ -168,23 +183,27 @@ The density of the firn column changes with the percentage of water content:
     \rho^{n-1} + \Delta\omega\rho_w\ \text{kg m\sups{-3}}, 
       &\Delta\omega > 0
   \end{cases},
-  $$
+\end{align*}
 where $\Delta\omega = \omega^n - \omega^{n-1}$ is the change in water content and superscripts refer to the time index.  This has the effect of adding water to the firn column and refreezing the portion of firn with decreasing water content.  The surface-density at time index $n+1$ can be described as: 
-  $$\rho_s^{n+1} = \rho_{\dot{b}}^{n+1} d_p + \rho_s^{n} (1 - d_p),$$
+\begin{align*}
+  \rho_s^{n+1} = \rho_{\dot{b}}^{n+1} d_p + \rho_s^{n} (1 - d_p),
+\end{align*}
 where
-  $$\rho_{\dot{b}}^{n+1} = \rho_{\dot{b}}^{n-1} + \Delta \omega_s \rho_{\dot{b}}^n,$$
-  $$\Delta \omega_s = \omega_s^{n} - \omega_s^{n-1},$$ 
-  $$d_p = \frac{d_n}{l_s},$$
-  $$d_n = w_s\Delta t,\text{ and}$$
-  \begin{center}$l_s$ is the length of the surface node.\end{center}
+\begin{align*}
+  \rho_{\dot{b}}^{n+1} &= \rho_{\dot{b}}^{n-1} + \Delta \omega_s \rho_{\dot{b}}^n,\\
+  \Delta \omega_s &= \omega_s^{n} - \omega_s^{n-1},\\
+  d_p &= \frac{d_n}{l_s},\\
+  d_n &= w_s\Delta t,\text{ and}\\
+  l_s &\text{ is the length of the surface node.}
+\end{align*}
 If $T_s \geq T_w$, the density of surface snow while taking into account re-freezing is simulated making
-  $$
+\begin{align*}
   \rho_{\dot{b}}^n = 
   \begin{cases}
     \rho_w - \rho_i\ \text{kg m\sups{-3}},  &\Delta\omega_s < 0\\
     \rho_w\ \text{kg m\sups{-3}}, &\Delta\omega_s > 0\\
   \end{cases},
-  $$
+\end{align*}
 but when $T_s < T_w$, $\rho_{\dot{b}}^n$ is simply made to be $\rho_s$.
 \begin{figure}[H]
 	\centering
@@ -198,37 +217,35 @@ but when $T_s < T_w$, $\rho_{\dot{b}}^n$ is simply made to be $\rho_s$.
 \section{Finite Element Method}
 
 This section will focus on the enthalpy solution.  Solving these equations with FEniCS is done with Galerkin's method and requires finding the weak formulation:
-  $$
+\begin{align*}
     0 =
-    \int_{\Omega} 
+    &\int_{\Omega} 
       \begin{Bmatrix}
         K_i\\
         K_0
       \end{Bmatrix}
       \nabla^2 H \psi\ d \Omega 
-    + \int_{\Omega}w \rho \nabla H \psi\ d \Omega
-  $$
-  $$
-    - \int_{\Omega} {\rho \frac{\partial H}{\partial t}} \psi\ d \Omega.
-  $$
+    + \int_{\Omega}w \rho \nabla H \psi\ d \Omega \\
+    &- \int_{\Omega} {\rho \frac{\partial H}{\partial t}} \psi\ d \Omega. \\
+\end{align*}
 Here we have integrated the enthalpy equation over the entire domain, $\Omega$, and multiplied by a test function $\psi$.  After integrating the diffusive term by parts this becomes
-  $$
+\begin{align*}
     f_H =
-    - \int_{\Omega} 
+    &- \int_{\Omega} 
         \begin{Bmatrix}
           K_i\\
           K_0
         \end{Bmatrix}
         \nabla H \nabla \psi\ d \Omega 
-    + \int_{\Omega}w \rho \nabla H \psi\ d \Omega
-  $$
-  $$
-    - \int_{\Omega} {\rho \frac{\partial H}{\partial t}} \psi\ d \Omega.
-  $$
+    + \int_{\Omega}w \rho \nabla H \psi\ d \Omega \\
+    &- \int_{\Omega} {\rho \frac{\partial H}{\partial t}} \psi\ d \Omega. \\
+\end{align*}
 We can discretize the enthalpy time-differential with the second-order accurate formula
-  $$\frac{\partial H}{\partial t} = \frac{H - H^{k-1}}{\Delta t} = \theta H^{k}  + (1-\theta) H^{k-1}$$
+\begin{align*}
+  \frac{\partial H}{\partial t} = \frac{H - H^{k-1}}{\Delta t} = \theta H^{k}  + (1-\theta) H^{k-1}
+\end{align*}
 with superscripts referring to time index.  Using a $\theta$-scheme as given by \emph{Logg et al.} [2011], $H_{mid} = \theta H^{k}  + (1-\theta) H^{k-1}$, where $\theta \in [0,1]$ is a weighting factor chosen from: 
-  $$
+\begin{align*}
     \theta = 
     \begin{cases}
       1,       & \text{Backwards-Euler}\\
@@ -237,37 +254,37 @@ with superscripts referring to time index.  Using a $\theta$-scheme as given by 
       0.5,     & \text{Crank-Nicolson}\\
       0,       & \text{Forward-Euler}\\
     \end{cases}
-  $$
+\end{align*}
 The entire enthalpy residual can be represented in FEniCS as:\par
 \footnotesize
-\begin{alltt}
+\begin{minted}[bgcolor=bg]{python}
 theta = 0.5
 H_mid = theta*H + (1 - theta)*H_1
 f_H   = rho*(H - H_1)/dt*psi*dx + 
         k/c*Kcoef*
         inner(grad(H_mid), grad(psi))*dx + 
         rho*w*grad(H_mid)*psi*dx
-\end{alltt}
+\end{minted}
 \normalsize
 The variable \texttt{Kcoef} is a coefficient vector which will be updated dynamically depending on the temperature of firn (either $1.0$ or $0.1$ corresponding to $K_i$ and $K_0$).
 
 The weak form for density is found similarly, with a upwinding necessary to eliminate artifacts due to the sudden increase in density where ice lenses formed.  The method used here is the Streamline Upwind Petrov-Galerkin (SUPG) method:
-  $$
+\begin{align*}
     \hat{\phi} = \phi + \frac{h}{2||w||} w \cdot \nabla{\phi},
-  $$
+\end{align*}
 where $h$ is the cellsize.  The density residual after integration by parts becomes:
-  $$
+\begin{align*}
   f_{\rho} = 
     \int_{\Omega} \frac{\partial \rho}{\partial t}\phi\ d \Omega + 
     \int_{\Omega} w\nabla \rho \hat{\phi}\ d \Omega -
     \int_{\Omega}\frac{d \rho}{dt}\hat{\phi}\ d \Omega.
-  $$
+\end{align*}
 With the partial-time differential of density defined identically to the enthalpy equation, this can be represented in FEniCS including the \emph{Arthern et al.} [2010] densification equation as:\par
 \footnotesize
-\begin{alltt}
+\begin{minted}[bgcolor=bg]{python}
 vnorm   = sqrt(dot(w, w) + 1e-10)
 cellh   = CellSize(mesh)
-phihat  = phi + cellh/(2*vnorm)*dot(w, grad(phi))
+phihat  = phi+cellh/(2*vnorm)*dot(w,grad(phi))
 c       = b*g*rhoCoef/kg * 
           exp(-Ec/(R*T) + Eg/(R*Tavg))
 drhodt  = c*(rhoi - rho)
@@ -275,43 +292,43 @@ theta   = 1.0
 rho_mid = theta*rho + (1 - theta)*rho_1
 f_rho   = (rho - rho_1)/dt*phi*dx - 
           (drhodt - w*grad(rho_mid))*phihat*dx
-\end{alltt}
+\end{minted}
 \normalsize
 The variable \texttt{rhoCoef} is another dynamically-updated-coefficient vector and is either $k_{c0}$ or $k_{c1}$ depending upon the density at the node.  We have chosen $\theta = 1$ corresponding to the Backwards-Euler method due to the jump condition at $\rho_m$.
 
 In order to find the vertical velocity the differential equation must be solved.  The weak formulation is:
-  $$
+\begin{align*}
   f_{w} = 
     \int_{\Omega} \rho \nabla{w} \eta\ d\Omega + \frac{d\rho}{dt} \eta\ d\Omega,
-  $$
+\end{align*}
 and is created with FEniCS by:
 \footnotesize
-\begin{alltt}
-theta     = 1.0
-w_mid     = theta*w + (1 - theta)*w_1
-f_w       = rho*grad(w_mid)*eta*dx + drhodt*eta*dx
-\end{alltt}
+\begin{minted}[bgcolor=bg]{python}
+theta = 1.0
+w_mid = theta*w + (1 - theta)*w_1
+f_w   = rho*grad(w_mid)*eta*dx + drhodt*eta*dx
+\end{minted}
 \normalsize
 We chose $\theta=1$ again due to the jump discontinuity at $\rho_m$.
 
 
 We can define the function space for the entire non-linear problem as 
-  $$
+\begin{align*}
     U = \Omega \times \Omega \times \Omega,
-  $$
+\end{align*}
 with corresponding trial and test functions respectively defined as
-  $$
+\begin{align*}
     d_h, j \subset U.
-  $$
+\end{align*}
 The test functions for each function can now be described as
-  $$
+\begin{align*}
     \psi, \phi, \eta \subset j.
-  $$
+\end{align*}
 In FEniCS these spaces can be defined by this:
 \footnotesize
-\begin{alltt}
+\begin{minted}[bgcolor=bg]{python}
 mesh        = IntervalMesh(n, zb, zs)
-V           = FunctionSpace(mesh, 'Lagrange', 1)
+V           = FunctionSpace(mesh,'Lagrange',1)
 MV          = MixedFunctionSpace([V, V, V])
 h           = Function(MV)
 H,rho,w     = split(h)    
@@ -319,24 +336,24 @@ dh          = TrialFunction(MV)
 dH,drho,dw  = split(dh)
 j           = TestFunction(MV)
 psi,phi,eta = split(j)
-\end{alltt}
+\end{minted}
 \normalsize
 The variable \texttt{zb} is the z-position of the base of the firn column which does not change and \texttt{n} is the number of nodes; the \texttt{mesh} variable defines the spacial dimensions of the system to be solved and is here created in one dimension.  The mesh may also be created in three dimensions if desired, or made to fit a custom grid.  The variables \texttt{dH} and \texttt{drho} are the trial functions for the enthalpy and density functions and are not utilized in this code, but are included for reference later on.
 
 We define the complete non-linear residual as 
-  $$
+\begin{align*}
     f = f_H + f_{\rho} + f_w.
-  $$
+\end{align*}
 Solving this system can be accomplished with \emph{Newton's Method} which requires derivation of the Jacobian:
-  $$
+\begin{align*}
     J = \frac{\partial f}{\partial d_h}.
-  $$
+\end{align*}
 In FEniCS this is done with:
 \footnotesize
-\begin{alltt}
+\begin{minted}[bgcolor=bg]{python}
 f  = f_H + f_rho + f_w
 J  = derivative(f, h, dh)
-\end{alltt}
+\end{minted}
 \normalsize
 
 
@@ -344,94 +361,106 @@ J  = derivative(f, h, dh)
 \section{Age Solution}
 
 The age of firn is described with the equation
-  $$
+\begin{align*}
   \frac{\partial a}{\partial t} = 1 - w \nabla{a}.
-  $$
-Because this equation is purely advective, upwinding is needed.  The Taylor series expansion of $w$ is
-  $$
+\end{align*}
+Because this equation is purely advective, upwinding is needed; the method chosen here is \emph{Taylor-Galerkin} and is described in \emph{Codina} [1997].  The Taylor series expansion of $w$ is
+\begin{align*}
   a^{k+1} = a^{k} + \frac{\partial a^k}{\partial t}\Delta t + 
             \frac{1}{2}\frac{\partial^2 a^{k+\theta}}{\partial t^2}\Delta t^2 + 
             \mathrm{O} (\Delta t^3).
-  $$
+\end{align*}
 Replacing the time partials with the previous equation and eliminating the $\Delta t^3$ term, we have
-  $$
+\begin{align*}
   a^{k+1} = a^{k} + \left[1 - w \nabla{a}^k \right] \Delta t
             - \frac{1}{2}\frac{\partial}{\partial t}
               \left[1 - w \nabla{a}^{k+\theta} \right] \Delta t^2. 
-  $$
+\end{align*}
 Rearranging and simplifying,
-  $$
+\begin{align*}
   \frac{a^{k+1} - a^{k}}{\Delta t} = 1 - w \nabla{a}^k
         - \frac{w \Delta t}{2} 
           \left( \nabla \frac{\partial a^{k+\theta}}{\partial t} \right).
-  $$
+\end{align*}
 The time differential in the last term can again be replaced, 
-  $$
+\begin{align*}
   \frac{a^{k+1} - a^{k}}{\Delta t} = 1 - w \nabla{a}^k
         - \frac{w \Delta t}{2} 
           \left( \nabla [1 - w \nabla a^{k+\theta}] \right),
-  $$
+\end{align*}
 reduced to
-  \begin{align*}
+\begin{align*}
   \frac{a^{k+1} - a^{k}}{\Delta t} &= 1 - w \nabla{a}^k
         + \frac{w \Delta t}{2} 
           \left( \nabla [w \nabla a^{k+\theta}] \right),
-  \end{align*}
+\end{align*}
 and finally evauated using the product rule as
-  \begin{align*}
+\begin{align*}
   \frac{a^{k+1} - a^{k}}{\Delta t} = &1 - w \nabla{a}^k\\
         &+ \frac{w \Delta t}{2} 
           \left( w \nabla^2 a^{k+\theta} + \nabla w \nabla a^{k+\theta} \right).
-  \end{align*}
+\end{align*}
 After moving all the terms to one side, multiplying by the test function $\xi$, and integrating over $\Omega$ we have
-  $$
+\begin{align*}
   0 = \int_{\Omega} \frac{a^{k+1} - a^{k}}{\Delta t}\xi\ d\Omega - 
       \int_{\Omega} 1\xi\ d\Omega
-  + \int_{\Omega} w \nabla{a}^k \xi\ d\Omega
-  $$
-  $$ 
+  + \int_{\Omega} w \nabla{a}^k \xi\ d\Omega \\
   - \int_{\Omega} \frac{w^2 \Delta t}{2} 
     \nabla^2 a^{k+\theta} \xi\ d\Omega.
   - \int_{\Omega} \frac{w \Delta t}{2} 
-    \nabla w \nabla a^{k+\theta} \xi\ d\Omega.
-  $$
+    \nabla w \nabla a^{k+\theta} \xi\ d\Omega. \\
+\end{align*}
 Integrating the second to last term by parts and disregarding the boundary term results in
-  $$
+\begin{align*}
   0 = \int_{\Omega} \frac{a^{k+1} - a^{k}}{\Delta t}\xi\ d\Omega - 
       \int_{\Omega} 1\xi\ d\Omega
-  + \int_{\Omega} w \nabla{a}^k \xi\ d\Omega
-  $$
-  $$ 
+  + \int_{\Omega} w \nabla{a}^k \xi\ d\Omega \\
   + \int_{\Omega} \frac{w^2 \Delta t}{2} 
     \nabla a^{k+\theta} \cdot \nabla \xi\ d\Omega.
   - \int_{\Omega} \frac{w \Delta t}{2} 
-    \nabla w \nabla a^{k+\theta} \xi\ d\Omega.
-  $$
+    \nabla w \nabla a^{k+\theta} \xi\ d\Omega.\\
+\end{align*}
+This final residual may be created in fenics as:
+
+\footnotesize
+\begin{minted}[bgcolor=bg]{python}
+a     = Function(V)
+da    = TrialFunction(V)
+xi    = TestFunction(V)
+a_1   = Function(V)
+
+theta = 0.5
+a_mid = theta*a + (1-theta)*a_1
+f_a   = (a - a_1)/dt*xi*dx 
+        - 1.*xi*dx 
+        + w*grad(a_mid)*xi*dx 
+        + w**2*dt/2*grad(a_mid)*grad(xi)*dx 
+        - w*grad(w)*dt/2*grad(a_mid)*xi*dx
+\end{minted}
+\normalsize
 
 
 %% Boundary Conditions =========================================================
 \section{Boundary Conditions}
 
 A cyclical enthalpy boundary condition for the surface can be simulated with 
-  $$
-    H_s = c_i ( T_s - T_0 ),
-  $$
-  $$
-    T_s = T_{avg} + \alpha \sin(\omega t),
-  $$
+\begin{align*}
+    H_s &= c_i ( T_s - T_0 ),\\
+    T_s &= T_{avg} + \alpha \sin(\omega t),\\
+\end{align*}
 where $\alpha$ is the amplitude of temperature variation and $\omega = 2\pi / spy$ is the frequency.  The surface-density boundary condition can be likewise described as (see Figure 1): 
-  $$
+\begin{align*}
     \rho_s^{n+1} = \rho_{\dot{b}}^{n+1} d_p + \rho_s^{n} (1 - d_p).
-  $$
+\end{align*}
 The velocity of the surface can be described as 
-  $$
+\begin{align*}
   w_s = -\frac{\dot{b}}{\rho_s},\ \dot{b} = \rho_i \dot{a},
-  $$
+\end{align*}
 Where $\dot{a}$ is the accumulation rate in m a\sups{-1}.
 The age of the firn on the surface will always be 0.
 Each of these of these can be created with FEniCS by
 \footnotesize
-\begin{alltt}
+\begin{minted}[bgcolor=bg]{python}
 code = 'c*(Tavg + 9.9*sin(omega*t) - T0)'
 Hs   = Expression(code, c=cp, Tavg=Tavg, 
                   omega=freq, t=t0, T0=T0)
@@ -454,16 +483,16 @@ Hbc   = DirichletBC(MV.sub(0), Hs,   surface)
 Dbc   = DirichletBC(MV.sub(1), rhoS, surface)
 wbc   = DirichletBC(MV.sub(2), wS,   surface)
 ageBc = DirichletBC(V,         ageS, surface)
-\end{alltt}
+\end{minted}
 \normalsize
 Within the time-loop the variables in each \texttt{Expression} object can be updated as needed by utilizing the dot operator.
 
 Now all that is left is to iterate through time and call the \texttt{solve} method at each step:\par
 \footnotesize
-\begin{alltt}
+\begin{minted}[bgcolor=bg]{python}
 solve(f == 0, h, [Hbc, Dbc, wbc], J=J)
-solve(f\_a == 0, a, ageBc)
-\end{alltt}
+solve(f_a == 0, a, ageBc)
+\end{minted}
 \normalsize
 The \texttt{solve} function chooses \emph{Newton's Method} by default to solve the non-linear enthaply, density, and velocity residual by minimizing \texttt{f}.  The boundary conditions are updated with these calls by specifying the list \texttt{[Hbc, Dbc, wbc]} and \texttt{ageBc} in solver parameters.
 
@@ -472,10 +501,12 @@ The \texttt{solve} function chooses \emph{Newton's Method} by default to solve t
 \section{Model Parameters}
 
 Within the time-loop there are a number of parameters which need to be updated.  Taking into account conservation of mass, the height $l$ of each node must be re-calculated:\par
-  $$l_{new} = l_{ini} \frac{\rho_{ini}}{\rho},$$
+\begin{align*}
+  l_{new} = l_{ini} \frac{\rho_{ini}}{\rho},
+\end{align*}
 where $\rho_{ini}$ abd $l_{ini}$ are the density and height vectors of the firn column when the system was initialized.  With the height of the nodes calculated, the z-positions may be found by iterating through the heights and setting the z vector's corresponding cell equal to the current sum.  These tasks may be completed with the following code performed by the \texttt{update\_height} function of the \texttt{firn} class:\par
 \footnotesize
-\begin{alltt}
+\begin{minted}[bgcolor=bg]{python}
 lnew     = self.l*self.rhoin / self.rho
 zSum     = self.zb
 zTemp    = np.zeros(self.n)
@@ -483,21 +514,21 @@ for i in range(self.n)[1:]:
   zTemp[i] = zSum + lnew[i]
   zSum    += lnew[i]
 self.z   = zTemp
-\end{alltt}
+\end{minted}
 \normalsize
 The variable \texttt{index} is an array of positions corresponding to the correct ordering of the nodes, necessary after mesh refinement.  
 
 The height $z_o$ at time index $n$ of the original surface may be calculated as follows:
-  $$
+\begin{align*}
   z_o^{n} = (z_s^0 - z_b) \frac{z_o^{n-1} - z_b}{z_s^{n-1} - z_b}
            + w_{z_o} \Delta t.
-  $$
+\end{align*}
 This maintains the relative location of the original surface to the current surface and moves downward proportional to $w$.  This is accomplished in the class named \texttt{firn} with\par
 \footnotesize
-\begin{alltt}
+\begin{minted}[bgcolor=bg]{python}
 interp  = interp1d(self.z, self.w,
-                       bounds_error=False,
-                      fill_value=self.w[0])
+                   bounds_error=False,
+                   fill_value=self.w[0])
 zint    = np.array([self.zo])
 wzo     = interp(zint)[0]
 dt      = self.dt
@@ -507,13 +538,13 @@ zs_1    = self.zs_1
 zo      = self.zo
 self.zo = (zs - zb) * (zo - zb) / (zs_1 - zb) 
           + wzo * dt
-\end{alltt}
+\end{minted}
 \normalsize
 The indexes to \texttt{self.z} refers to the surface, \texttt{[-1]}, or the base, \texttt{[0]}.  For all operations it is convenient to store all the state data from the simulation in an object for ease of access.  It was for this purpose the \texttt{firn} class was created and contains the signature\par 
 \footnotesize
-\begin{alltt}
+\begin{minted}[bgcolor=bg]{python}
 firn(data, z, l, index, dt)
-\end{alltt}
+\end{minted}
 \normalsize
 with \texttt{data} a tuple containing the main variables, \texttt{z} the node z-positions as defined above, \texttt{l} the height vector of the elements, \texttt{index} the index of re-ordered mesh locations, and \texttt{dt} the time step of the program, $\Delta t$.
 
@@ -605,19 +636,19 @@ Above the ice lens in Figure 2 you will see numerical distortion: this is caused
 %% Current Work ================================================================
 \section{Work in Progress}
 At its current state of development the model does not take into account water transport through the firn column, describable with the Darcy flow equations:
-  $$
+\begin{align*}
     q = \frac{-k}{\mu}\nabla P, \ \  v = \frac{q}{\phi},
-  $$
+\end{align*}
 where $k$ is permeability, $\mu =$ \SI{1.787e-3} Pa$\cdot$s is the viscosity of water at $0\degree$ C, $\nabla P$ is the pressure gradient vector, and $\phi = 1- \rho/\rho_i$ is porosity.
 
 \emph{Waldner et al.} [2002] introduces this issue and provides references to numerous models which simulate this phenomenon.  \emph{Coleou et al.} [1998] supplies an equation for the irreducible water content of snow
-  $$
+\begin{align*}
     S_0 = \frac{0.0057}{1 - \phi} + 0.0017,
-  $$
+\end{align*}
 which may be used with the expression for permeability from \emph{Bozhinskiy \& Krass} [1989] :
-  $$
+\begin{align*}
     k = k_0 \exp(m \phi)\left( \frac{S - S_0}{\phi - S_0} \right)^2,
-  $$
+\end{align*}
 where $S$ is the relative water content and $k$ \& $m$ are empirical constants.
 
 
@@ -655,10 +686,11 @@ This model is a good start towards accurately modeling the densification of firn
   \bibitem{wald02}Waldner, P.A., Schneebeli, M., Schultze \mbox{-} Zimmermann, U., and Fl\"{u}hler, H. 2002. Effect of snow structure on water flow and solute transport. \textit{Hydrol. Process.}, DOI: 10.1002/hyp.1401
   \bibitem{bozh89}Bozhinskiy, A.N. and Krass, M.S. 1989. A mathematical model of snowmelt and water percolation processes in snow and firn. \textit{Snow Cover and Glacier Variations}. IAHS publ. no. 183.
   \bibitem{logg11}Logg, A., Mardal, K., and Wells, G.N. 2011. \textit{Automated Solution of Differential Equations by the Finite Element Method}, The FEniCS Project.
+  \bibitem{codi97}Codina, R. 1997. Comparison of some finite element methods for solving the diffusion\mbox{-}convection\mbox{-}reaction equation, \textit{Comput. Methods Appl. Mech. Engrg.}, 156(1998), 185\mbox{-}210.
 \end{thebibliography}
 
 \end{document}
-%%Compile with pdflatex file.tex
+%%Compile with pdflatex -shell-escape fdm.tex
 
 
 

@@ -47,7 +47,7 @@ Hsp   = const.Hsp              # Enthalpy of ice at Tw .......... J/kg
 # model variables :
 n     = 75                     # num of z-positions
 rhos  = 360.                   # initial density at surface ..... kg/m^3
-adot  = 0.30                   # accumulation rate .............. m/a
+adot  = 0.10                   # accumulation rate .............. m/a
 acc   = rhoi * adot / spy      # surface accumulation ........... kg/(m^2 s)
 A     = spy*acc/rhos*1e3       # surface accumulation ........... mm/a
 Tavg  = Tw - 50.0              # average temperature ............ degrees K
