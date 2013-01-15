@@ -21,6 +21,21 @@ class FmicData():
     self.z815   = firn.z815
     self.age815 = firn.age815
 
+  def __call__(self, firn):
+    """
+    Data structure to hold intercomparison project data.
+    """
+    self.t      = array([0.0])
+    self.a      = append(0.0, firn.a)
+    self.z      = append(0.0, firn.z)
+    self.rho    = append(0.0, firn.rho)
+    self.T      = append(0.0, firn.T)
+    self.drhodt = append(0.0, firn.drhodt)
+    self.porAll = firn.porAll
+    self.por815 = firn.por815
+    self.z815   = firn.z815
+    self.age815 = firn.age815
+
 
   def calc_fmic_variables(self, firn):
     """

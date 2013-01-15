@@ -243,9 +243,8 @@ while t <= tf:
 
   # update the plotting parameters :
   plot.update_plot(firn, t/spy)
-  #print t/spy, min(firn.a)/spy, max(firn.a)/spy
- 
-  print ( Tavg + 10.0*sin(2*pi/spy*t) ) - Tw, firn.T[-1] - Tw
+  #print t/spy, min(firn.a)/spy, max(firn.a)/spy 
+  #print ( Tavg + 10.0*sin(2*pi/spy*t) ) - Tw, firn.T[-1] - Tw
  
   # update model parameters :
   t += dt
@@ -253,32 +252,37 @@ while t <= tf:
   a_1.assign(a)
 
   # for modulo arithmetic :
-  tr = round(t/spy, 2)
-  
-  ## update fmic data :
-  #if tr % 1 == 0.0:
-  #  print 'dt: ' + str(tr) + '\t=>\t815 SAVED'
-  #  fmic.append_815(tr, firn)
-  #
-  #if t <= 100.0*spy and tr % 10 == 0.0:
-  #  print 'dt: ' + str(tr) + '\t=>\tSAVED'
-  #  fmic.append_state(tr, firn)
+  tr = round(t/spy - 10, 2)
 
-  #elif t > 100.0*spy and t < 150.0*spy and tr % 1 == 0.0:
-  #  print 'dt: ' + str(tr) + '\t=>\tSAVED'
-  #  fmic.append_state(tr, firn)
-  #  
-  #elif t >= 150.0*spy and t < 250.0*spy and tr % 5 == 0.0:
-  #  print 'dt: ' + str(tr) + '\t=>\tSAVED'
-  #  fmic.append_state(tr, firn)
-
-  #elif t >= 250.0*spy and t <= 2000.0*spy and tr % 10 == 0.0:
-  #  print 'dt: ' + str(tr) + '\t=>\tSAVED'
-  #  fmic.append_state(tr, firn)
+  # initialize the data : 
+  if tr == 0.0:
+    fmic(firn)
   
-  ## vary the temperature :
-  #if t == 100.0 * spy:
-  #  Hs.Tavg = Tw - 45.0
+  # update fmic data :
+  if tr > 0.0 and tr % 1 == 0.0:
+    print 'dt: ' + str(tr) + '\t=>\t815 SAVED'
+    fmic.append_815(tr, firn)
+  
+  if tr > 0.0 and tr <= 100.0*spy and tr % 10 == 0.0:
+    print 'dt: ' + str(tr) + '\t=>\tSAVED'
+    fmic.append_state(tr, firn)
+
+  elif tr > 100.0*spy and tr <= 150.0*spy and tr % 1 == 0.0:
+    print 'dt: ' + str(tr) + '\t=>\tSAVED'
+    fmic.append_state(tr, firn)
+    
+  elif tr > 150.0*spy and tr <= 250.0*spy and tr % 5 == 0.0:
+    print 'dt: ' + str(tr) + '\t=>\tSAVED'
+    fmic.append_state(tr, firn)
+
+  elif tr > 250.0*spy and tr <= 2000.0*spy and tr % 10 == 0.0:
+    print 'dt: ' + str(tr) + '\t=>\tSAVED'
+    fmic.append_state(tr, firn)
+  
+  # vary the temperature :
+  if tr == 50.0 * spy:
+    Hs.Tavg = Tw - 45.0
+    fmic.save_fmic_data(1)
   #if t == 100.0 * spy:
   #  Hs.Tavg = Tw - 35.0
   #if t == 100.0 * spy:
@@ -303,7 +307,7 @@ while t <= tf:
   
   # update boundary conditions :
   Hs.t      = t
-  Hs.c      = firn.c[-1]
+  #Hs.c      = firn.c[-1]
   #rhoS.rhoi = firn.rho[-1]
   #if firn.Ts > Tw:
   #  if domega[-1] > 0:
