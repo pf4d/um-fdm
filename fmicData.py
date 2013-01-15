@@ -130,20 +130,22 @@ class FmicData():
 
     rho815 = vstack((t, age815, z815))
     por    = vstack((age815, por815, porAll))
+    
+    directory = 'data/fmic/CummingsExperiment' + exp + '/'
   
-    savetxt('data/fmic/CummingsExperiment' + exp + 'Age.txt',         a,
+    savetxt(directory + 'CummingsExperiment' + exp + 'Age.txt',         a,
             delimiter='\t')
-    savetxt('data/fmic/CummingsExperiment' + exp + 'Depth.txt',       z,
+    savetxt(directory + 'CummingsExperiment' + exp + 'Depth.txt',       z,
             delimiter='\t')
-    savetxt('data/fmic/CummingsExperiment' + exp + 'Density.txt',     rho,
+    savetxt(directory + 'CummingsExperiment' + exp + 'Density.txt',     rho,
             delimiter='\t')
-    savetxt('data/fmic/CummingsExperiment' + exp + 'Temperature.txt', T,
+    savetxt(directory + 'CummingsExperiment' + exp + 'Temperature.txt', T,
             delimiter='\t')
-    savetxt('data/fmic/CummingsExperiment' + exp + 'DensityRate.txt', drhodt,
+    savetxt(directory + 'CummingsExperiment' + exp + 'DensityRate.txt', drhodt,
             delimiter='\t')
-    savetxt('data/fmic/CummingsExperiment' + exp + 'Porosity.txt',    por,
+    savetxt(directory + 'CummingsExperiment' + exp + 'Porosity.txt',    por,
             delimiter='\t')
-    savetxt('data/fmic/CummingsExperiment' + exp + 'Rho815.txt',      rho815,
+    savetxt(directory + 'CummingsExperiment' + exp + 'Rho815.txt',      rho815,
             delimiter='\t')
 
 

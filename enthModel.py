@@ -95,7 +95,7 @@ rhoS   = Expression('rhon', rhon=rhos)
 # surface age is always 0 :
 ageS   = Constant(0.0)
 
-# velocity of surface (-acc / rhos) :
+# velocity of surface (-acc / rhos) [m/s] :
 code   = '- (rhoi * adot / spy) / rhos'
 wS     = Expression(code, rhoi=rhoi, adot=adot, spy=spy, rhos=rhos)
 
