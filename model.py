@@ -1,7 +1,7 @@
 """
 model.py
 Evan Cummings
-07.19.12
+01.16.12
 
 FEniCS solution to firn enthalpy / density profile.
 
@@ -47,17 +47,40 @@ Hsp   = const.Hsp              # Enthalpy of ice at Tw .......... J/kg
 # model variables :
 n     = 75                     # num of z-positions
 rhos  = 360.                   # initial density at surface ..... kg/m^3
-adot  = 0.10                   # accumulation rate .............. m/a
+ex    = int(sys.argv[3])
+
+# fmic experiment :
+if ex == 1:
+  adot  = 0.10                 # accumulation rate .............. m/a
+  Tavg  = Tw - 50.0            # average temperature ............ degrees K
+elif ex == 2:
+  adot  = 0.10                 # accumulation rate .............. m/a
+  Tavg  = Tw - 40.0            # average temperature ............ degrees K
+elif ex == 3:
+  adot  = 0.10                 # accumulation rate .............. m/a
+  Tavg  = Tw - 30.0            # average temperature ............ degrees K
+elif ex == 4:
+  adot  = 0.02                 # accumulation rate .............. m/a
+  Tavg  = Tw - 30.0            # average temperature ............ degrees K
+elif ex == 5:
+  adot  = 0.15                 # accumulation rate .............. m/a
+  Tavg  = Tw - 30.0            # average temperature ............ degrees K
+elif ex == 6:
+  adot  = 0.25                 # accumulation rate .............. m/a
+  Tavg  = Tw - 30.0            # average temperature ............ degrees K
+else :
+  adot  = 0.10                 # accumulation rate .............. m/a
+  Tavg  = Tw - 50.0            # average temperature ............ degrees K
+
 acc   = rhoi * adot / spy      # surface accumulation ........... kg/(m^2 s)
 A     = spy*acc/rhos*1e3       # surface accumulation ........... mm/a
-Tavg  = Tw - 50.0              # average temperature ............ degrees K
 cp    = 152.5 + 7.122*Tavg     # heat capacity of ice ........... J/(kg K)
 zs    = 1000.                  # surface start .................. m
 zs_0  = zs                     # previous time-step surface ..... m
 zb    = 0.                     # depth .......................... m
 dz    = (zs - zb)/n            # initial z-spacing .............. m
 l     = dz*ones(n+1)           # height vector .................. m
-dt    = 0.025*spy              # time-step ...................... s
+dt    = 0.05*spy               # time-step ...................... s
 t0    = 0.0                    # begin time ..................... s
 tf    = sys.argv[1]            # end-time ....................... string
 tf    = float(tf)*spy          # end-time ....................... s
@@ -228,7 +251,7 @@ tstart = time.clock()
 set_log_active(False)
 for t in times:
   # update boundary conditions :
-  Hs.t      = t + dt
+  Hs.t      = t
   #Hs.c      = firn.c[-1]
   #rhoS.rhoi = firn.rho[-1]
   #if firn.Ts > Tw:
@@ -280,51 +303,49 @@ for t in times:
     print 'dt: ' + str(tr) + '\t=>\t815 SAVED'
     print 'dt: ' + str(tr) + '\t=>\tSAVED'
   
-  # update fmic data :
+  # update fmic 815 data :
   if tr > 0.0 and tr % 1 == 0.0:
     print 'dt: ' + str(tr) + '\t=>\t815 SAVED'
     fmic.append_815(tr, firn)
   
+  # update the main fmic data:
   if tr > 0.0 and tr <= 100.0 and tr % 10 == 0.0:
     print 'dt: ' + str(tr) + '\t=>\tSAVED'
     fmic.append_state(tr, firn)
-
   elif tr > 100.0 and tr <= 150.0 and tr % 1 == 0.0:
     print 'dt: ' + str(tr) + '\t=>\tSAVED'
     fmic.append_state(tr, firn)
-    
   elif tr > 150.0 and tr <= 250.0 and tr % 5 == 0.0:
     print 'dt: ' + str(tr) + '\t=>\tSAVED'
     fmic.append_state(tr, firn)
-
   elif tr > 250.0 and tr <= 2000.0 and tr % 10 == 0.0:
     print 'dt: ' + str(tr) + '\t=>\tSAVED'
     fmic.append_state(tr, firn)
   
   # vary the temperature :
-  if tr == 100.0:
+  if tr == 100.0 and ex == 1:
     Hs.Tavg = Tw - 45.0
-  #if tr == 100.0:
-  #  Hs.Tavg = Tw - 35.0
-  #if tr == 100.0:
-  #  Hs.Tavg = Tw - 25.0
+  elif tr == 100.0 and ex == 2:
+    Hs.Tavg = Tw - 35.0
+  elif tr == 100.0 and ex == 3:
+    Hs.Tavg = Tw - 25.0
 
-  ## vary the accumulation :
-  #if tr == 100:
-  #  adot = 0.07
-  #  #bdotNew = ones(n)*(rhoi * adot / spy)
-  #  #bdot.vector().set_local(bdotNew)
-  #  wS.adot = adot
-  #if tr == 100:
-  #  adot = 0.20  
-  #  #bdotNew = ones(n)*(rhoi * adot / spy)
-  #  #bdot.vector().set_local(bdotNew)
-  #  wS.adot = adot
-  #if tr == 100:
-  #  adot = 0.30
-  #  #bdotNew = ones(n)*(rhoi * adot / spy)
-  #  #bdot.vector().set_local(bdotNew)
-  #  wS.adot = adot
+  # vary the accumulation :
+  elif tr == 100 and ex == 4:
+    adot = 0.07
+    #bdotNew = ones(n)*(rhoi * adot / spy)
+    #bdot.vector().set_local(bdotNew)
+    wS.adot = adot
+  elif tr == 100 and ex == 5:
+    adot = 0.20  
+    #bdotNew = ones(n)*(rhoi * adot / spy)
+    #bdot.vector().set_local(bdotNew)
+    wS.adot = adot
+  elif tr == 100 and ex == 6:
+    adot = 0.30
+    #bdotNew = ones(n)*(rhoi * adot / spy)
+    #bdot.vector().set_local(bdotNew)
+    wS.adot = adot
   
   if bp:
     plt.draw()  # update the graph
@@ -338,7 +359,7 @@ ttot   = tfin - tstart
 thours = round(ttot*(12000/tf)*spy/60/60, 3)
 print "total time to process 12,000 years:", thours, "hrs"
 
-#fmic.save_fmic_data(1)
+fmic.save_fmic_data(ex)
 # plot the surface height trend :
 #x = linspace(0, t/spy, len(firn.ht))
 #plot.plot_height(x, firn.ht, firn.origHt)
