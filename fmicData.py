@@ -23,7 +23,7 @@ class FmicData():
 
   def __call__(self, firn):
     """
-    Data structure to hold intercomparison project data.
+    Reset the initial conditons to that of the firn object.
     """
     self.t      = array([0.0])
     self.a      = append(0.0, firn.a)
@@ -114,7 +114,7 @@ class FmicData():
     saves the current state of this object to txt files in /data/fmic directory.
     
     INPUT    - exp: experiment number
-    OUTPUTS  - txt files in fmic directory
+    OUTPUTS  - txt files in fmic/exp directory
     """
     exp    = str(exp)
     t      = self.t

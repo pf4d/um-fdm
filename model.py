@@ -1,5 +1,5 @@
 """
-enthModel.py
+model.py
 Evan Cummings
 07.19.12
 
@@ -9,10 +9,10 @@ FEniCS solution to firn enthalpy / density profile.
 
 from numpy import *
 from fmicData import *
-from modelFunctions import *
+from functions import *
 import numpy as np
 from dolfin import *
-from plotFmic import *
+from plot import *
 import sys
 import time
 
@@ -57,10 +57,13 @@ zs_0  = zs                     # previous time-step surface ..... m
 zb    = 0.                     # depth .......................... m
 dz    = (zs - zb)/n            # initial z-spacing .............. m
 l     = dz*ones(n+1)           # height vector .................. m
-dt    = 0.05*spy               # time-step ...................... s
+dt    = 0.025*spy              # time-step ...................... s
 t0    = 0.0                    # begin time ..................... s
 tf    = sys.argv[1]            # end-time ....................... string
 tf    = float(tf)*spy          # end-time ....................... s
+numt  = (tf-t0)/dt             # number of time steps ........... none
+times = linspace(dt,tf,numt)   # array of times to evaluate ..... s
+bp    = int(sys.argv[2])       # plot or not .................... bool
 
 
 #===============================================================================
@@ -83,7 +86,7 @@ MV     = MixedFunctionSpace([V, V, V])        # mixed function space
 
 # enthalpy surface condition with cyclical 2-meter air temperature :
 code   = 'c*( Tavg + 10.0*sin(2*omega*t) )'
-Hs     = Expression(code, c=cp, Tavg=Tavg, omega=pi/spy, t=t0+dt, T0=T0)
+Hs     = Expression(code, c=cp, Tavg=Tavg, omega=pi/spy, t=t0, T0=T0)
 
 # experimental surface density :
 #code   = 'dp*rhon + (1 - dp)*rhoi'
@@ -211,9 +214,10 @@ FEMdata = (mesh, V, MV, H_i, rho_i, w_i, a_i, h, H, T,
            rho, drhodt, w, a, h_1, a_1, k, c)
 firn    = firn(const, FEMdata, data, rhos, adot, A, acc, z, l, index, dt)
 
-#plt.ion() 
-#plot = plot(firn)
-#plt.draw()
+if bp:
+  plt.ion() 
+  plot = plot(firn)
+  plt.draw()
 fmic = FmicData(firn)
 
 
@@ -222,7 +226,24 @@ fmic = FmicData(firn)
 t = t0
 tstart = time.clock()
 set_log_active(False)
-while t <= tf:
+for t in times:
+  # update boundary conditions :
+  Hs.t      = t + dt
+  #Hs.c      = firn.c[-1]
+  #rhoS.rhoi = firn.rho[-1]
+  #if firn.Ts > Tw:
+  #  if domega[-1] > 0:
+  #    if rhoS.rhon < rhoi:
+  #      rhoS.rhon = rhoS.rhon + domega[-1]*rhow
+  #  else:
+  #    rhoS.rhon = rhoS.rhon + domega[-1]*83.0
+  #else:
+  #  rhoS.rhon = rhos
+  #ltop      = lnew[-1]
+  #dnew      = -firn.w[-1]*dt
+  #rhoS.dp = dnew/ltop
+  #rhoS.Ts = firn.T[-1]
+  
   # newton's iterative method :
   solve(f == 0, h, [Hbc, Dbc, wbc], J=df)
 
@@ -235,25 +256,23 @@ while t <= tf:
   # update firn object :
   firn.update_vars()
   #firn.update_height_history()
+  #firn.update_height()
   
   # calculate the fmic data and update the firn object :
   fmic.calc_fmic_variables(firn)
-
-  # calculate height of each interval (conservation of mass) :
-  #firn.update_height()
  
   # update model parameters :
-  t += dt
   h_1.assign(h)
   a_1.assign(a)
 
   # update the plotting parameters :
-  #plot.update_plot(firn, t/spy)
+  if bp:
+    plot.update_plot(firn, t/spy)
   #print t/spy, min(firn.a)/spy, max(firn.a)/spy 
   #print ( Tavg + 10.0*sin(2*pi/spy*t) ) - Tw, firn.T[-1] - Tw
 
-  # for modulo arithmetic, restart the time at 10,000 years :
-  tr = round(t/spy - 10000, 2)
+  # only start capturing the data at 10,000 years :
+  tr = t/spy - 10000
 
   # initialize the data : 
   if tr == 0.0:
@@ -307,34 +326,19 @@ while t <= tf:
   #  #bdot.vector().set_local(bdotNew)
   #  wS.adot = adot
   
-  # update boundary conditions :
-  Hs.t      = t
-  #Hs.c      = firn.c[-1]
-  #rhoS.rhoi = firn.rho[-1]
-  #if firn.Ts > Tw:
-  #  if domega[-1] > 0:
-  #    if rhoS.rhon < rhoi:
-  #      rhoS.rhon = rhoS.rhon + domega[-1]*rhow
-  #  else:
-  #    rhoS.rhon = rhoS.rhon + domega[-1]*83.0
-  #else:
-  #  rhoS.rhon = rhos
-  #ltop      = lnew[-1]
-  #dnew      = -firn.w[-1]*dt
-  #rhoS.dp = dnew/ltop
-  #rhoS.Ts = firn.T[-1]
-
-  #plt.draw()  # update the graph
+  if bp:
+    plt.draw()  # update the graph
 
 tfin = time.clock()
-#plt.ioff()
-#plt.show()
+if bp:
+  plt.ioff()
+  plt.show()
 
 ttot   = tfin - tstart
 thours = round(ttot*(12000/tf)*spy/60/60, 3)
 print "total time to process 12,000 years:", thours, "hrs"
 
-fmic.save_fmic_data(1)
+#fmic.save_fmic_data(1)
 # plot the surface height trend :
 #x = linspace(0, t/spy, len(firn.ht))
 #plot.plot_height(x, firn.ht, firn.origHt)
