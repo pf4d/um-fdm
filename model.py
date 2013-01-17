@@ -171,12 +171,12 @@ a_1.vector().set_local(a_i.vector().array())  # initialize age in prev. sol
 #===============================================================================
 # Define equations to be solved :
 bdot      = interpolate(Constant(rhoi * adot / spy), V)   # average annual acc
-c         = (152.5 + sqrt(152.5**2 + 4*7.122*H)) / 2      # Patterson 1994
+#c         = (152.5 + sqrt(152.5**2 + 4*7.122*H)) / 2      # Patterson 1994
 Ta        = interpolate(Constant(Tavg), V)
 c         = 152.5 + 7.122*Ta
 k         = 2.1*(rho / rhoi)**2                           # Arthern 2008
 Tcoef     = interpolate(Constant(1.0), V)                 # T above Tw = 0.0
-Kcoef     = interpolate(Constant(1.0),  V)                # enthalpy coef.
+Kcoef     = interpolate(Constant(1.0), V)                 # enthalpy coef.
 T         = Tcoef * H / c                                 # temperature
 
 # age residual :
@@ -185,11 +185,11 @@ T         = Tcoef * H / c                                 # temperature
 # uses Taylor-Galerkin upwinding :
 theta     = 0.5 
 a_mid     = theta*a + (1-theta)*a_1
-f_a       = (a - a_1)/dt*xi*dx \
-            - 1.*xi*dx \
-            + w*grad(a_mid)*xi*dx \
-            + w**2*dt/2*inner(grad(a_mid), grad(xi))*dx \
-            - w*grad(w)*dt/2*grad(a_mid)*xi*dx
+f_a       = (a - a_1)/dt*xi*dx - \
+            1.*xi*dx + \
+            w*grad(a_mid)*xi*dx + \
+            w**2*dt/2*inner(grad(a_mid), grad(xi))*dx - \
+            w*grad(w)*dt/2*grad(a_mid)*xi*dx
 
 # enthalpy residual :
 theta     = 0.5
@@ -246,7 +246,6 @@ fmic = FmicData(firn)
 
 #===============================================================================
 # Compute solution :
-t = t0
 tstart = time.clock()
 set_log_active(False)
 for t in times:
@@ -361,7 +360,6 @@ print "total time to process 12,000 years:", thours, "hrs"
 
 fmic.save_fmic_data(ex)
 # plot the surface height trend :
-#x = linspace(0, t/spy, len(firn.ht))
-#plot.plot_height(x, firn.ht, firn.origHt)
+#plot.plot_height(times, firn.ht, firn.origHt)
 
 
