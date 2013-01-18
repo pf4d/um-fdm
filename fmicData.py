@@ -66,7 +66,7 @@ class FmicData():
     drhotot  = rhob - rhoa
   
     porAll   = sum(1 - firn.rho/rhoi)
-    por815   = sum(1 - firn.rho[rho815m]/rhoi) + (1 - drhom/rhoi)
+    por815   = sum(1 - firn.rho[rho815m]/rhoi)
     z815     = zb + ztot * (drhop/drhotot)
     age815   = ageb + agetot * (drhop/drhotot)
   
@@ -80,7 +80,7 @@ class FmicData():
     """
     append the state of firn to arrays. rows = space, cols = time.
     """
-    self.a      = vstack((self.a,      append(t, firn.a)))
+    self.a      = vstack((self.a,      append(t, firn.a/self.spy)))
     self.z      = vstack((self.z,      append(t, firn.z)))
     self.rho    = vstack((self.rho,    append(t, firn.rho)))
     self.T      = vstack((self.T,      append(t, firn.T)))
@@ -95,7 +95,7 @@ class FmicData():
     self.porAll = append(self.porAll, firn.porAll)
     self.por815 = append(self.por815, firn.por815)
     self.z815   = append(self.z815,   firn.z815)
-    self.age815 = append(self.age815, firn.age815)
+    self.age815 = append(self.age815, firn.age815/self.spy)
   
   
   def save_state(self, firn):
@@ -103,10 +103,12 @@ class FmicData():
     Save the current state of firn object to /data/enthalpy directory.
     """
     savetxt("data/enthalpy/z.txt",   firn.z)
+    savetxt("data/enthalpy/l.txt",   firn.l)
     savetxt("data/enthalpy/a.txt",   firn.a)
     savetxt("data/enthalpy/rho.txt", firn.rho)
     savetxt("data/enthalpy/H.txt",   firn.H)
     savetxt("data/enthalpy/w.txt",   firn.w)
+    print "saved the current state of firn"
 
 
   def save_fmic_data(self, exp):
@@ -129,7 +131,7 @@ class FmicData():
     age815 = self.age815.T
 
     rho815 = vstack((t, age815, z815))
-    por    = vstack((age815, por815, porAll))
+    por    = vstack((t, por815, porAll))
     
     directory = 'data/fmic/CummingsExperiment2_' + exp + '/'
   

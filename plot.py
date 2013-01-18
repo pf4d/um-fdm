@@ -66,7 +66,8 @@ class firn():
   """
   Data structure to hold firn model state data.
   """
-  def __init__(self, const, FEMdata, data, rhos, adot, A, acc, z, l, index, dt):
+  def __init__(self, const, FEMdata, data, Tavg, 
+               rhos, adot, A, acc, z, l, index, dt):
 
     self.const   = const                     # constants
 
@@ -99,12 +100,14 @@ class firn():
     self.c       = data[7]                   # heat capacity
     self.omega   = data[8]                   # percentage of water content
 
+    self.Tavg    = Tavg                      # average surface temperature
     self.rhos    = rhos                      # initial density at surface
     self.adot    = adot                      # accumulation rate
     self.A       = A                         # surface accumulation
     self.acc     = acc                       # surface accumulation
     self.z       = z[index]                  # z-coordinates of mesh
     self.l       = l                         # height vector
+    self.lini    = l                         # initial height vector
     self.index   = index                     # index of ordered, refined mesh
     self.dt      = dt                        # time step
     
@@ -174,13 +177,14 @@ class firn():
     """
     calculate height of each interval (conservation of mass) :
     """
-    lnew     = self.l*self.rhoin / self.rho
+    lnew     = self.lini*self.rhoin / self.rho
     zSum     = self.zb
     zTemp    = np.zeros(self.n)
     for i in range(self.n)[1:]:
       zTemp[i] = zSum + lnew[i]
       zSum    += lnew[i]
     self.z   = zTemp
+    self.l   = lnew
 
 
   def adjust_vectors(self, Kcoef, Tcoef, rhoCoef):
@@ -199,7 +203,7 @@ class firn():
     # find vector of T, rho :
     self.H      = project(self.HF, self.V).vector().array()
     self.rho    = project(self.rhoF, self.V).vector().array()
-  
+
     # update kc term in drhodt :
     # if rho >  550, kc = kcHigh
     # if rho <= 550, kc = kcLow
@@ -242,6 +246,34 @@ class firn():
     #Tcoef.vector().set_local(TcoefNew)
 
 
+  def set_ini_conv(self):
+    """
+    sets the firn model's initial state based on files in data/enthalpy folder.
+    """
+    self.rhoin = genfromtxt("data/enthalpy/rho.txt")
+    self.rho   = self.rhoin
+    self.w     = genfromtxt("data/enthalpy/w.txt")
+    self.z     = genfromtxt("data/enthalpy/z.txt")
+    self.a     = genfromtxt("data/enthalpy/a.txt")
+    self.H     = genfromtxt("data/enthalpy/H.txt")
+    self.lin   = genfromtxt("data/enthalpy/l.txt")
+    
+    self.zs_1    = self.z[-1]                # previous time-step surface  
+    self.zo      = self.z[-1]                # z-coordinate of initial surface
+    self.ht      = [self.z[-1]]              # list of surface heights
+    self.origHt  = [self.z[-1]]              # list of initial surface heights
+    self.Ts      = self.H[-1] / self.c[-1]   # temperature of surface
+  
+    self.rho_i.vector().set_local(self.rho)
+    self.H_i.vector().set_local(self.H)
+    self.w_i.vector().set_local(self.w)
+    h_0 = project(as_vector([self.H_i,self.rho_i,self.w_i]), self.MV)
+    self.h.vector().set_local(h_0.vector().array())
+    self.h_1.vector().set_local(h_0.vector().array())
+    self.aF.vector().set_local(self.a)
+    self.a_1.vector().set_local(self.a)
+
+
 class plot():
   """
   Plotting class handles all things related to plotting.
@@ -261,8 +293,8 @@ class plot():
 
     # y-value :
     z      = firn.z
-    zs     = firn.zs
-    zb     = firn.zb
+    zs     = firn.z[-1]
+    zb     = firn.z[0]
     
     # original surface height :
     zo     = firn.zo

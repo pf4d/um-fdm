@@ -32,8 +32,9 @@ def refine_mesh(mesh, divs, i, k,  m=1):
 
   else :
     z  = mesh.coordinates()[:,0]
-    zs = z[-1]
-    zb = z[0]
+    index = argsort(z)
+    zs = z[index][-1]
+    zb = z[index][0]
 
     cell_markers = CellFunction("bool", mesh)
     cell_markers.set_all(False)
@@ -45,28 +46,6 @@ def refine_mesh(mesh, divs, i, k,  m=1):
     mesh = refine(mesh, cell_markers)
 
     return refine_mesh(mesh, divs, i*k, k, m=m+1)
-
-
-def set_ini_conv(H_i, rho_i, w_i, h, h_1, a, a_1):
-  """
-  sets the firn model's initial state based on files in data/enthalpy folder.
-  """
-  rhoin   = genfromtxt("data/enthalpy/rho.txt")
-  win     = genfromtxt("data/enthalpy/w.txt")
-  zTemp   = genfromtxt("data/enthalpy/z.txt")
-  ain     = genfromtxt("data/enthalpy/a.txt")
-  Hin     = genfromtxt("data/enthalpy/H.txt")
-  zs_0    = zTemp[-1]
-
-  rho_i.vector().set_local(rhoin)
-  H_i.vector().set_local(Hin)
-  w_i.vector().set_local(win)
-  h_0 = project(as_vector([H_i,rho_i,w_i]), MV) # project inital values on space
-  h.vector().set_local(h_0.vector().array())    # initalize T, rho in solution
-  h_1.vector().set_local(h_0.vector().array())  # initalize T, rho in prev. sol
-  a.vector().set_local(ain)
-  a_1.vector().set_local(ain)
-  return zs_0
 
 
 def project_vars(V, H, T, rho, drhodt, a, w, k, c, omega):

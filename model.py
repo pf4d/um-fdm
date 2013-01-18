@@ -45,7 +45,7 @@ Lf    = const.Lf               # latent heat of fusion .......... J/kg
 Hsp   = const.Hsp              # Enthalpy of ice at Tw .......... J/kg
 
 # model variables :
-n     = 75                     # num of z-positions
+n     = 100                    # num of z-positions
 rhos  = 360.                   # initial density at surface ..... kg/m^3
 ex    = int(sys.argv[3])
 
@@ -75,7 +75,7 @@ else :
 acc   = rhoi * adot / spy      # surface accumulation ........... kg/(m^2 s)
 A     = spy*acc/rhos*1e3       # surface accumulation ........... mm/a
 cp    = 152.5 + 7.122*Tavg     # heat capacity of ice ........... J/(kg K)
-zs    = 1000.                  # surface start .................. m
+zs    = 500.                   # surface start .................. m
 zs_0  = zs                     # previous time-step surface ..... m
 zb    = 0.                     # depth .......................... m
 dz    = (zs - zb)/n            # initial z-spacing .............. m
@@ -94,9 +94,9 @@ bp    = int(sys.argv[2])       # plot or not .................... bool
 mesh  = IntervalMesh(n, zb, zs)
 z     = mesh.coordinates()[:,0]
 
-z, l, mesh, index = refine_mesh(mesh, divs=5, i=1.5, k=1.30)
+z, l, mesh, index = refine_mesh(mesh, divs=3, i=1.5, k=1.30)
 z, l, mesh, index = refine_mesh(mesh, divs=1, i=4,   k=1.30)
-z, l, mesh, index = refine_mesh(mesh, divs=1, i=66,  k=1.30)
+z, l, mesh, index = refine_mesh(mesh, divs=1, i=33,  k=1.30)
 
 n      = len(l)                               # new number of nodes
 rhoin  = rhoin*ones(n)                        # initial density
@@ -208,15 +208,15 @@ vnorm     = sqrt(dot(w, w) + 1e-10)
 cellh     = CellSize(mesh)
 phihat    = phi + cellh/(2*vnorm)*dot(w, grad(phi))
 
-theta     = 1.0
+theta     = 0.878
 rho_mid   = theta*rho + (1 - theta)*rho_1
 rhoCoef   = interpolate(Constant(kcHh), V)
-drhodt    = (bdot*g*rhoCoef/kg)*exp( -Ec/(R*T) + Eg/(R*Tavg) )*(rhoi - rho_mid)
+drhodt    = (bdot*g*rhoCoef/kg)*exp( -Ec/(R*T) + Eg/(R*Ta) )*(rhoi - rho_mid)
 f_rho     = (rho - rho_1)/dt*phi*dx - \
             (drhodt - w*grad(rho_mid))*phihat*dx 
 
 # velocity residual :
-theta     = 1.0
+theta     = 0.878
 w_mid     = theta*w + (1 - theta)*w_1
 f_w       = rho*grad(w_mid)*eta*dx + drhodt*eta*dx
 
@@ -228,14 +228,14 @@ df_a      = derivative(f_a, a, da) # age jacobian
 #===============================================================================
 # initialize data structures :
 
-# load initialization data :
-#zs_0 = set_ini_conv(H_i, rho_i, w_i, h, h_1, a, a_1)
-
 # project the initial functions onto the space and initialize firn object : 
 data    = project_vars(V, H, T, rho, drhodt, a, w, k, c, omega)
 FEMdata = (mesh, V, MV, H_i, rho_i, w_i, a_i, h, H, T, 
            rho, drhodt, w, a, h_1, a_1, k, c)
-firn    = firn(const, FEMdata, data, rhos, adot, A, acc, z, l, index, dt)
+firn    = firn(const, FEMdata, data, Tavg, rhos, adot, A, acc, z, l, index, dt)
+
+# load initialization data :
+#firn.set_ini_conv()
 
 if bp:
   plt.ion() 
@@ -294,7 +294,7 @@ for t in times:
   #print ( Tavg + 10.0*sin(2*pi/spy*t) ) - Tw, firn.T[-1] - Tw
 
   # only start capturing the data at 10,000 years :
-  tr = t/spy - 10000
+  tr = t/spy - 7500
 
   # initialize the data : 
   if tr == 0.0:
@@ -323,28 +323,34 @@ for t in times:
   
   # vary the temperature :
   if tr == 100.0 and ex == 1:
-    Hs.Tavg = Tw - 45.0
+    firn.Tavg = Tw - 45.0
+    Ta        = interpolate(Constant(firn.Tavg), V)
+    Hs.Tavg   = firn.Tavg
   elif tr == 100.0 and ex == 2:
-    Hs.Tavg = Tw - 35.0
+    firn.Tavg = Tw - 35.0
+    Ta        = interpolate(Constant(firn.Tavg), V)
+    Hs.Tavg   = firn.Tavg
   elif tr == 100.0 and ex == 3:
-    Hs.Tavg = Tw - 25.0
+    firn.Tavg = Tw - 25.0
+    Ta        = interpolate(Constant(firn.Tavg), V)
+    Hs.Tavg   = firn.Tavg
 
   # vary the accumulation :
   elif tr == 100 and ex == 4:
-    adot = 0.07
-    #bdotNew = ones(n)*(rhoi * adot / spy)
-    #bdot.vector().set_local(bdotNew)
-    wS.adot = adot
+    firn.adot = 0.07
+    bdotNew = ones(n)*(rhoi * firn.adot / spy)
+    bdot.vector().set_local(bdotNew)
+    wS.adot = firn.adot
   elif tr == 100 and ex == 5:
-    adot = 0.20  
-    #bdotNew = ones(n)*(rhoi * adot / spy)
-    #bdot.vector().set_local(bdotNew)
-    wS.adot = adot
+    firn.adot = 0.20  
+    bdotNew = ones(n)*(rhoi * firn.adot / spy)
+    bdot.vector().set_local(bdotNew)
+    wS.adot = firn.adot
   elif tr == 100 and ex == 6:
-    adot = 0.30
-    #bdotNew = ones(n)*(rhoi * adot / spy)
-    #bdot.vector().set_local(bdotNew)
-    wS.adot = adot
+    firn.adot = 0.30
+    bdotNew = ones(n)*(rhoi * firn.adot / spy)
+    bdot.vector().set_local(bdotNew)
+    wS.adot = firn.adot
   
   if bp:
     plt.draw()  # update the graph
@@ -355,8 +361,8 @@ if bp:
   plt.show()
 
 ttot   = tfin - tstart
-thours = round(ttot*(12000/tf)*spy/60/60, 3)
-print "total time to process 12,000 years:", thours, "hrs"
+thours = round(ttot*(7500/tf)*spy/60/60, 3)
+print "total time to process 7,500 years:", thours, "hrs"
 
 fmic.save_fmic_data(ex)
 # plot the surface height trend :
