@@ -75,12 +75,13 @@ else :
 acc   = rhoi * adot / spy      # surface accumulation ........... kg/(m^2 s)
 A     = spy*acc/rhos*1e3       # surface accumulation ........... mm/a
 cp    = 152.5 + 7.122*Tavg     # heat capacity of ice ........... J/(kg K)
+cp    = cpi                    # heat capacity of ice ........... J/(kg K)
 zs    = 500.                   # surface start .................. m
 zs_0  = zs                     # previous time-step surface ..... m
 zb    = 0.                     # depth .......................... m
 dz    = (zs - zb)/n            # initial z-spacing .............. m
 l     = dz*ones(n+1)           # height vector .................. m
-dt    = 0.025*spy              # time-step ...................... s
+dt    = 0.05*spy               # time-step ...................... s
 t0    = 0.0                    # begin time ..................... s
 tf    = 10#sys.argv[1]            # end-time ....................... string
 tf    = float(tf)*spy          # end-time ....................... s
@@ -174,7 +175,7 @@ a_1.vector().set_local(a_i.vector().array())  # initialize age in prev. sol
 bdot      = interpolate(Constant(rhoi * adot / spy), V)   # average annual acc
 #c         = (152.5 + sqrt(152.5**2 + 4*7.122*H)) / 2      # Patterson 1994
 Ta        = interpolate(Constant(Tavg), V)
-c         = 152.5 + 7.122*Ta
+c         = cp
 k         = 2.1*(rho / rhoi)**2                           # Arthern 2008
 Tcoef     = interpolate(Constant(1.0), V)                 # T above Tw = 0.0
 Kcoef     = interpolate(Constant(1.0), V)                 # enthalpy coef.
@@ -323,17 +324,17 @@ for t in times:
     fmic.append_state(tr, firn)
   
   # vary the temperature :
-  if tr == 1.0 and ex == 1:
+  if tr == 100.0 and ex == 1:
     firn.Tavg = Tw - 45.0
-    Ta        = interpolate(Constant(firn.Tavg), V)
+    Ta.vector().set_local(ones(n)*firn.Tavg)
     Hs.Tavg   = firn.Tavg
   elif tr == 100.0 and ex == 2:
     firn.Tavg = Tw - 35.0
-    Ta        = interpolate(Constant(firn.Tavg), V)
+    Ta.vector().set_local(ones(n)*firn.Tavg)
     Hs.Tavg   = firn.Tavg
   elif tr == 100.0 and ex == 3:
     firn.Tavg = Tw - 25.0
-    Ta        = interpolate(Constant(firn.Tavg), V)
+    Ta.vector().set_local(ones(n)*firn.Tavg)
     Hs.Tavg   = firn.Tavg
 
   # vary the accumulation :

@@ -8,7 +8,7 @@
 \usepackage{graphicx}%Used to import images.
 \usepackage{minted}
 \definecolor{bg}{rgb}{0.95,0.95,0.95}
-\usemintedstyle{default}
+\usemintedstyle{bw}
 \usepackage{amsmath, amssymb, amscd}%Contains the AMS expanded math symbols library.
 \usepackage{algorithm, algorithmic} %pseudo-code
 %%For those who want smaller margins, you can use this:
@@ -244,7 +244,7 @@ We can discretize the enthalpy time-differential with the second-order accurate 
 \begin{align*}
   \frac{\partial H}{\partial t} = \frac{H - H^{k-1}}{\Delta t} = \theta H^{k}  + (1-\theta) H^{k-1}
 \end{align*}
-with superscripts referring to time index.  Using a $\theta$-scheme as given by \emph{Logg et al.} [2011], $H_{mid} = \theta H^{k}  + (1-\theta) H^{k-1}$, where $\theta \in [0,1]$ is a weighting factor chosen from: 
+with superscripts referring to time index.  Using a $\theta$-scheme as given by \emph{Logg et al.} [2011] and \emph{Zienkiewicz \& Taylor} [2005], $H_{mid} = \theta H^{k}  + (1-\theta) H^{k-1}$, where $\theta \in [0,1]$ is a weighting factor chosen from: 
 \begin{align*}
     \theta = 
     \begin{cases}
@@ -268,7 +268,7 @@ f_H   = rho*(H - H_1)/dt*psi*dx +
 \normalsize
 The variable \texttt{Kcoef} is a coefficient vector which will be updated dynamically depending on the temperature of firn (either $1.0$ or $0.1$ corresponding to $K_i$ and $K_0$).
 
-The weak form for density is found similarly, with a upwinding necessary to eliminate artifacts due to the sudden increase in density where ice lenses formed.  The method used here is the Streamline Upwind Petrov-Galerkin (SUPG) method:
+The weak form for density is found similarly, with a upwinding necessary to eliminate artifacts due to the sudden increase in density where ice lenses formed.  The method used here is the Streamline-Upwind-Petrov-Galerkin (SUPG) method:
 \begin{align*}
     \hat{\phi} = \phi + \frac{h}{2||w||} w \cdot \nabla{\phi},
 \end{align*}
@@ -288,13 +288,13 @@ phihat  = phi+cellh/(2*vnorm)*dot(w,grad(phi))
 c       = b*g*rhoCoef/kg * 
           exp(-Ec/(R*T) + Eg/(R*Tavg))
 drhodt  = c*(rhoi - rho)
-theta   = 1.0
+theta   = 0.878
 rho_mid = theta*rho + (1 - theta)*rho_1
 f_rho   = (rho - rho_1)/dt*phi*dx - 
           (drhodt - w*grad(rho_mid))*phihat*dx
 \end{minted}
 \normalsize
-The variable \texttt{rhoCoef} is another dynamically-updated-coefficient vector and is either $k_{c0}$ or $k_{c1}$ depending upon the density at the node.  We have chosen $\theta = 1$ corresponding to the Backwards-Euler method due to the jump condition at $\rho_m$.
+The variable \texttt{rhoCoef} is another dynamically-updated-coefficient vector and is either $k_{c0}$ or $k_{c1}$ depending upon the density at the node.  We have chosen $\theta = 0.878$ corresponding to the semi-implicit first order time stepping Liniger method; this is needed due to the jump condition at $\rho_m$.
 
 In order to find the vertical velocity the differential equation must be solved.  The weak formulation is:
 \begin{align*}
@@ -304,12 +304,12 @@ In order to find the vertical velocity the differential equation must be solved.
 and is created with FEniCS by:
 \footnotesize
 \begin{minted}[bgcolor=bg]{python}
-theta = 1.0
+theta = 0.878
 w_mid = theta*w + (1 - theta)*w_1
 f_w   = rho*grad(w_mid)*eta*dx + drhodt*eta*dx
 \end{minted}
 \normalsize
-We chose $\theta=1$ again due to the jump discontinuity at $\rho_m$.
+We chose $\theta=0.878$ again due to the jump discontinuity at $\rho_m$.
 
 
 We can define the function space for the entire non-linear problem as 
@@ -687,9 +687,11 @@ This model is a good start towards accurately modeling the densification of firn
   \bibitem{bozh89}Bozhinskiy, A.N. and Krass, M.S. 1989. A mathematical model of snowmelt and water percolation processes in snow and firn. \textit{Snow Cover and Glacier Variations}. IAHS publ. no. 183.
   \bibitem{logg11}Logg, A., Mardal, K., and Wells, G.N. 2011. \textit{Automated Solution of Differential Equations by the Finite Element Method}, The FEniCS Project.
   \bibitem{codi97}Codina, R. 1997. Comparison of some finite element methods for solving the diffusion\mbox{-}convection\mbox{-}reaction equation, \textit{Comput. Methods Appl. Mech. Engrg.}, 156(1998), 185\mbox{-}210.
+  \bibitem{zien05}Zienkiewicz, O.C., Tayler, R.L. 2005. \textit{The Finite Element Method}, 6th edn. Butterworth\mbox{-}Heinemann.
 \end{thebibliography}
 
 \end{document}
+
 %%Compile with pdflatex -shell-escape fdm.tex
 
 

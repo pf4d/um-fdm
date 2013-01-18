@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.1415926-1.40.10 (TeX Live 2009/Debian) (format=pdflatex 2012.5.16)  14 JAN 2013 18:21
+This is pdfTeX, Version 3.1415926-1.40.10 (TeX Live 2009/Debian) (format=pdflatex 2012.5.16)  18 JAN 2013 15:51
 entering extended mode
  \write18 enabled.
  %&-line parsing enabled.
@@ -253,7 +253,7 @@ runsystem(which pygmentize && touch fdm.aex)...executed.
 
 runsystem(rm fdm.aex)...executed.
 
-runsystem(pygmentize -S default -f latex > fdm.pyg)...executed.
+runsystem(pygmentize -S bw -f latex > fdm.pyg)...executed.
 
 
 (./fdm.pyg) (/usr/share/texmf-texlive/tex/latex/amsmath/amsmath.sty
@@ -358,14 +358,7 @@ Package ifvtex Info: VTeX not detected.
 \Gm@even@mp=\dimen130
 \Gm@dimlist=\toks31
 
-(/usr/share/texmf-texlive/tex/xelatex/xetexconfig/geometry.cfg)) (./fdm.aux
-
-LaTeX Warning: Label `fig:500 year orbit' multiply defined.
-
-
-LaTeX Warning: Label `fig:500 year orbit' multiply defined.
-
-)
+(/usr/share/texmf-texlive/tex/xelatex/xetexconfig/geometry.cfg)) (./fdm.aux)
 \openout1 = `fdm.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 23.
@@ -382,7 +375,8 @@ LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 23.
 LaTeX Font Info:    ... okay on input line 23.
 LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 23.
 LaTeX Font Info:    Try loading font information for TS1+cmr on input line 23.
- (/usr/share/texmf-texlive/tex/latex/base/ts1cmr.fd
+
+(/usr/share/texmf-texlive/tex/latex/base/ts1cmr.fd
 File: ts1cmr.fd 1999/05/25 v2.5h Standard LaTeX font definitions
 )
 LaTeX Font Info:    ... okay on input line 23.
@@ -504,8 +498,8 @@ runsystem(rm fdm.out.pyg)...executed.
 runsystem(rm fdm.pyg)...executed.
 
 
-Overfull \hbox (7.68018pt too wide) in paragraph at lines 271--272
-\OT1/ptm/m/n/10 method used here is the Stream-line Up-wind Petrov-Galerkin
+Overfull \hbox (10.54004pt too wide) in paragraph at lines 271--272
+\OT1/ptm/m/n/10 method used here is the Streamline-Upwind-Petrov-Galerkin
  []
 
 \openout3 = `fdm.pyg'.
@@ -533,7 +527,10 @@ runsystem(rm fdm.pyg)...executed.
 runsystem(pygmentize -l python -f latex -F tokenmerge             -P "verboptio
 ns= " -o fdm.out.pyg fdm.pyg)...executed.
 
- (./fdm.out.pyg)
+ (./fdm.out.pyg
+LaTeX Font Info:    Font shape `OT1/pcr/m/it' in size <8> not available
+(Font)              Font shape `OT1/pcr/m/sl' tried instead on input line 3.
+)
 runsystem(rm fdm.out.pyg)...executed.
 
 runsystem(rm fdm.pyg)...executed.
@@ -668,10 +665,10 @@ Underfull \hbox (badness 10000) in paragraph at lines 592--593
 
  []
 
-[7] <images/40yrDen.png, id=49, 587.19376pt x 562.1pt>
+[7] <images/40yrDen.png, id=50, 587.19376pt x 562.1pt>
 File: images/40yrDen.png Graphic file (type png)
 
-<use images/40yrDen.png> <images/40yrHt.png, id=50, 597.6729pt x 457.4691pt>
+<use images/40yrDen.png> <images/40yrHt.png, id=51, 597.6729pt x 457.4691pt>
 File: images/40yrHt.png Graphic file (type png)
 
 <use images/40yrHt.png>
@@ -706,15 +703,15 @@ g.\OT1/ptm/m/n/10 ,
 
 [8 <./images/40yrDen.png> <./images/40yrHt.png>] (./fdm.aux)
 
-LaTeX Warning: There were multiply-defined labels.
+LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
 
  ) 
 Here is how much of TeX's memory you used:
- 5981 strings out of 493848
- 81279 string characters out of 1152823
- 178668 words of memory out of 3000000
- 9080 multiletter control sequences out of 15000+50000
- 29810 words of font info for 78 fonts, out of 3000000 for 9000
+ 5966 strings out of 493848
+ 81150 string characters out of 1152823
+ 176834 words of memory out of 3000000
+ 9063 multiletter control sequences out of 15000+50000
+ 30427 words of font info for 80 fonts, out of 3000000 for 9000
  714 hyphenation exceptions out of 8191
  60i,21n,80p,853b,439s stack positions out of 5000i,500n,10000p,200000b,50000s
 {/usr/share/texmf-texlive/fonts/enc/dvips/base/8r.enc}</usr/share/texmf-texli
@@ -732,12 +729,13 @@ e/texmf-texlive/fonts/type1/public/amsfonts/cm/cmsy6.pfb></usr/share/texmf-texl
 ive/fonts/type1/public/amsfonts/cm/cmsy7.pfb></usr/share/texmf-texlive/fonts/ty
 pe1/public/amsfonts/cm/cmsy8.pfb></usr/share/texmf-texlive/fonts/type1/urw/cour
 ier/ucrb8a.pfb></usr/share/texmf-texlive/fonts/type1/urw/courier/ucrr8a.pfb></u
-sr/share/texmf-texlive/fonts/type1/urw/times/utmb8a.pfb></usr/share/texmf-texli
-ve/fonts/type1/urw/times/utmr8a.pfb></usr/share/texmf-texlive/fonts/type1/urw/t
-imes/utmri8a.pfb>
-Output written on fdm.pdf (8 pages, 561325 bytes).
+sr/share/texmf-texlive/fonts/type1/urw/courier/ucrro8a.pfb></usr/share/texmf-te
+xlive/fonts/type1/urw/times/utmb8a.pfb></usr/share/texmf-texlive/fonts/type1/ur
+w/times/utmr8a.pfb></usr/share/texmf-texlive/fonts/type1/urw/times/utmri8a.pfb>
+
+Output written on fdm.pdf (8 pages, 571216 bytes).
 PDF statistics:
- 119 PDF objects out of 1000 (max. 8388607)
+ 123 PDF objects out of 1000 (max. 8388607)
  0 named destinations out of 1000 (max. 500000)
  21 words of extra memory for PDF output out of 10000 (max. 10000000)
 
