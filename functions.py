@@ -20,10 +20,10 @@ def refine_mesh(mesh, divs, i, k,  m=1):
                                mesh, and index of sorted mesh respectively
 
   """
+  z     = mesh.coordinates()[:,0]
+  index = argsort(z)
 
   if m > divs :
-    z     = mesh.coordinates()[:,0]
-    index = argsort(z)
     z1    = z[index]
     z2    = z1[1:]
     z2    = append(z2, z2[-1])
@@ -31,8 +31,6 @@ def refine_mesh(mesh, divs, i, k,  m=1):
     return z, l, mesh, index
 
   else :
-    z  = mesh.coordinates()[:,0]
-    index = argsort(z)
     zs = z[index][-1]
     zb = z[index][0]
 

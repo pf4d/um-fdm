@@ -9,10 +9,11 @@ class FmicData():
     self.spy    = 31556926.0
     self.rhoi   = 917.
     self.rhoc   = 815.
+    self.zs     = firn.z[-1]
 
     self.t      = array([0.0])
-    self.a      = append(0.0, firn.a)
-    self.z      = append(0.0, firn.z)
+    self.a      = append(0.0, firn.a/self.spy)
+    self.z      = append(0.0, firn.z - self.zs)
     self.rho    = append(0.0, firn.rho)
     self.T      = append(0.0, firn.T)
     self.drhodt = append(0.0, firn.drhodt)
@@ -25,9 +26,10 @@ class FmicData():
     """
     Reset the initial conditons to that of the firn object.
     """
+    self.zs     = firn.z[-1]
     self.t      = array([0.0])
-    self.a      = append(0.0, firn.a)
-    self.z      = append(0.0, firn.z)
+    self.a      = append(0.0, firn.a/self.spy)
+    self.z      = append(0.0, firn.z - self.zs)
     self.rho    = append(0.0, firn.rho)
     self.T      = append(0.0, firn.T)
     self.drhodt = append(0.0, firn.drhodt)
@@ -73,7 +75,7 @@ class FmicData():
     firn.porAll = porAll
     firn.por815 = por815
     firn.z815   = z815
-    firn.age815 = age815/spy
+    firn.age815 = age815
 
 
   def append_state(self, t, firn):
@@ -81,7 +83,7 @@ class FmicData():
     append the state of firn to arrays. rows = space, cols = time.
     """
     self.a      = vstack((self.a,      append(t, firn.a/self.spy)))
-    self.z      = vstack((self.z,      append(t, firn.z)))
+    self.z      = vstack((self.z,      append(t, firn.z - self.zs)))
     self.rho    = vstack((self.rho,    append(t, firn.rho)))
     self.T      = vstack((self.T,      append(t, firn.T)))
     self.drhodt = vstack((self.drhodt, append(t, firn.drhodt)))
@@ -94,7 +96,7 @@ class FmicData():
     self.t      = append(self.t,      t)
     self.porAll = append(self.porAll, firn.porAll)
     self.por815 = append(self.por815, firn.por815)
-    self.z815   = append(self.z815,   firn.z815)
+    self.z815   = append(self.z815,   firn.z815 - self.zs)
     self.age815 = append(self.age815, firn.age815/self.spy)
   
   
@@ -149,7 +151,6 @@ class FmicData():
             delimiter='\t')
     savetxt(directory + 'CummingsExperiment' + exp + 'Rho815.txt',      rho815,
             delimiter='\t')
-
 
 
 

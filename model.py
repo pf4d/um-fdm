@@ -45,9 +45,9 @@ Lf    = const.Lf               # latent heat of fusion .......... J/kg
 Hsp   = const.Hsp              # Enthalpy of ice at Tw .......... J/kg
 
 # model variables :
-n     = 100                    # num of z-positions
+n     = 50                     # num of z-positions
 rhos  = 360.                   # initial density at surface ..... kg/m^3
-ex    = int(sys.argv[3])
+ex    = int(sys.argv[1])
 
 # fmic experiment :
 if ex == 1:
@@ -80,13 +80,13 @@ zs_0  = zs                     # previous time-step surface ..... m
 zb    = 0.                     # depth .......................... m
 dz    = (zs - zb)/n            # initial z-spacing .............. m
 l     = dz*ones(n+1)           # height vector .................. m
-dt    = 0.05*spy               # time-step ...................... s
+dt    = 0.025*spy              # time-step ...................... s
 t0    = 0.0                    # begin time ..................... s
-tf    = sys.argv[1]            # end-time ....................... string
+tf    = 10#sys.argv[1]            # end-time ....................... string
 tf    = float(tf)*spy          # end-time ....................... s
 numt  = (tf-t0)/dt             # number of time steps ........... none
 times = linspace(dt,tf,numt)   # array of times to evaluate ..... s
-bp    = int(sys.argv[2])       # plot or not .................... bool
+bp    = 0#int(sys.argv[2])       # plot or not .................... bool
 
 
 #===============================================================================
@@ -97,6 +97,7 @@ z     = mesh.coordinates()[:,0]
 z, l, mesh, index = refine_mesh(mesh, divs=3, i=1.5, k=1.30)
 z, l, mesh, index = refine_mesh(mesh, divs=1, i=4,   k=1.30)
 z, l, mesh, index = refine_mesh(mesh, divs=1, i=33,  k=1.30)
+z, l, mesh, index = refine_mesh(mesh, divs=1, i=2,   k=1.30)
 
 n      = len(l)                               # new number of nodes
 rhoin  = rhoin*ones(n)                        # initial density
@@ -293,7 +294,7 @@ for t in times:
   #print t/spy, min(firn.a)/spy, max(firn.a)/spy 
   #print ( Tavg + 10.0*sin(2*pi/spy*t) ) - Tw, firn.T[-1] - Tw
 
-  # only start capturing the data at 10,000 years :
+  # only start capturing the data at 7,500 years :
   tr = t/spy - 7500
 
   # initialize the data : 
@@ -322,7 +323,7 @@ for t in times:
     fmic.append_state(tr, firn)
   
   # vary the temperature :
-  if tr == 100.0 and ex == 1:
+  if tr == 1.0 and ex == 1:
     firn.Tavg = Tw - 45.0
     Ta        = interpolate(Constant(firn.Tavg), V)
     Hs.Tavg   = firn.Tavg
@@ -361,8 +362,8 @@ if bp:
   plt.show()
 
 ttot   = tfin - tstart
-thours = round(ttot*(7500/tf)*spy/60/60, 3)
-print "total time to process 7,500 years:", thours, "hrs"
+thours = round(ttot*(9500/tf)*spy/60/60, 3)
+print "total time to process 9,500 years:", thours, "hrs"
 
 fmic.save_fmic_data(ex)
 # plot the surface height trend :
