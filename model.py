@@ -238,7 +238,7 @@ FEMdata = (mesh, V, MV, H_i, rho_i, w_i, a_i, h, H, T,
 firn    = firn(const, FEMdata, data, Tavg, rhos, adot, A, acc, z, l, index, dt)
 
 # load initialization data :
-#firn.set_ini_conv()
+#firn.set_ini_conv(ex)
 
 if bp:
   plt.ion() 
@@ -299,6 +299,7 @@ for t in times:
   # initialize the data : 
   if tr == 0.0:
     fmic(firn)
+    fmic.save_state(firn, ex)
     print 'dt: ' + str(tr) + '\t=>\t815 SAVED'
     print 'dt: ' + str(tr) + '\t=>\tSAVED'
   

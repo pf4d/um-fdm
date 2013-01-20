@@ -246,17 +246,19 @@ class firn():
     #Tcoef.vector().set_local(TcoefNew)
 
 
-  def set_ini_conv(self):
+  def set_ini_conv(self, ex):
     """
     sets the firn model's initial state based on files in data/enthalpy folder.
     """
-    self.rhoin = genfromtxt("data/enthalpy/rho.txt")
+    ex = str(ex)
+
+    self.rhoin = genfromtxt("data/fmic/initial" + ex + "/rho.txt")
     self.rho   = self.rhoin
-    self.w     = genfromtxt("data/enthalpy/w.txt")
-    self.z     = genfromtxt("data/enthalpy/z.txt")
-    self.a     = genfromtxt("data/enthalpy/a.txt")
-    self.H     = genfromtxt("data/enthalpy/H.txt")
-    self.lin   = genfromtxt("data/enthalpy/l.txt")
+    self.w     = genfromtxt("data/fmic/initial" + ex + "/w.txt")
+    self.z     = genfromtxt("data/fmic/initial" + ex + "/z.txt")
+    self.a     = genfromtxt("data/fmic/initial" + ex + "/a.txt")
+    self.H     = genfromtxt("data/fmic/initial" + ex + "/H.txt")
+    self.lin   = genfromtxt("data/fmic/initial" + ex + "/l.txt")
     
     self.zs_1    = self.z[-1]                # previous time-step surface  
     self.zo      = self.z[-1]                # z-coordinate of initial surface

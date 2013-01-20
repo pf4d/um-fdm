@@ -108,16 +108,17 @@ class FmicData():
     self.age815 = append(self.age815, firn.age815/self.spy)
   
   
-  def save_state(self, firn):
+  def save_state(self, firn, ex):
     """
     Save the current state of firn object to /data/enthalpy directory.
     """
-    savetxt("data/enthalpy/z.txt",   firn.z)
-    savetxt("data/enthalpy/l.txt",   firn.l)
-    savetxt("data/enthalpy/a.txt",   firn.a)
-    savetxt("data/enthalpy/rho.txt", firn.rho)
-    savetxt("data/enthalpy/H.txt",   firn.H)
-    savetxt("data/enthalpy/w.txt",   firn.w)
+    ex = str(ex)
+    savetxt("data/fmic/initial" + ex + "/z.txt",   firn.z)
+    savetxt("data/fmic/initial" + ex + "/l.txt",   firn.l)
+    savetxt("data/fmic/initial" + ex + "/a.txt",   firn.a)
+    savetxt("data/fmic/initial" + ex + "/rho.txt", firn.rho)
+    savetxt("data/fmic/initial" + ex + "/H.txt",   firn.H)
+    savetxt("data/fmic/initial" + ex + "/w.txt",   firn.w)
     print "saved the current state of firn"
 
 
