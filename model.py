@@ -81,7 +81,7 @@ zs_0  = zs                     # previous time-step surface ..... m
 zb    = 0.                     # depth .......................... m
 dz    = (zs - zb)/n            # initial z-spacing .............. m
 l     = dz*ones(n+1)           # height vector .................. m
-dt    = 0.05*spy               # time-step ...................... s
+dt    = 0.025*spy               # time-step ...................... s
 t0    = 0.0                    # begin time ..................... s
 tf    = sys.argv[1]            # end-time ....................... string
 tf    = float(tf)*spy          # end-time ....................... s
@@ -98,6 +98,7 @@ z     = mesh.coordinates()[:,0]
 z, l, mesh, index = refine_mesh(mesh, divs=3, i=1.5, k=1.30)
 z, l, mesh, index = refine_mesh(mesh, divs=1, i=4,   k=1.30)
 z, l, mesh, index = refine_mesh(mesh, divs=1, i=33,  k=1.30)
+z, l, mesh, index = refine_mesh(mesh, divs=1, i=2,   k=1.30)
 z, l, mesh, index = refine_mesh(mesh, divs=1, i=2,   k=1.30)
 
 n      = len(l)                               # new number of nodes
