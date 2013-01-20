@@ -47,7 +47,7 @@ Hsp   = const.Hsp              # Enthalpy of ice at Tw .......... J/kg
 # model variables :
 n     = 50                     # num of z-positions
 rhos  = 360.                   # initial density at surface ..... kg/m^3
-ex    = int(sys.argv[1])
+ex    = int(sys.argv[3])
 
 # fmic experiment :
 if ex == 1:
@@ -81,13 +81,13 @@ zs_0  = zs                     # previous time-step surface ..... m
 zb    = 0.                     # depth .......................... m
 dz    = (zs - zb)/n            # initial z-spacing .............. m
 l     = dz*ones(n+1)           # height vector .................. m
-dt    = 0.05*spy               # time-step ...................... s
+dt    = 0.025*spy               # time-step ...................... s
 t0    = 0.0                    # begin time ..................... s
-tf    = 10#sys.argv[1]            # end-time ....................... string
+tf    = sys.argv[1]            # end-time ....................... string
 tf    = float(tf)*spy          # end-time ....................... s
 numt  = (tf-t0)/dt             # number of time steps ........... none
 times = linspace(dt,tf,numt)   # array of times to evaluate ..... s
-bp    = 0#int(sys.argv[2])       # plot or not .................... bool
+bp    = int(sys.argv[2])       # plot or not .................... bool
 
 
 #===============================================================================
@@ -210,7 +210,7 @@ vnorm     = sqrt(dot(w, w) + 1e-10)
 cellh     = CellSize(mesh)
 phihat    = phi + cellh/(2*vnorm)*dot(w, grad(phi))
 
-theta     = 0.878
+theta     = 0.878#1.0
 rho_mid   = theta*rho + (1 - theta)*rho_1
 rhoCoef   = interpolate(Constant(kcHh), V)
 drhodt    = (bdot*g*rhoCoef/kg)*exp( -Ec/(R*T) + Eg/(R*Ta) )*(rhoi - rho_mid)
@@ -237,7 +237,7 @@ FEMdata = (mesh, V, MV, H_i, rho_i, w_i, a_i, h, H, T,
 firn    = firn(const, FEMdata, data, Tavg, rhos, adot, A, acc, z, l, index, dt)
 
 # load initialization data :
-#firn.set_ini_conv()
+firn.set_ini_conv()
 
 if bp:
   plt.ion() 
@@ -282,9 +282,6 @@ for t in times:
   #firn.update_height_history()
   #firn.update_height()
   
-  # calculate the fmic data and update the firn object :
-  fmic.calc_fmic_variables(firn)
- 
   # update model parameters :
   h_1.assign(h)
   a_1.assign(a)
@@ -307,6 +304,7 @@ for t in times:
   # update fmic 815 data :
   if tr > 0.0 and tr % 1 == 0.0:
     print 'dt: ' + str(tr) + '\t=>\t815 SAVED'
+    fmic.calc_fmic_variables(firn)
     fmic.append_815(tr, firn)
   
   # update the main fmic data:

@@ -1,4 +1,5 @@
 from numpy import *
+from scipy.integrate import simps
 
 class FmicData():
 
@@ -41,7 +42,7 @@ class FmicData():
 
   def calc_fmic_variables(self, firn):
     """
-    porosity and calculations around rho=815.  updates the firn object's data.
+    porosity and calculations around rho = 815.  updates the firn object's data.
     """
     spy      = self.spy
     rhoi     = self.rhoi
@@ -67,11 +68,18 @@ class FmicData():
     drhop    = rhob - rhoc
     drhotot  = rhob - rhoa
   
-    porAll   = sum(1 - firn.rho/rhoi)
-    por815   = sum(1 - firn.rho[rho815m]/rhoi)
+    # interpolated depth and age :
     z815     = zb + ztot * (drhop/drhotot)
     age815   = ageb + agetot * (drhop/drhotot)
-  
+    
+    # integral of porosity of whole column via simpson's rule :
+    porAll   = simps(1 - firn.rho/rhoi, firn.z)
+
+    # integral of porosity to rho = 815 :
+    por815   = simps(1 - firn.rho[rho815m]/rhoi, firn.z[rho815m]) + \
+               simps(1 - array([rhoa, rhoc])/rhoi, dx = za - z815)
+
+    # update object :
     firn.porAll = porAll
     firn.por815 = por815
     firn.z815   = z815
