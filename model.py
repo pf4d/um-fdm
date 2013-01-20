@@ -99,6 +99,7 @@ z, l, mesh, index = refine_mesh(mesh, divs=3, i=1.5, k=1.30)
 z, l, mesh, index = refine_mesh(mesh, divs=1, i=4,   k=1.30)
 z, l, mesh, index = refine_mesh(mesh, divs=1, i=33,  k=1.30)
 z, l, mesh, index = refine_mesh(mesh, divs=1, i=2,   k=1.30)
+z, l, mesh, index = refine_mesh(mesh, divs=1, i=2,   k=1.30)
 
 n      = len(l)                               # new number of nodes
 rhoin  = rhoin*ones(n)                        # initial density
@@ -237,7 +238,7 @@ FEMdata = (mesh, V, MV, H_i, rho_i, w_i, a_i, h, H, T,
 firn    = firn(const, FEMdata, data, Tavg, rhos, adot, A, acc, z, l, index, dt)
 
 # load initialization data :
-firn.set_ini_conv()
+#firn.set_ini_conv()
 
 if bp:
   plt.ion() 
