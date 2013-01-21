@@ -365,7 +365,7 @@ ttot   = tfin - tstart
 thours = round(ttot*(9500/tf)*spy/60/60, 3)
 print "total time to process 9,500 years:", thours, "hrs"
 
-fmic.save_fmic_data(ex)
+#fmic.save_fmic_data(ex)
 # plot the surface height trend :
 #plot.plot_height(times, firn.ht, firn.origHt)
 
