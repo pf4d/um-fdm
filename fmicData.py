@@ -21,8 +21,8 @@ class FmicData():
     self.drhodt = append(0.0, firn.drhodt)
     self.porAll = firn.porAll
     self.por815 = firn.por815
-    self.z815   = firn.z815
-    self.age815 = firn.age815
+    self.z815   = firn.z815 - self.zs
+    self.age815 = firn.age815 / self.spy
 
   def __call__(self):
     """
@@ -37,8 +37,8 @@ class FmicData():
     self.drhodt = append(0.0, self.firn.drhodt)
     self.porAll = self.firn.porAll
     self.por815 = self.firn.por815
-    self.z815   = self.firn.z815
-    self.age815 = self.firn.age815
+    self.z815   = self.firn.z815 - self.zs
+    self.age815 = self.firn.age815 / self.spy
 
 
   def calc_fmic_variables(self):
@@ -91,7 +91,7 @@ class FmicData():
   def append_state(self, t):
     """
     append the state of firn to arrays. rows = space, cols = time.
-    """
+    """    
     firn = self.firn
 
     self.a      = vstack((self.a,      append(t, firn.a/self.spy)))
@@ -169,5 +169,6 @@ class FmicData():
     savetxt(directory + 'CummingsExperiment' + exp + 'Rho815.txt',      rho815,
             delimiter='\t')
 
+    print "saved fmic data"
 
 

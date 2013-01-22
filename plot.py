@@ -62,7 +62,7 @@ class Constants():
     self.Hsp   = self.cpi*self.Tw  # Enthalpy of ice at Tw .......... J/kg
 
 
-class firn():
+class Firn():
   """
   Data structure to hold firn model state data.
   """
@@ -276,7 +276,7 @@ class firn():
     self.a_1.vector().set_local(self.a)
 
 
-class plot():
+class Plot():
   """
   Plotting class handles all things related to plotting.
   """

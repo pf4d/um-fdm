@@ -234,14 +234,14 @@ df_a      = derivative(f_a, a, da) # age jacobian
 data    = project_vars(V, H, T, rho, drhodt, a, w, k, c, omega)
 FEMdata = (mesh, V, MV, H_i, rho_i, w_i, a_i, h, H, T, 
            rho, drhodt, w, a, h_1, a_1, k, c)
-firn    = firn(const, FEMdata, data, Tavg, rhos, adot, A, acc, z, l, index, dt)
+firn    = Firn(const, FEMdata, data, Tavg, rhos, adot, A, acc, z, l, index, dt)
 
 # load initialization data :
-#firn.set_ini_conv(ex)
+firn.set_ini_conv(ex)
 
 if bp:
   plt.ion() 
-  plot = plot(firn)
+  plot = Plot(firn)
   plt.draw()
 fmic = FmicData(firn)
 
@@ -279,7 +279,7 @@ for t in times:
   
   # update firn object :
   firn.update_vars()
-  #firn.update_height_history()
+  firn.update_height_history()
   #firn.update_height()
   
   # update model parameters :
@@ -293,34 +293,35 @@ for t in times:
   #print ( Tavg + 10.0*sin(2*pi/spy*t) ) - Tw, firn.T[-1] - Tw
 
   # only start capturing the data at 7,500 years :
-  tr = t/spy - 7500
+  tr = round(t/spy,2) - 1
 
   # initialize the data : 
   if tr == 0.0:
-    fmic(firn)
-    fmic.save_state(firn, ex)
+    fmic.calc_fmic_variables()
+    fmic()
+    #fmic.save_state(ex)
     print 'dt: ' + str(tr) + '\t=>\t815 SAVED'
     print 'dt: ' + str(tr) + '\t=>\tSAVED'
   
   # update fmic 815 data :
   if tr > 0.0 and tr % 1 == 0.0:
     print 'dt: ' + str(tr) + '\t=>\t815 SAVED'
-    fmic.calc_fmic_variables(firn)
-    fmic.append_815(tr, firn)
+    fmic.calc_fmic_variables()
+    fmic.append_815(tr)
   
   # update the main fmic data:
   if tr > 0.0 and tr <= 100.0 and tr % 10 == 0.0:
     print 'dt: ' + str(tr) + '\t=>\tSAVED'
-    fmic.append_state(tr, firn)
+    fmic.append_state(tr)
   elif tr > 100.0 and tr <= 150.0 and tr % 1 == 0.0:
     print 'dt: ' + str(tr) + '\t=>\tSAVED'
-    fmic.append_state(tr, firn)
+    fmic.append_state(tr)
   elif tr > 150.0 and tr <= 250.0 and tr % 5 == 0.0:
     print 'dt: ' + str(tr) + '\t=>\tSAVED'
-    fmic.append_state(tr, firn)
+    fmic.append_state(tr)
   elif tr > 250.0 and tr <= 2000.0 and tr % 10 == 0.0:
     print 'dt: ' + str(tr) + '\t=>\tSAVED'
-    fmic.append_state(tr, firn)
+    fmic.append_state(tr)
   
   # vary the temperature :
   if tr == 100.0 and ex == 1:
@@ -362,10 +363,10 @@ if bp:
   plt.show()
 
 ttot   = tfin - tstart
-thours = round(ttot*(9500/tf)*spy/60/60, 3)
-print "total time to process 9,500 years:", thours, "hrs"
+thours = round(ttot*(2100/tf)*spy/60/60, 3)
+print "total time to process 2,100 years:", thours, "hrs"
 
-#fmic.save_fmic_data(ex)
+fmic.save_fmic_data(ex)
 # plot the surface height trend :
 #plot.plot_height(times, firn.ht, firn.origHt)
 
