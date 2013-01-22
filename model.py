@@ -210,7 +210,7 @@ vnorm     = sqrt(dot(w, w) + 1e-10)
 cellh     = CellSize(mesh)
 phihat    = phi + cellh/(2*vnorm)*dot(w, grad(phi))
 
-theta     = 0.878#1.0
+theta     = 1.0
 rho_mid   = theta*rho + (1 - theta)*rho_1
 rhoCoef   = interpolate(Constant(kcHh), V)
 drhodt    = (bdot*g*rhoCoef/kg)*exp( -Ec/(R*T) + Eg/(R*Ta) )*(rhoi - rho_mid)
@@ -218,7 +218,7 @@ f_rho     = (rho - rho_1)/dt*phi*dx - \
             (drhodt - w*grad(rho_mid))*phihat*dx 
 
 # velocity residual :
-theta     = 0.878
+theta     = 1.0
 w_mid     = theta*w + (1 - theta)*w_1
 f_w       = rho*grad(w_mid)*eta*dx + drhodt*eta*dx
 
@@ -366,7 +366,7 @@ ttot   = tfin - tstart
 thours = round(ttot*(2100/tf)*spy/60/60, 3)
 print "total time to process 2,100 years:", thours, "hrs"
 
-fmic.save_fmic_data(ex)
+#fmic.save_fmic_data(ex)
 # plot the surface height trend :
 #plot.plot_height(times, firn.ht, firn.origHt)
 
