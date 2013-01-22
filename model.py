@@ -279,7 +279,7 @@ for t in times:
   
   # update firn object :
   firn.update_vars()
-  firn.update_height_history()
+  #firn.update_height_history()
   #firn.update_height()
   
   # update model parameters :
@@ -293,7 +293,7 @@ for t in times:
   #print ( Tavg + 10.0*sin(2*pi/spy*t) ) - Tw, firn.T[-1] - Tw
 
   # only start capturing the data at 7,500 years :
-  tr = round(t/spy,2) - 1
+  tr = round(t/spy,2) - 1000
 
   # initialize the data : 
   if tr == 0.0:
@@ -363,8 +363,8 @@ if bp:
   plt.show()
 
 ttot   = tfin - tstart
-thours = round(ttot*(2100/tf)*spy/60/60, 3)
-print "total time to process 2,100 years:", thours, "hrs"
+thours = round(ttot*(3000/tf)*spy/60/60, 3)
+print "total time to process 3,000 years:", thours, "hrs"
 
 #fmic.save_fmic_data(ex)
 # plot the surface height trend :
