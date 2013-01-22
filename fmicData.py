@@ -7,9 +7,10 @@ class FmicData():
     """
     Data structure to hold intercomparison project data.
     """
-    self.spy    = 31556926.0
-    self.rhoi   = 917.
-    self.rhoc   = 815.
+    self.firn   = firn
+    self.spy    = firn.const.spy
+    self.rhoi   = firn.const.rhoi
+    self.rhoc   = firn.const.rhoc
     self.zs     = firn.z[-1]
 
     self.t      = array([0.0])
@@ -23,30 +24,31 @@ class FmicData():
     self.z815   = firn.z815
     self.age815 = firn.age815
 
-  def __call__(self, firn):
+  def __call__(self):
     """
     Reset the initial conditons to that of the firn object.
     """
-    self.zs     = firn.z[-1]
+    self.zs     = self.firn.z[-1]
     self.t      = array([0.0])
-    self.a      = append(0.0, firn.a/self.spy)
-    self.z      = append(0.0, firn.z - self.zs)
-    self.rho    = append(0.0, firn.rho)
-    self.T      = append(0.0, firn.T)
-    self.drhodt = append(0.0, firn.drhodt)
-    self.porAll = firn.porAll
-    self.por815 = firn.por815
-    self.z815   = firn.z815
-    self.age815 = firn.age815
+    self.a      = append(0.0, self.firn.a/self.spy)
+    self.z      = append(0.0, self.firn.z - self.zs)
+    self.rho    = append(0.0, self.firn.rho)
+    self.T      = append(0.0, self.firn.T)
+    self.drhodt = append(0.0, self.firn.drhodt)
+    self.porAll = self.firn.porAll
+    self.por815 = self.firn.por815
+    self.z815   = self.firn.z815
+    self.age815 = self.firn.age815
 
 
-  def calc_fmic_variables(self, firn):
+  def calc_fmic_variables(self):
     """
     porosity and calculations around rho = 815.  updates the firn object's data.
     """
     spy      = self.spy
     rhoi     = self.rhoi
     rhoc     = self.rhoc
+    firn     = self.firn
 
     rho815p  = where(firn.rho >  rhoc)[0]
     rho815m  = where(firn.rho <= rhoc)[0]
@@ -86,10 +88,12 @@ class FmicData():
     firn.age815 = age815
 
 
-  def append_state(self, t, firn):
+  def append_state(self, t):
     """
     append the state of firn to arrays. rows = space, cols = time.
     """
+    firn = self.firn
+
     self.a      = vstack((self.a,      append(t, firn.a/self.spy)))
     self.z      = vstack((self.z,      append(t, firn.z - self.zs)))
     self.rho    = vstack((self.rho,    append(t, firn.rho)))
@@ -97,10 +101,12 @@ class FmicData():
     self.drhodt = vstack((self.drhodt, append(t, firn.drhodt)))
   
   
-  def append_815(self, t, firn):
+  def append_815(self, t):
     """
     append porosity and rho815 values.
     """
+    firn = self.firn
+
     self.t      = append(self.t,      t)
     self.porAll = append(self.porAll, firn.porAll)
     self.por815 = append(self.por815, firn.por815)
@@ -108,11 +114,13 @@ class FmicData():
     self.age815 = append(self.age815, firn.age815/self.spy)
   
   
-  def save_state(self, firn, ex):
+  def save_state(self, ex):
     """
     Save the current state of firn object to /data/enthalpy directory.
     """
-    ex = str(ex)
+    firn = self.firn
+    ex   = str(ex)
+
     savetxt("data/fmic/initial" + ex + "/z.txt",   firn.z)
     savetxt("data/fmic/initial" + ex + "/l.txt",   firn.l)
     savetxt("data/fmic/initial" + ex + "/a.txt",   firn.a)
@@ -144,7 +152,7 @@ class FmicData():
     rho815 = vstack((t, age815, z815))
     por    = vstack((t, por815, porAll))
     
-    directory = 'data/fmic/CummingsExperiment_coarse' + exp + '/'
+    directory = 'data/fmic/CummingsExperiment' + exp + '/'
   
     savetxt(directory + 'CummingsExperiment' + exp + 'Age.txt',         a,
             delimiter='\t')
