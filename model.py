@@ -363,8 +363,8 @@ if bp:
   plt.show()
 
 ttot   = tfin - tstart
-thours = round(ttot*(2100/tf)*spy/60/60, 3)
-print "total time to process 2,100 years:", thours, "hrs"
+thours = round(ttot*(3000/tf)*spy/60/60, 3)
+print "total time to process 3,000 years:", thours, "hrs"
 
 fmic.save_fmic_data(ex)
 # plot the surface height trend :
