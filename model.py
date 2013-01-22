@@ -279,7 +279,7 @@ for t in times:
   
   # update firn object :
   firn.update_vars()
-  firn.update_height_history()
+  #firn.update_height_history()
   #firn.update_height()
   
   # update model parameters :
@@ -293,7 +293,7 @@ for t in times:
   #print ( Tavg + 10.0*sin(2*pi/spy*t) ) - Tw, firn.T[-1] - Tw
 
   # only start capturing the data at 7,500 years :
-  tr = round(t/spy,2) - 1
+  tr = round(t/spy,2) - 1000
 
   # initialize the data : 
   if tr == 0.0:
