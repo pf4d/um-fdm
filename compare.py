@@ -5,7 +5,7 @@ spy    = 31556926.0
 ex = sys.argv[1]
 ex = str(ex)
 
-directory = "data/fmic/CummingsExperiment" + ex + "/"
+directory = "data/fmic/CummingsExperiment_coarse" + ex + "/"
 
 rho    = genfromtxt(directory + "CummingsExperiment" + ex + "Density.txt")
 T      = genfromtxt(directory + "CummingsExperiment" + ex + "Temperature.txt")
@@ -125,8 +125,8 @@ def plot_age815():
   show() 
 
 def plot_por815():
-  plot(t815, age815)
-  title(r'Porosity up to $\rho = 815$')
+  plot(t815, por815)
+  title(r'Integrated Porosity up to $\rho = 815$')
   xlabel(r'$t$')
   ylabel(r'$\phi$')
   grid()
@@ -134,7 +134,7 @@ def plot_por815():
 
 def plot_porAll():
   plot(t815, porAll)
-  title('Porosity of Column')
+  title('Integrated Porosity of Column')
   xlabel(r'$t$')
   ylabel(r'$\phi$')
   grid()
