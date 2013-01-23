@@ -299,7 +299,7 @@ for t in times:
   if tr == 0.0:
     fmic.calc_fmic_variables()
     fmic()
-    #fmic.save_state(ex)
+    fmic.save_state(ex)
     print 'dt: ' + str(tr) + '\t=>\t815 SAVED'
     print 'dt: ' + str(tr) + '\t=>\tSAVED'
   
@@ -366,7 +366,7 @@ ttot   = tfin - tstart
 thours = round(ttot*(3000/tf)*spy/60/60, 3)
 print "total time to process 3,000 years:", thours, "hrs"
 
-#fmic.save_fmic_data(ex)
+fmic.save_fmic_data(ex)
 # plot the surface height trend :
 #plot.plot_height(times, firn.ht, firn.origHt)
 

@@ -152,7 +152,7 @@ class FmicData():
     rho815 = vstack((t, age815, z815))
     por    = vstack((t, por815, porAll))
     
-    directory = 'data/fmic/CummingsExperiment' + exp + '/'
+    directory = 'data/fmic/CummingsExperiment_coarse' + exp + '/'
   
     savetxt(directory + 'CummingsExperiment' + exp + 'Age.txt',         a,
             delimiter='\t')
