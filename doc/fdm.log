@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.1415926-1.40.10 (TeX Live 2009/Debian) (format=pdflatex 2013.1.21)  24 JAN 2013 09:52
+This is pdfTeX, Version 3.1415926-1.40.10 (TeX Live 2009/Debian) (format=pdflatex 2013.1.21)  24 JAN 2013 10:26
 entering extended mode
  \write18 enabled.
  %&-line parsing enabled.
@@ -671,31 +671,31 @@ File: images/40yrDen.png Graphic file (type png)
 File: images/40yrHt.png Graphic file (type png)
 
 <use images/40yrHt.png>
-LaTeX Font Info:    Try loading font information for OMS+ptm on input line 676.
+LaTeX Font Info:    Try loading font information for OMS+ptm on input line 677.
 
  (/usr/share/texmf-texlive/tex/latex/psnfss/omsptm.fd
 File: omsptm.fd 
 )
 LaTeX Font Info:    Font shape `OMS/ptm/m/n' in size <10> not available
-(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 676.
+(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 677.
 
-Underfull \hbox (badness 2088) in paragraph at lines 683--684
+Underfull \hbox (badness 2088) in paragraph at lines 684--685
 []\OT1/ptm/m/n/10 Ligtenberg, S.R.M., Helsen, M.M., and van den
  []
 
 
-Underfull \hbox (badness 2418) in paragraph at lines 683--684
+Underfull \hbox (badness 2418) in paragraph at lines 684--685
 \OT1/ptm/m/n/10 Broeke, M.R. 2011. An im-proved semi[]empirical
  []
 
 
-Underfull \hbox (badness 1424) in paragraph at lines 683--684
+Underfull \hbox (badness 1424) in paragraph at lines 684--685
 \OT1/ptm/m/n/10 model for the den-si-fi-ca-tion of Antarc-tic firn. \OT1/ptm/m/
 it/10 The
  []
 
 
-Underfull \hbox (badness 3758) in paragraph at lines 689--690
+Underfull \hbox (badness 3758) in paragraph at lines 690--691
 \OT1/ptm/m/n/10 equa-tion, \OT1/ptm/m/it/10 Com-put. Meth-ods Appl. Mech. En-gr
 g.\OT1/ptm/m/n/10 ,
  []
@@ -732,7 +732,7 @@ sr/share/texmf-texlive/fonts/type1/urw/courier/ucrro8a.pfb></usr/share/texmf-te
 xlive/fonts/type1/urw/times/utmb8a.pfb></usr/share/texmf-texlive/fonts/type1/ur
 w/times/utmr8a.pfb></usr/share/texmf-texlive/fonts/type1/urw/times/utmri8a.pfb>
 
-Output written on fdm.pdf (8 pages, 571199 bytes).
+Output written on fdm.pdf (8 pages, 571397 bytes).
 PDF statistics:
  123 PDF objects out of 1000 (max. 8388607)
  0 named destinations out of 1000 (max. 500000)
