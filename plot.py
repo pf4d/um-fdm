@@ -175,7 +175,8 @@ class Firn():
 
   def update_height(self):
     """
-    calculate height of each interval (conservation of mass) :
+    If conserving the mass of the firn column, calculate height of each 
+    interval :
     """
     lnew     = self.lini*self.rhoin / self.rho
     zSum     = self.zb
@@ -185,6 +186,7 @@ class Firn():
       zSum    += lnew[i]
     self.z   = zTemp
     self.l   = lnew
+    self.mesh.coordinates()[:,0][self.index] = self.z  # update the mesh coord.
 
 
   def adjust_vectors(self, Kcoef, Tcoef, rhoCoef):
@@ -219,28 +221,25 @@ class Firn():
     #Hhigh               = where(self.H >= Hsp)[0]
     #Hlow                = where(self.H <  Hsp)[0]
     #omegaNew            = zeros(n)
-    #Hnew                = zeros(n)
-    #rhoNew              = zeros(n)
     #TcoefNew            = ones(n)
     #KcoefNew            = ones(n)
   
     #KcoefNew[Hhigh]     = 1/10.0
     #TcoefNew[Hhigh]     = self.c[Hhigh] / self.H[Hhigh] * Tw
   
-    ## update enthalpy :
+    ## update water content and density :
     #omegaNew[Hhigh]     = (self.H[Hhigh] - self.c[Hhigh]*(Tw - T0)) / Lf
     #domega              = omegaNew - self.omega          # water content chg.
     #domPos              = where(domega >  0)[0]          # water content inc.
     #domNeg              = where(domega <= 0)[0]          # water content dec.
     #rhoNotLiq           = where(self.rho < rhow)[0]      # density < water
     #rhoInc              = intersect1d(domPos, rhoNotLiq) # where rho can inc.
-    #Hnew[Hhigh]         = self.c[Hhigh]*(Tw - T0) + self.omega[Hhigh]*Lf
-    #Hnew[Hlow]          = self.H[Hlow]
+    #self.rho[rhoInc]    = self.rho[rhoInc] + domega[rhoInc]*rhow 
+    #self.rho[domNeg]    = self.rho[domNeg] + domega[domNeg]*83.0
   
     ## update the dolfin vectors :
     #self.rho_i.vector().set_local(self.rho)
-    #self.H_i.vector().set_local(Hnew)
-    #h_0 = project(as_vector([self.H_i, self.rho_i, self.wF]), self.MV)
+    #h_0 = project(as_vector([self.HF, self.rho_i, self.wF]), self.MV)
     #self.h.vector().set_local(h_0.vector().array())
     #Kcoef.vector().set_local(KcoefNew)  #FIXME: erratic 
     #Tcoef.vector().set_local(TcoefNew)

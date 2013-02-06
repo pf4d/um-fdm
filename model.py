@@ -99,6 +99,7 @@ z, l, mesh, index = refine_mesh(mesh, divs=3, i=1.5, k=1.30)
 z, l, mesh, index = refine_mesh(mesh, divs=1, i=4,   k=1.30)
 z, l, mesh, index = refine_mesh(mesh, divs=1, i=33,  k=1.30)
 z, l, mesh, index = refine_mesh(mesh, divs=1, i=2,   k=1.30)
+z, l, mesh, index = refine_mesh(mesh, divs=1, i=2,   k=1.30)
 
 n      = len(l)                               # new number of nodes
 rhoin  = rhoin*ones(n)                        # initial density
@@ -147,6 +148,7 @@ rho_i      = interpolate(Constant(rhoin[0]), V)       # initial density vector
 a_i        = interpolate(Constant(1.0), V)            # initial age vector
 w_i        = interpolate(Constant(acc), V)            # initial velocity vector
 
+epi             = Function(MV)
 h               = Function(MV)                # solution
 H, rho, w       = split(h)                    # solutions for H, rho
 h_1             = Function(MV)                # previous solution
@@ -162,6 +164,7 @@ da         = TrialFunction(V)                 # trial function for age
 xi         = TestFunction(V)                  # age test function
 a_1        = Function(V)                      # previous age solution
 
+epi.vector().set_local(ones(3*n))
 h_0 = project(as_vector([H_i,rho_i,w_i]), MV) # project inital values on space
 h.vector().set_local(h_0.vector().array())    # initalize H, rho in solution
 h_1.vector().set_local(h_0.vector().array())  # initalize H, rho in prev. sol
@@ -210,7 +213,7 @@ vnorm     = sqrt(dot(w, w) + 1e-10)
 cellh     = CellSize(mesh)
 phihat    = phi + cellh/(2*vnorm)*dot(w, grad(phi))
 
-theta     = 1.0
+theta     = 0.878
 rho_mid   = theta*rho + (1 - theta)*rho_1
 rhoCoef   = interpolate(Constant(kcHh), V)
 drhodt    = (bdot*g*rhoCoef/kg)*exp( -Ec/(R*T) + Eg/(R*Ta) )*(rhoi - rho_mid)
@@ -218,7 +221,7 @@ f_rho     = (rho - rho_1)/dt*phi*dx - \
             (drhodt - w*grad(rho_mid))*phihat*dx 
 
 # velocity residual :
-theta     = 1.0
+theta     = 0.878
 w_mid     = theta*w + (1 - theta)*w_1
 f_w       = rho*grad(w_mid)*eta*dx + drhodt*eta*dx
 
@@ -250,6 +253,8 @@ fmic = FmicData(firn)
 # Compute solution :
 tstart = time.clock()
 set_log_active(False)
+problem = NonlinearVariationalProblem(f, h, [Hbc, Dbc, wbc], J=df)
+solver  = NonlinearVariationalSolver(problem)
 for t in times:
   # update boundary conditions :
   Hs.t      = t
@@ -268,8 +273,11 @@ for t in times:
   #rhoS.dp = dnew/ltop
   #rhoS.Ts = firn.T[-1]
   
+  #h.vector().set_local(h.vector().array() + rand())
+  solver.solve()
+
   # newton's iterative method :
-  solve(f == 0, h, [Hbc, Dbc, wbc], J=df)
+  #solve(f == 0, h, [Hbc, Dbc, wbc], J=df)
 
   # solve for age :
   solve(f_a == 0, a, ageBc)
@@ -292,14 +300,14 @@ for t in times:
   #print t/spy, min(firn.a)/spy, max(firn.a)/spy 
   #print ( Tavg + 10.0*sin(2*pi/spy*t) ) - Tw, firn.T[-1] - Tw
 
-  # only start capturing the data at 7,500 years :
+  # only start capturing the data at 1000 years :
   tr = round(t/spy,2) - 1000
 
   # initialize the data : 
   if tr == 0.0:
     fmic.calc_fmic_variables()
     fmic()
-    fmic.save_state(ex)
+    #fmic.save_state(ex)
     print 'dt: ' + str(tr) + '\t=>\t815 SAVED'
     print 'dt: ' + str(tr) + '\t=>\tSAVED'
   
