@@ -192,16 +192,16 @@ theta     = 0.5
 a_mid     = theta*a + (1-theta)*a_1
 f_a       = (a - a_1)/dt*xi*dx - \
             1.*xi*dx + \
-            w*grad(a_mid)*xi*dx + \
-            w**2*dt/2*inner(grad(a_mid), grad(xi))*dx - \
-            w*grad(w)*dt/2*grad(a_mid)*xi*dx
+            w*a_mid.dx(0)*xi*dx + \
+            w**2*dt/2*inner(a_mid.dx(0), xi.dx(0))*dx - \
+            w*w.dx(0)*dt/2*a_mid.dx(0)*xi*dx
 
 # enthalpy residual :
 theta     = 0.5
 H_mid     = theta*H + (1 - theta)*H_1
 f_H       = rho*(H - H_1)/dt*psi*dx + \
-            k/c*Kcoef*inner(grad(H_mid), grad(psi))*dx + \
-            rho*w*grad(H_mid)*psi*dx
+            k/c*Kcoef*inner(H_mid.dx(0), psi.dx(0))*dx + \
+            rho*w*H_mid.dx(0)*psi*dx
 
 # density residual :
 # material derivative :
@@ -211,19 +211,19 @@ f_H       = rho*(H - H_1)/dt*psi*dx + \
 # SUPG method phihat :        
 vnorm     = sqrt(dot(w, w) + 1e-10)
 cellh     = CellSize(mesh)
-phihat    = phi + cellh/(2*vnorm)*dot(w, grad(phi))
+phihat    = phi + cellh/(2*vnorm)*dot(w, phi.dx(0))
 
 theta     = 0.878
 rho_mid   = theta*rho + (1 - theta)*rho_1
 rhoCoef   = interpolate(Constant(kcHh), V)
 drhodt    = (bdot*g*rhoCoef/kg)*exp( -Ec/(R*T) + Eg/(R*Ta) )*(rhoi - rho_mid)
 f_rho     = (rho - rho_1)/dt*phi*dx - \
-            (drhodt - w*grad(rho_mid))*phihat*dx 
+            (drhodt - w*rho_mid.dx(0))*phihat*dx 
 
 # velocity residual :
 theta     = 0.878
 w_mid     = theta*w + (1 - theta)*w_1
-f_w       = rho*grad(w_mid)*eta*dx + drhodt*eta*dx
+f_w       = rho*w_mid.dx(0)*eta*dx + drhodt*eta*dx
 
 # equation to be minimzed :
 f         = f_H + f_rho + f_w
