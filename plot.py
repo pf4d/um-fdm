@@ -317,8 +317,8 @@ class Plot():
     zmax   = zs + (zs - zb) / 5                   # max z-coord
     zmin   = zb                                   # min z-coord
 
-    Tmin   = firn.Tavg - Tw - 10                  # T x-coord min
-    Tmax   = firn.Tavg - Tw + 10                  # T x-coord max
+    Tmin   = firn.Tavg - Tw - 15                  # T x-coord min
+    Tmax   = firn.Tavg - Tw + 15                  # T x-coord max
     Th     = Tmin + 0.1*(Tmax - Tmin) / 2         # T height x-coord
     Tz     = zmax - 0.15*(zmax - zmin) / 2        # z-coord of Ts
 

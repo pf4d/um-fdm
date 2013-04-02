@@ -110,7 +110,7 @@ V      = FunctionSpace(mesh, 'Lagrange', 1)   # function space for rho, T
 MV     = MixedFunctionSpace([V, V, V])        # mixed function space
 
 # enthalpy surface condition with cyclical 2-meter air temperature :
-code   = 'c*( Tavg + 10.0*sin(2*omega*t) )'
+code   = 'c*( Tavg + 10.0*sin(2*omega*t) + 5*sin(pi*omega/4*t) )'
 Hs     = Expression(code, c=cp, Tavg=Tavg, omega=pi/spy, t=t0, T0=T0)
 
 # experimental surface density :
