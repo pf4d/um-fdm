@@ -1,6 +1,7 @@
 import os.path
 from scipy.interpolate import interp1d
 from numpy import *
+import numpy as np
 from dolfin import *
 
 
@@ -24,10 +25,7 @@ def refine_mesh(mesh, divs, i, k,  m=1):
   index = argsort(z)
 
   if m > divs :
-    z1    = z[index]
-    z2    = z1[1:]
-    z2    = append(z2, z2[-1])
-    l     = z2 - z1
+    l     = np.diff(z[index])
     return z, l, mesh, index
 
   else :

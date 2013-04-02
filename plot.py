@@ -112,6 +112,7 @@ class Firn():
     self.dt      = dt                        # time step
     
     self.n       = len(self.H)               # system DOF
+    self.domega  = np.zeros(self.n)          # percent change of water content
     self.rhoin   = self.rho                  # initial density vector
     self.zb      = z[index][0]               # base of firn
     self.zs      = z[index][-1]              # surface of firn
@@ -145,6 +146,19 @@ class Firn():
     self.A      = self.const.spy*self.acc/self.rhos*1e3
 
 
+  def save_state(self):
+    """
+    Save the current state of firn object to /data/enthalpy directory.
+    """
+    savetxt("data/umcur/init/z.txt",   self.z)
+    savetxt("data/umcur/init/l.txt",   self.l)
+    savetxt("data/umcur/init/a.txt",   self.a)
+    savetxt("data/umcur/init/rho.txt", self.rho)
+    savetxt("data/umcur/init/H.txt",   self.H)
+    savetxt("data/umcur/init/w.txt",   self.w)
+    print "saved the current state of firn"
+  
+  
   def update_height_history(self):
     """
     track the current height of the firn :
@@ -217,47 +231,46 @@ class Firn():
     rhoCoefNew[rhoLow]  = kcLw*(1.435 - 0.151*np.log(self.A))
     rhoCoef.vector().set_local(rhoCoefNew)
   
-    ## update coefficients used by enthalpy :
-    #Hhigh               = where(self.H >= Hsp)[0]
-    #Hlow                = where(self.H <  Hsp)[0]
-    #omegaNew            = zeros(n)
-    #TcoefNew            = ones(n)
-    #KcoefNew            = ones(n)
+    # update coefficients used by enthalpy :
+    Hhigh               = where(self.H >= Hsp)[0]
+    Hlow                = where(self.H <  Hsp)[0]
+    omegaNew            = zeros(n)
+    TcoefNew            = ones(n)
+    KcoefNew            = ones(n)
   
-    #KcoefNew[Hhigh]     = 1/10.0
-    #TcoefNew[Hhigh]     = self.c[Hhigh] / self.H[Hhigh] * Tw
+    KcoefNew[Hhigh]     = 1/10.0
+    TcoefNew[Hhigh]     = self.c[Hhigh] / self.H[Hhigh] * Tw
   
-    ## update water content and density :
-    #omegaNew[Hhigh]     = (self.H[Hhigh] - self.c[Hhigh]*(Tw - T0)) / Lf
-    #domega              = omegaNew - self.omega          # water content chg.
-    #domPos              = where(domega >  0)[0]          # water content inc.
-    #domNeg              = where(domega <= 0)[0]          # water content dec.
-    #rhoNotLiq           = where(self.rho < rhow)[0]      # density < water
-    #rhoInc              = intersect1d(domPos, rhoNotLiq) # where rho can inc.
-    #self.rho[rhoInc]    = self.rho[rhoInc] + domega[rhoInc]*rhow 
-    #self.rho[domNeg]    = self.rho[domNeg] + domega[domNeg]*83.0
+    # update water content and density :
+    omegaNew[Hhigh]     = (self.H[Hhigh] - self.c[Hhigh]*(Tw - T0)) / Lf
+    domega              = omegaNew - self.omega          # water content chg.
+    self.domega         = domega
+    domPos              = where(domega >  0)[0]          # water content inc.
+    domNeg              = where(domega <= 0)[0]          # water content dec.
+    rhoNotLiq           = where(self.rho < rhow)[0]      # density < water
+    rhoInc              = intersect1d(domPos, rhoNotLiq) # where rho can inc.
+    self.rho[rhoInc]    = self.rho[rhoInc] + domega[rhoInc]*rhow 
+    self.rho[domNeg]    = self.rho[domNeg] + domega[domNeg]*83.0
   
-    ## update the dolfin vectors :
-    #self.rho_i.vector().set_local(self.rho)
-    #h_0 = project(as_vector([self.HF, self.rho_i, self.wF]), self.MV)
-    #self.h.vector().set_local(h_0.vector().array())
+    # update the dolfin vectors :
+    self.rho_i.vector().set_local(self.rho)
+    h_0 = project(as_vector([self.HF, self.rho_i, self.wF]), self.MV)
+    self.h.vector().set_local(h_0.vector().array())
     #Kcoef.vector().set_local(KcoefNew)  #FIXME: erratic 
-    #Tcoef.vector().set_local(TcoefNew)
+    Tcoef.vector().set_local(TcoefNew)
 
 
-  def set_ini_conv(self, ex):
+  def set_ini_conv(self):
     """
     sets the firn model's initial state based on files in data/enthalpy folder.
     """
-    ex = str(ex)
-
-    self.rhoin = genfromtxt("data/fmic/initial" + ex + "/rho.txt")
-    self.rho   = self.rhoin
-    self.w     = genfromtxt("data/fmic/initial" + ex + "/w.txt")
-    self.z     = genfromtxt("data/fmic/initial" + ex + "/z.txt")
-    self.a     = genfromtxt("data/fmic/initial" + ex + "/a.txt")
-    self.H     = genfromtxt("data/fmic/initial" + ex + "/H.txt")
-    self.lin   = genfromtxt("data/fmic/initial" + ex + "/l.txt")
+    self.rhoin = genfromtxt("data/umcur/init/rho.txt")
+    self.rho   = self.rhoin                  
+    self.w     = genfromtxt("data/umcur/init/w.txt")
+    self.z     = genfromtxt("data/umcur/init/z.txt")
+    self.a     = genfromtxt("data/umcur/init/a.txt")
+    self.H     = genfromtxt("data/umcur/init/H.txt")
+    self.lin   = genfromtxt("data/umcur/init/l.txt")
     
     self.zs_1    = self.z[-1]                # previous time-step surface  
     self.zo      = self.z[-1]                # z-coordinate of initial surface
@@ -283,14 +296,15 @@ class Plot():
     """
     Initialize plots with firn object as input.
     """   
-    self.spy  = 31556926.0
+    self.spy  = firn.const.spy
+    Tw        = firn.const.Tw
      
     # x-values :
     T      = firn.T
     rho    = firn.rho
     w      = firn.w * self.spy * 1e2 # cm/a
     a      = firn.a/self.spy
-    Ts     = firn.Ts - 273.15
+    Ts     = firn.Ts - Tw
 
     # y-value :
     z      = firn.z
@@ -303,8 +317,8 @@ class Plot():
     zmax   = zs + (zs - zb) / 5                   # max z-coord
     zmin   = zb                                   # min z-coord
 
-    Tmin   = -65                                  # T x-coord min
-    Tmax   = -35                                  # T x-coord max
+    Tmin   = firn.Tavg - Tw - 10                  # T x-coord min
+    Tmax   = firn.Tavg - Tw + 10                  # T x-coord max
     Th     = Tmin + 0.1*(Tmax - Tmin) / 2         # T height x-coord
     Tz     = zmax - 0.15*(zmax - zmin) / 2        # z-coord of Ts
 
@@ -312,12 +326,12 @@ class Plot():
     rhoMax = 1000                                 # rho x-coord max
     #rhoh   = rhoMin + 0.1*(rhoMax - rhoMin) / 2  # rho height x-coord
     
-    wMin   = -80
+    wMin   = -30
     wMax   = 0
     wh     = wMin + 0.1*(wMax - wMin) / 2
 
     aMin   = 0.0
-    aMax   = 10000.0
+    aMax   = 1400.0
     #kh     = kMin + 0.1*(kMax - kMin) / 2
 
     self.fig   = plt.figure(figsize=(15,6))
@@ -340,22 +354,22 @@ class Plot():
 
     # plots :
     self.Tsurf    = self.Tax.text(Th, Tz, r'Surface Temp: %.1f $\degree$C' % Ts)
-    self.phT,     = self.Tax.plot(T - 273.15, z, '0.3', lw=1.2)
+    self.phT,     = self.Tax.plot(T - 273.15, z, '0.3', lw=2)
     self.phTs,    = self.Tax.plot([Tmin, Tmax], [zs, zs], 'k-', lw=2)
     self.phTs_0,  = self.Tax.plot(Th, zo, 'ko')
     self.phTsp,   = self.Tax.plot(Th*np.ones(len(z)), z, 'r+')
     
-    self.phrho,   = self.rhoax.plot(rho, z, '0.3', lw=1.2)
+    self.phrho,   = self.rhoax.plot(rho, z, '0.3', lw=2)
     self.phrhoS,  = self.rhoax.plot([rhoMin, rhoMax], [zs, zs], 'k-', lw=2)
     #self.phrhoS_0,= self.rhoax.plot(rhoh, zo, 'ko')
     #self.phrhoSp, = self.rhoax.plot(rhoh*np.ones(len(z)), z, 'r+')
 
-    self.phw,     = self.wax.plot(w, z, '0.3', lw=1.2)
+    self.phw,     = self.wax.plot(w, z, '0.3', lw=2)
     self.phwS,    = self.wax.plot([wMin, wMax], [zs, zs], 'k-', lw=2)
     #self.phws_0,  = self.wax.plot(wh, zo, 'ko')
     #self.phwsp,   = self.wax.plot(wh*np.ones(len(z)), z, 'r+')
     
-    self.pha,     = self.aax.plot(a, z, '0.3', lw=1.2)
+    self.pha,     = self.aax.plot(a, z, '0.3', lw=2)
     self.phaS,    = self.aax.plot([aMin, aMax], [zs, zs], 'k-', lw=2)
     #self.phks_0,  = self.kax.plot(kh, zo, 'ko')
     #self.phksp,   = self.kax.plot(kh*np.ones(len(z)), z, 'r+')

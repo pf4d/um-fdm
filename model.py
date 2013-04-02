@@ -45,7 +45,7 @@ Lf    = const.Lf               # latent heat of fusion .......... J/kg
 Hsp   = const.Hsp              # Enthalpy of ice at Tw .......... J/kg
 
 # model variables :
-n     = 50                     # num of z-positions
+n     = 25                     # num of z-positions
 rhos  = 360.                   # initial density at surface ..... kg/m^3
 ex    = int(sys.argv[3])
 
@@ -70,18 +70,18 @@ elif ex == 6:
   Tavg  = Tw - 30.0            # average temperature ............ degrees K
 else :
   adot  = 0.10                 # accumulation rate .............. m/a
-  Tavg  = Tw - 50.0            # average temperature ............ degrees K
+  Tavg  = Tw - 10.0            # average temperature ............ degrees K
 
 acc   = rhoi * adot / spy      # surface accumulation ........... kg/(m^2 s)
 A     = spy*acc/rhos*1e3       # surface accumulation ........... mm/a
 cp    = 152.5 + 7.122*Tavg     # heat capacity of ice ........... J/(kg K)
 cp    = cpi                    # heat capacity of ice ........... J/(kg K)
-zs    = 500.                   # surface start .................. m
+zs    = 150.                   # surface start .................. m
 zs_0  = zs                     # previous time-step surface ..... m
 zb    = 0.                     # depth .......................... m
 dz    = (zs - zb)/n            # initial z-spacing .............. m
 l     = dz*ones(n+1)           # height vector .................. m
-dt    = 0.05*spy               # time-step ...................... s
+dt    = 00.05*spy              # time-step ...................... s
 t0    = 0.0                    # begin time ..................... s
 tf    = sys.argv[1]            # end-time ....................... string
 tf    = float(tf)*spy          # end-time ....................... s
@@ -99,9 +99,8 @@ z, l, mesh, index = refine_mesh(mesh, divs=3, i=1.5, k=1.30)
 z, l, mesh, index = refine_mesh(mesh, divs=1, i=4,   k=1.30)
 z, l, mesh, index = refine_mesh(mesh, divs=1, i=33,  k=1.30)
 z, l, mesh, index = refine_mesh(mesh, divs=1, i=2,   k=1.30)
-z, l, mesh, index = refine_mesh(mesh, divs=1, i=2,   k=1.30)
 
-n      = len(l)                               # new number of nodes
+n      = len(z)                               # new number of nodes
 rhoin  = rhoin*ones(n)                        # initial density
 omega  = zeros(n)                             # water content percent
 age    = zeros(n)                             # initial age
@@ -115,11 +114,11 @@ code   = 'c*( Tavg + 10.0*sin(2*omega*t) )'
 Hs     = Expression(code, c=cp, Tavg=Tavg, omega=pi/spy, t=t0, T0=T0)
 
 # experimental surface density :
-#code   = 'dp*rhon + (1 - dp)*rhoi'
-#rhoS   = Expression(code, rhon=rhos, rhoi=rhoi, dp=1e-3)
+code   = 'dp*rhon + (1 - dp)*rhoi'
+rhoS   = Expression(code, rhon=rhos, rhoi=rhoi, dp=1e-3)
 
 # constant surface density :
-rhoS   = Expression('rhon', rhon=rhos)
+#rhoS   = Expression('rhon', rhon=rhos)
 
 # surface age is always 0 :
 ageS   = Constant(0.0)
@@ -146,9 +145,8 @@ ageBc = DirichletBC(V,         ageS, surface)    # age of surface
 H_i        = interpolate(Constant(cp*(Tavg - T0)), V) # initial enthalpy vector
 rho_i      = interpolate(Constant(rhoin[0]), V)       # initial density vector
 a_i        = interpolate(Constant(1.0), V)            # initial age vector
-w_i        = interpolate(Constant(acc), V)            # initial velocity vector
+w_i        = interpolate(Constant(0.0), V)            # initial velocity vector
 
-epi             = Function(MV)
 h               = Function(MV)                # solution
 H, rho, w       = split(h)                    # solutions for H, rho
 h_1             = Function(MV)                # previous solution
@@ -164,7 +162,6 @@ da         = TrialFunction(V)                 # trial function for age
 xi         = TestFunction(V)                  # age test function
 a_1        = Function(V)                      # previous age solution
 
-epi.vector().set_local(ones(3*n))
 h_0 = project(as_vector([H_i,rho_i,w_i]), MV) # project inital values on space
 h.vector().set_local(h_0.vector().array())    # initalize H, rho in solution
 h_1.vector().set_local(h_0.vector().array())  # initalize H, rho in prev. sol
@@ -240,7 +237,7 @@ FEMdata = (mesh, V, MV, H_i, rho_i, w_i, a_i, h, H, T,
 firn    = Firn(const, FEMdata, data, Tavg, rhos, adot, A, acc, z, l, index, dt)
 
 # load initialization data :
-firn.set_ini_conv(ex)
+firn.set_ini_conv()
 
 if bp:
   plt.ion() 
@@ -253,31 +250,32 @@ fmic = FmicData(firn)
 # Compute solution :
 tstart = time.clock()
 set_log_active(False)
-problem = NonlinearVariationalProblem(f, h, [Hbc, Dbc, wbc], J=df)
-solver  = NonlinearVariationalSolver(problem)
+#problem = NonlinearVariationalProblem(f, h, [Hbc, Dbc, wbc], J=df)
+#solver  = NonlinearVariationalSolver(problem)
 for t in times:
   # update boundary conditions :
   Hs.t      = t
   #Hs.c      = firn.c[-1]
-  #rhoS.rhoi = firn.rho[-1]
-  #if firn.Ts > Tw:
-  #  if domega[-1] > 0:
-  #    if rhoS.rhon < rhoi:
-  #      rhoS.rhon = rhoS.rhon + domega[-1]*rhow
-  #  else:
-  #    rhoS.rhon = rhoS.rhon + domega[-1]*83.0
-  #else:
-  #  rhoS.rhon = rhos
-  #ltop      = lnew[-1]
-  #dnew      = -firn.w[-1]*dt
-  #rhoS.dp = dnew/ltop
-  #rhoS.Ts = firn.T[-1]
+  #code   = 'dp*rhon + (1 - dp)*rhoi'
+  rhoS.rhoi = firn.rho[-1]
+  if firn.Ts > Tw:
+    if firn.domega[-1] > 0:
+      if rhoS.rhon < rhoi:
+        rhoS.rhon = rhoS.rhon + firn.domega[-1]*rhow
+    else:
+      rhoS.rhon = rhoS.rhon + firn.domega[-1]*83.0
+  else:
+    rhoS.rhon = rhos
+  ltop    = firn.l[-1]
+  dnew    = -firn.w[-1]*dt
+  rhoS.dp = dnew/ltop
+  rhoS.Ts = firn.T[-1]
   
   #h.vector().set_local(h.vector().array() + rand())
-  solver.solve()
+  #solver.solve()
 
   # newton's iterative method :
-  #solve(f == 0, h, [Hbc, Dbc, wbc], J=df)
+  solve(f == 0, h, [Hbc, Dbc, wbc], J=df)
 
   # solve for age :
   solve(f_a == 0, a, ageBc)
@@ -287,7 +285,7 @@ for t in times:
   
   # update firn object :
   firn.update_vars()
-  #firn.update_height_history()
+  firn.update_height_history()
   #firn.update_height()
   
   # update model parameters :
@@ -303,64 +301,64 @@ for t in times:
   # only start capturing the data at 1000 years :
   tr = round(t/spy,2) - 1000
 
-  # initialize the data : 
-  if tr == 0.0:
-    fmic.calc_fmic_variables()
-    fmic()
-    #fmic.save_state(ex)
-    print 'dt: ' + str(tr) + '\t=>\t815 SAVED'
-    print 'dt: ' + str(tr) + '\t=>\tSAVED'
+  ## initialize the data : 
+  #if tr == 0.0:
+  #  fmic.calc_fmic_variables()
+  #  fmic()
+  #  #fmic.save_state(ex)
+  #  print 'dt: ' + str(tr) + '\t=>\t815 SAVED'
+  #  print 'dt: ' + str(tr) + '\t=>\tSAVED'
+  #
+  ## update fmic 815 data :
+  #if tr > 0.0 and tr % 1 == 0.0:
+  #  print 'dt: ' + str(tr) + '\t=>\t815 SAVED'
+  #  fmic.calc_fmic_variables()
+  #  fmic.append_815(tr)
+  #
+  ## update the main fmic data:
+  #if tr > 0.0 and tr <= 100.0 and tr % 10 == 0.0:
+  #  print 'dt: ' + str(tr) + '\t=>\tSAVED'
+  #  fmic.append_state(tr)
+  #elif tr > 100.0 and tr <= 150.0 and tr % 1 == 0.0:
+  #  print 'dt: ' + str(tr) + '\t=>\tSAVED'
+  #  fmic.append_state(tr)
+  #elif tr > 150.0 and tr <= 250.0 and tr % 5 == 0.0:
+  #  print 'dt: ' + str(tr) + '\t=>\tSAVED'
+  #  fmic.append_state(tr)
+  #elif tr > 250.0 and tr <= 2000.0 and tr % 10 == 0.0:
+  #  print 'dt: ' + str(tr) + '\t=>\tSAVED'
+  #  fmic.append_state(tr)
   
-  # update fmic 815 data :
-  if tr > 0.0 and tr % 1 == 0.0:
-    print 'dt: ' + str(tr) + '\t=>\t815 SAVED'
-    fmic.calc_fmic_variables()
-    fmic.append_815(tr)
-  
-  # update the main fmic data:
-  if tr > 0.0 and tr <= 100.0 and tr % 10 == 0.0:
-    print 'dt: ' + str(tr) + '\t=>\tSAVED'
-    fmic.append_state(tr)
-  elif tr > 100.0 and tr <= 150.0 and tr % 1 == 0.0:
-    print 'dt: ' + str(tr) + '\t=>\tSAVED'
-    fmic.append_state(tr)
-  elif tr > 150.0 and tr <= 250.0 and tr % 5 == 0.0:
-    print 'dt: ' + str(tr) + '\t=>\tSAVED'
-    fmic.append_state(tr)
-  elif tr > 250.0 and tr <= 2000.0 and tr % 10 == 0.0:
-    print 'dt: ' + str(tr) + '\t=>\tSAVED'
-    fmic.append_state(tr)
-  
-  # vary the temperature :
-  if tr == 100.0 and ex == 1:
-    firn.Tavg = Tw - 45.0
-    Ta.vector().set_local(ones(n)*firn.Tavg)
-    Hs.Tavg   = firn.Tavg
-  elif tr == 100.0 and ex == 2:
-    firn.Tavg = Tw - 35.0
-    Ta.vector().set_local(ones(n)*firn.Tavg)
-    Hs.Tavg   = firn.Tavg
-  elif tr == 100.0 and ex == 3:
-    firn.Tavg = Tw - 25.0
-    Ta.vector().set_local(ones(n)*firn.Tavg)
-    Hs.Tavg   = firn.Tavg
+  ## vary the temperature :
+  #if tr == 100.0 and ex == 1:
+  #  firn.Tavg = Tw - 45.0
+  #  Ta.vector().set_local(ones(n)*firn.Tavg)
+  #  Hs.Tavg   = firn.Tavg
+  #elif tr == 100.0 and ex == 2:
+  #  firn.Tavg = Tw - 35.0
+  #  Ta.vector().set_local(ones(n)*firn.Tavg)
+  #  Hs.Tavg   = firn.Tavg
+  #elif tr == 100.0 and ex == 3:
+  #  firn.Tavg = Tw - 25.0
+  #  Ta.vector().set_local(ones(n)*firn.Tavg)
+  #  Hs.Tavg   = firn.Tavg
 
-  # vary the accumulation :
-  elif tr == 100 and ex == 4:
-    firn.adot = 0.07
-    bdotNew = ones(n)*(rhoi * firn.adot / spy)
-    bdot.vector().set_local(bdotNew)
-    wS.adot = firn.adot
-  elif tr == 100 and ex == 5:
-    firn.adot = 0.20  
-    bdotNew = ones(n)*(rhoi * firn.adot / spy)
-    bdot.vector().set_local(bdotNew)
-    wS.adot = firn.adot
-  elif tr == 100 and ex == 6:
-    firn.adot = 0.30
-    bdotNew = ones(n)*(rhoi * firn.adot / spy)
-    bdot.vector().set_local(bdotNew)
-    wS.adot = firn.adot
+  ## vary the accumulation :
+  #elif tr == 100 and ex == 4:
+  #  firn.adot = 0.07
+  #  bdotNew = ones(n)*(rhoi * firn.adot / spy)
+  #  bdot.vector().set_local(bdotNew)
+  #  wS.adot = firn.adot
+  #elif tr == 100 and ex == 5:
+  #  firn.adot = 0.20  
+  #  bdotNew = ones(n)*(rhoi * firn.adot / spy)
+  #  bdot.vector().set_local(bdotNew)
+  #  wS.adot = firn.adot
+  #elif tr == 100 and ex == 6:
+  #  firn.adot = 0.30
+  #  bdotNew = ones(n)*(rhoi * firn.adot / spy)
+  #  bdot.vector().set_local(bdotNew)
+  #  wS.adot = firn.adot
   
   if bp:
     plt.draw()  # update the graph
@@ -374,7 +372,7 @@ ttot   = tfin - tstart
 thours = round(ttot*(3000/tf)*spy/60/60, 3)
 print "total time to process 3,000 years:", thours, "hrs"
 
-fmic.save_fmic_data(ex)
+#fmic.save_fmic_data(ex)
 # plot the surface height trend :
 #plot.plot_height(times, firn.ht, firn.origHt)
 
