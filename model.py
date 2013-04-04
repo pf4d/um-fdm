@@ -81,7 +81,7 @@ zs_0  = zs                     # previous time-step surface ..... m
 zb    = 0.                     # depth .......................... m
 dz    = (zs - zb)/n            # initial z-spacing .............. m
 l     = dz*ones(n+1)           # height vector .................. m
-dt    = 00.05*spy              # time-step ...................... s
+dt    = 00.025*spy             # time-step ...................... s
 t0    = 0.0                    # begin time ..................... s
 tf    = sys.argv[1]            # end-time ....................... string
 tf    = float(tf)*spy          # end-time ....................... s
@@ -93,7 +93,6 @@ bp    = int(sys.argv[2])       # plot or not .................... bool
 #===============================================================================
 # create mesh :
 mesh  = IntervalMesh(n, zb, zs)
-z     = mesh.coordinates()[:,0]
 
 z, l, mesh, index = refine_mesh(mesh, divs=3, i=1.5, k=1.30)
 z, l, mesh, index = refine_mesh(mesh, divs=1, i=4,   k=1.30)
@@ -110,7 +109,7 @@ V      = FunctionSpace(mesh, 'Lagrange', 1)   # function space for rho, T
 MV     = MixedFunctionSpace([V, V, V])        # mixed function space
 
 # enthalpy surface condition with cyclical 2-meter air temperature :
-code   = 'c*( Tavg + 10.0*sin(2*omega*t) + 5*sin(pi*omega/4*t) )'
+code   = 'c*( Tavg + 10.0*sin(2*omega*t) )'#+ 5*sin(pi*omega/4*t) )'
 Hs     = Expression(code, c=cp, Tavg=Tavg, omega=pi/spy, t=t0, T0=T0)
 
 # experimental surface density :
@@ -178,7 +177,6 @@ Ta        = interpolate(Constant(Tavg), V)
 c         = cp
 k         = 2.1*(rho / rhoi)**2                           # Arthern 2008
 Tcoef     = interpolate(Constant(1.0), V)                 # T above Tw = 0.0
-Kcoef     = interpolate(Constant(1.0), V)                 # enthalpy coef.
 T         = Tcoef * H / c                                 # temperature
 
 # age residual :
@@ -197,7 +195,7 @@ f_a       = (a - a_1)/dt*xi*dx - \
 theta     = 0.5
 H_mid     = theta*H + (1 - theta)*H_1
 f_H       = rho*(H - H_1)/dt*psi*dx + \
-            k/c*Kcoef*inner(H_mid.dx(0), psi.dx(0))*dx + \
+            k/c*inner(H_mid.dx(0), psi.dx(0))*dx + \
             rho*w*H_mid.dx(0)*psi*dx
 
 # density residual :
@@ -281,12 +279,12 @@ for t in times:
   solve(f_a == 0, a, ageBc)
   
   # adjust the coefficient vectors :
-  firn.adjust_vectors(Kcoef, Tcoef, rhoCoef)
+  firn.adjust_vectors(Tcoef, rhoCoef)
   
   # update firn object :
   firn.update_vars()
   firn.update_height_history()
-  #firn.update_height()
+  firn.update_height()
   
   # update model parameters :
   h_1.assign(h)
@@ -374,6 +372,5 @@ print "total time to process 3,000 years:", thours, "hrs"
 
 #fmic.save_fmic_data(ex)
 # plot the surface height trend :
-#plot.plot_height(times, firn.ht, firn.origHt)
-
+plot.plot_height(times/spy, firn.ht, firn.origHt)
 

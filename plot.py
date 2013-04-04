@@ -192,18 +192,20 @@ class Firn():
     If conserving the mass of the firn column, calculate height of each 
     interval :
     """
-    lnew     = self.lini*self.rhoin / self.rho
-    zSum     = self.zb
-    zTemp    = np.zeros(self.n)
+    avg_rhoin = (self.rhoin[1:] + self.rhoin[:-1]) / 2
+    avg_rho   = (self.rho[1:] + self.rho[:-1]) / 2
+    lnew      = self.lini * avg_rhoin / avg_rho
+    zSum      = self.zb
+    zTemp     = np.zeros(self.n)
     for i in range(self.n)[1:]:
-      zTemp[i] = zSum + lnew[i]
-      zSum    += lnew[i]
-    self.z   = zTemp
-    self.l   = lnew
+      zTemp[i] = zSum + lnew[i-1]
+      zSum    += lnew[i-1]
+    self.z    = zTemp
+    self.l    = lnew
     self.mesh.coordinates()[:,0][self.index] = self.z  # update the mesh coord.
 
 
-  def adjust_vectors(self, Kcoef, Tcoef, rhoCoef):
+  def adjust_vectors(self, Tcoef, rhoCoef):
     """
     Adjust the vectors for enthalpy and density.
     """
@@ -236,14 +238,15 @@ class Firn():
     Hlow                = where(self.H <  Hsp)[0]
     omegaNew            = zeros(n)
     TcoefNew            = ones(n)
-    KcoefNew            = ones(n)
+    HNew                = ones(n)
   
-    KcoefNew[Hhigh]     = 1/10.0
+    HNew[Hhigh]         = 1/10.0 * self.H[Hhigh]
     TcoefNew[Hhigh]     = self.c[Hhigh] / self.H[Hhigh] * Tw
   
     # update water content and density :
     omegaNew[Hhigh]     = (self.H[Hhigh] - self.c[Hhigh]*(Tw - T0)) / Lf
     domega              = omegaNew - self.omega          # water content chg.
+    self.omega          = omegaNew
     self.domega         = domega
     domPos              = where(domega >  0)[0]          # water content inc.
     domNeg              = where(domega <= 0)[0]          # water content dec.
@@ -252,11 +255,11 @@ class Firn():
     self.rho[rhoInc]    = self.rho[rhoInc] + domega[rhoInc]*rhow 
     self.rho[domNeg]    = self.rho[domNeg] + domega[domNeg]*83.0
   
-    # update the dolfin vectors :
+    # update the dolfin vectors :`
+    self.H_i.vector().set_local(self.H)
     self.rho_i.vector().set_local(self.rho)
-    h_0 = project(as_vector([self.HF, self.rho_i, self.wF]), self.MV)
+    h_0 = project(as_vector([self.H_i, self.rho_i, self.wF]), self.MV)
     self.h.vector().set_local(h_0.vector().array())
-    #Kcoef.vector().set_local(KcoefNew)  #FIXME: erratic 
     Tcoef.vector().set_local(TcoefNew)
 
 
@@ -271,7 +274,8 @@ class Firn():
     self.a     = genfromtxt("data/umcur/init/a.txt")
     self.H     = genfromtxt("data/umcur/init/H.txt")
     self.lin   = genfromtxt("data/umcur/init/l.txt")
-    
+    self.T     = self.H / self.c
+
     self.zs_1    = self.z[-1]                # previous time-step surface  
     self.zo      = self.z[-1]                # z-coordinate of initial surface
     self.ht      = [self.z[-1]]              # list of surface heights
@@ -305,6 +309,7 @@ class Plot():
     w      = firn.w * self.spy * 1e2 # cm/a
     a      = firn.a/self.spy
     Ts     = firn.Ts - Tw
+    omega  = firn.omega
 
     # y-value :
     z      = firn.z
@@ -314,8 +319,8 @@ class Plot():
     # original surface height :
     zo     = firn.zo
 
-    zmax   = zs + (zs - zb) / 5                   # max z-coord
-    zmin   = zb                                   # min z-coord
+    zmax   = zs + 2# + (zs - zb) / 5                   # max z-coord
+    zmin   = 140#zb                                   # min z-coord
 
     Tmin   = firn.Tavg - Tw - 15                  # T x-coord min
     Tmax   = firn.Tavg - Tw + 15                  # T x-coord max
@@ -334,11 +339,15 @@ class Plot():
     aMax   = 1400.0
     #kh     = kMin + 0.1*(kMax - kMin) / 2
 
+    omegaMin = 0.0
+    omegaMax = 0.1
+
     self.fig   = plt.figure(figsize=(15,6))
     self.Tax   = self.fig.add_subplot(141)
     self.rhoax = self.fig.add_subplot(142)
-    self.wax   = self.fig.add_subplot(143)
-    self.aax   = self.fig.add_subplot(144)
+    self.wax   = self.fig.add_subplot(144)
+    #self.aax   = self.fig.add_subplot(144)
+    self.omegaax   = self.fig.add_subplot(143)
 
     # format : [xmin, xmax, ymin, ymax]
     self.Tax.axis([Tmin, Tmax, zmin, zmax])
@@ -348,9 +357,11 @@ class Plot():
     self.rhoax.xaxis.set_major_formatter(FixedOrderFormatter(2))
     self.wax.axis([wMin, wMax, zmin, zmax])
     self.wax.grid()
-    self.aax.axis([aMin, aMax, zmin, zmax])
-    self.aax.xaxis.set_major_formatter(FixedOrderFormatter(3))
-    self.aax.grid()
+    #self.aax.axis([aMin, aMax, zmin, zmax])
+    #self.aax.xaxis.set_major_formatter(FixedOrderFormatter(3))
+    #self.aax.grid()
+    self.omegaax.axis([omegaMin, omegaMax, zmin, zmax])
+    self.omegaax.grid()
 
     # plots :
     self.Tsurf    = self.Tax.text(Th, Tz, r'Surface Temp: %.1f $\degree$C' % Ts)
@@ -369,8 +380,11 @@ class Plot():
     #self.phws_0,  = self.wax.plot(wh, zo, 'ko')
     #self.phwsp,   = self.wax.plot(wh*np.ones(len(z)), z, 'r+')
     
-    self.pha,     = self.aax.plot(a, z, '0.3', lw=2)
-    self.phaS,    = self.aax.plot([aMin, aMax], [zs, zs], 'k-', lw=2)
+    self.phomega, = self.omegaax.plot(omega, z, '0.3', lw=2)
+    self.phomegaS,= self.omegaax.plot([omegaMin, omegaMax], [zs, zs], 'k-', lw=2)
+    
+    #self.pha,     = self.aax.plot(a, z, '0.3', lw=2)
+    #self.phaS,    = self.aax.plot([aMin, aMax], [zs, zs], 'k-', lw=2)
     #self.phks_0,  = self.kax.plot(kh, zo, 'ko')
     #self.phksp,   = self.kax.plot(kh*np.ones(len(z)), z, 'r+')
 
@@ -386,9 +400,12 @@ class Plot():
     
     self.wax.set_title('Velocity')
     self.wax.set_xlabel(r'$w\ \left[\frac{\mathrm{cm}}{\mathrm{a}}\right]$')
+    
+    self.omegaax.set_title('Water Percentage')
+    self.omegaax.set_xlabel(r'$\omega\ [\mathrm{\%}]$')
 
-    self.aax.set_title('Age')
-    self.aax.set_xlabel(r'$a\ [\mathrm{a}]$')
+    #self.aax.set_title('Age')
+    #self.aax.set_xlabel(r'$a\ [\mathrm{a}]$')
     
 
   def update_plot(self, firn, t):
@@ -402,6 +419,7 @@ class Plot():
     z     = firn.z
     zo    = firn.zo
     Ts    = firn.Ts - 273.15
+    omega = firn.omega
 
     self.fig_text.set_text('Time = %.2f yr' % t) 
     
@@ -420,9 +438,13 @@ class Plot():
     self.phw.set_ydata(z)
     self.phwS.set_ydata(z[-1])
    
-    self.pha.set_xdata(a)
-    self.pha.set_ydata(z)
-    self.phaS.set_ydata(z[-1])
+    self.phomega.set_xdata(omega)
+    self.phomega.set_ydata(z)
+    self.phomegaS.set_ydata(z[-1])
+    
+    #self.pha.set_xdata(a)
+    #self.pha.set_ydata(z)
+    #self.phaS.set_ydata(z[-1])
     
 
   def plot_all(self, firns, titles, colors):
@@ -511,14 +533,15 @@ class Plot():
     plt.show()
 
 
-  def plot_height(self, x, ht, origHt):
+  def plot_height(self, t, ht, origHt):
     """
     Plot the height history of a column of firn for times x, current height ht, 
     and original surface height origHt.
     """
     # plot the surface height information :
-    plt.plot(x,               ht,     'k-',  lw=1.5, label=r'Surface Height')
-    plt.plot(x[:len(origHt)], origHt, 'k--', lw=1.5, label=r'Original Surface')
+    t = append(0.0, t) / self.spy
+    plt.plot(t, ht,     'k-',  lw=1.5, label=r'Surface Height')
+    plt.plot(t, origHt, 'k--', lw=1.5, label=r'Original Surface')
     plt.xlabel('time [a]')
     plt.ylabel('height [m]')
     plt.title('Surface Height Changes')
@@ -533,34 +556,27 @@ class Plot():
     plt.show()
 
 
-  def plot_all_height(self, xs, hts, origHts, titles, colors):
+  def plot_all_height(self, t, hts, origHts, titles, colors):
     """
-    Plot the height history of a list of firn objects for times array xs, 
+    Plot the height history of a list of firn objects for times array t, 
     current height array hts, original surface heights origHts, with 
     corresponding titles and colors arrays.
     """
-    zMin = min(min(origHts))
-    zMax = max(max(hts))
-    zMax = zMax + (zMax - zMin) / 16.0
-    xMin = min(min(xs))
-    xMax = max(max(xs))
-    
+    t = append(0.0, t) / self.spy
+     
     fig = plt.figure(figsize=(11,8))
     ax  = fig.add_subplot(111)
     
-    # format : [xmin, xmax, ymin, ymax]
-    ax.axis([xMin, xMax, zMin, zMax])
-    ax.grid()
     
     # plot the surface height information :
-    for x, ht, origHt, title, color in zip(xs, hts, origHts, titles, colors):
-      ax.plot(x, ht,     color + '-',  label=title + ' Surface Height')
-      ax.plot(x, origHt, color + '--', label=title + ' Original Surface')
+    for ht, origHt, title, color in zip(hts, origHts, titles, colors):
+      ax.plot(t, ht,     color + '-',  label=title + ' Surface Height')
+      ax.plot(t, origHt, color + '--', label=title + ' Original Surface')
     
+    ax.grid()
     ax.set_xlabel('time [a]')
     ax.set_ylabel('height [m]')
     ax.set_title('Surface Height Changes')
-    ax.grid()
   
     # Legend formatting:
     leg    = ax.legend(loc='lower left')
