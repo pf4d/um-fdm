@@ -282,6 +282,7 @@ class Firn():
     self.origHt  = [self.z[-1]]              # list of initial surface heights
     self.Ts      = self.H[-1] / self.c[-1]   # temperature of surface
   
+    #self.mesh.coordinates()[:,0][self.index] = self.z  # update the mesh coord.
     self.rho_i.vector().set_local(self.rho)
     self.H_i.vector().set_local(self.H)
     self.w_i.vector().set_local(self.w)
@@ -556,27 +557,24 @@ class Plot():
     plt.show()
 
 
-  def plot_all_height(self, t, hts, origHts, titles, colors):
+  def plot_all_height(self, t, firns, titles, colors):
     """
     Plot the height history of a list of firn objects for times array t, 
-    current height array hts, original surface heights origHts, with 
-    corresponding titles and colors arrays.
+    array of firn objects firns, with corresponding titles and colors arrays.
     """
     t = append(0.0, t) / self.spy
      
     fig = plt.figure(figsize=(11,8))
     ax  = fig.add_subplot(111)
     
-    
     # plot the surface height information :
-    for ht, origHt, title, color in zip(hts, origHts, titles, colors):
-      ax.plot(t, ht,     color + '-',  label=title + ' Surface Height')
-      ax.plot(t, origHt, color + '--', label=title + ' Original Surface')
+    for firn, title, color in zip(firns, titles, colors):
+      ax.plot(t, firn.ht,     color + '-',  lw=1.5, label=title + ' Surface Height')
+      ax.plot(t, firn.origHt, color + '--', lw=1.5, label=title + ' Original Surface')
     
     ax.grid()
     ax.set_xlabel('time [a]')
     ax.set_ylabel('height [m]')
-    ax.set_title('Surface Height Changes')
   
     # Legend formatting:
     leg    = ax.legend(loc='lower left')
