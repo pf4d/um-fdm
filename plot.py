@@ -329,7 +329,7 @@ class Plot():
     Tz     = zmax - 0.15*(zmax - zmin) / 2        # z-coord of Ts
 
     rhoMin = 300                                  # rho x-coord min
-    rhoMax = 1000                                 # rho x-coord max
+    rhoMax = 650#1000                                 # rho x-coord max
     #rhoh   = rhoMin + 0.1*(rhoMax - rhoMin) / 2  # rho height x-coord
     
     wMin   = -30
@@ -453,84 +453,31 @@ class Plot():
     Plot the data from a list of firn objects with corresponding titles and
     colors array.
     """    
-    Tmin   = -20                                 # T x-coord min
-    Tmax   = 0                                   # T x-coord max
-    Th     = Tmin + 0.1*(Tmax - Tmin) / 2        # T height x-coord
-
     rhoMin = 300                                 # rho x-coord min
     rhoMax = 1000                                # rho x-coord max
     rhoh   = rhoMin + 0.1*(rhoMax - rhoMin) / 2  # rho height x-coord
-
-    wMin   = -22.0e-6
-    wMax   = -7.5e-6
-    wh     = wMin + 0.1*(wMax - wMin) / 2
-
-    kMin   = 0.0
-    kMax   = 2.2
-    kh     = kMin + 0.1*(kMax - kMin) / 2
     
     zmax   = firns[0].zs + 20                    # max z-coord
     zmin   = firns[0].zb                         # min z-coord
 
-    fig    = plt.figure(figsize=(16,6))
-    Tax    = fig.add_subplot(141)
-    rhoax  = fig.add_subplot(142)
-    wax    = fig.add_subplot(143)
-    kax    = fig.add_subplot(144)
+    fig    = plt.figure()
 
     # format : [xmin, xmax, ymin, ymax]
-    Tax.axis([Tmin, Tmax, zmin, zmax])
-    Tax.grid()
-    rhoax.axis([rhoMin, rhoMax, zmin, zmax])
-    rhoax.grid()
-    rhoax.xaxis.set_major_formatter(FixedOrderFormatter(2))
-    wax.axis([wMin, wMax, zmin, zmax])
-    wax.grid()
-    wax.xaxis.set_major_formatter(FixedOrderFormatter(-6))
-    kax.axis([kMin, kMax, zmin, zmax])
-    kax.grid()
+    plt.axis([300, 650, 135, 155])
+    plt.grid()
 
     # plots :
     for firn, title, color in zip(firns, titles, colors):
-      i = firn.index
-      Tax.plot(firn.T[i] - 273.15, firn.z[i], color, label=title, lw=2)
-      Tax.plot([Tmin, Tmax], [firn.z[i][-1], firn.z[i][-1]], color, lw=2)
-
-      rhoax.plot(firn.rho[i], firn.z[i], color, lw=2)
-      rhoax.plot([rhoMin, rhoMax], [firn.z[i][-1], firn.z[i][-1]], color, lw=2)
-
-      wax.plot(firn.w[i], firn.z[i], color, lw=2)
-      wax.plot([wMin, wMax], [firn.z[i][-1], firn.z[i][-1]], color, lw=2)
-
-      kax.plot(firn.k2[i], firn.z[i], color, lw=2)
-      kax.plot([kMin, kMax], [firn.z[i][-1], firn.z[i][-1]], color, lw=2)
+      plt.plot(firn.rho, firn.z, color, lw=2, label=title)
+      plt.plot([rhoMin, rhoMax], [firn.z[-1], firn.z[-1]], color, lw=2)
     
-    # formatting :
-    fig_text = plt.figtext(.85,.95,'Time = 0.0 yr')
-
-    Tax.set_title('Temperature')
-    Tax.set_xlabel(r'$T$ $[\degree C]$')
-    Tax.set_ylabel(r'Depth $[m]$')
-
-    rhoax.set_title('Density')
-    rhoax.set_xlabel(r'$\rho$ $\left [\frac{kg}{m^3}\right ]$')
+    #plt.plot(rhoh, zo, 'ko')
+    #plt.plot(rhoh*np.ones(len(z)), z, 'r+')
+   
+    plt.xlabel(r'$\rho$ $\left [\frac{kg}{m^3}\right ]$')
     #rhoax.set_ylabel(r'Depth $[m]$')
 
-    wax.set_title('Velocity')
-    wax.set_xlabel(r'$w$ $\left [\frac{mm}{s}\right ]$')
-    #wax.set_ylabel(r'Depth $[m]$')
-
-    kax.set_title('Thermal Conductivity')
-    kax.set_xlabel(r'$k$ $\left [\frac{J}{m K s} \right ]$')
-    #kax.set_ylabel(r'Depth $[m]$')
-    
-    # Legend formatting:
-    leg    = Tax.legend(loc='upper right')
-    ltext  = leg.get_texts()
-    frame  = leg.get_frame()
-    plt.setp(ltext, fontsize='small')
-    frame.set_alpha(0)
-
+    plt.savefig('density.png', dpi=300)
     plt.show()
 
 
@@ -549,7 +496,7 @@ class Plot():
     plt.grid()
   
     # Legend formatting:
-    leg = plt.legend(loc='lower left')
+    leg    = plt.legend(loc='lower left')
     ltext  = leg.get_texts()
     frame  = leg.get_frame()
     plt.setp(ltext, fontsize='small')
@@ -557,31 +504,29 @@ class Plot():
     plt.show()
 
 
-  def plot_all_height(self, t, firns, titles, colors):
+  def plot_all_height(self, t, firns, colors):
     """
     Plot the height history of a list of firn objects for times array t, 
     array of firn objects firns, with corresponding titles and colors arrays.
     """
     t = append(0.0, t) / self.spy
-     
-    fig = plt.figure(figsize=(11,8))
-    ax  = fig.add_subplot(111)
     
     # plot the surface height information :
-    for firn, title, color in zip(firns, titles, colors):
-      ax.plot(t, firn.ht,     color + '-',  lw=1.5, label=title + ' Surface Height')
-      ax.plot(t, firn.origHt, color + '--', lw=1.5, label=title + ' Original Surface')
+    for firn, color in zip(firns, colors):
+      plt.plot(t, firn.ht,     color + '-',  lw=2.0, label='Surface Height')
+      plt.plot(t, firn.origHt, color + '--', lw=2.0, label='Original Surface')
     
-    ax.grid()
-    ax.set_xlabel('time [a]')
-    ax.set_ylabel('height [m]')
+    plt.grid()
+    plt.xlabel('time [a]')
+    plt.ylabel('height [m]')
   
     # Legend formatting:
-    leg    = ax.legend(loc='lower left')
+    leg    = plt.legend(loc='lower left')
     ltext  = leg.get_texts()
     frame  = leg.get_frame()
     plt.setp(ltext, fontsize='small')
     frame.set_alpha(0)
+    plt.savefig('heights.png', dpi=300)
     plt.show()
 
 
