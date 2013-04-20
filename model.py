@@ -200,8 +200,8 @@ f_a       = (a - a_1)/dt*xi*dx - \
 theta     = 0.5
 H_mid     = theta*H + (1 - theta)*H_1
 f_H       = rho*(H - H_1)/dt*psi*dx + \
-            k/c*Kcoef*inner(H_mid.dx(0), psi.dx(0))*dx + \
-            rho*w*H_mid.dx(0)*psi*dx
+            k/c*Kcoef*inner(H_mid.dx(0), psi.dx(0))*dx# + \
+            #rho*w*H_mid.dx(0)*psi*dx
 
 # density residual :
 # material derivative :
