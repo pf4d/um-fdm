@@ -5,7 +5,7 @@ spy    = 31556926.0
 ex = sys.argv[1]
 ex = str(ex)
 
-directory = "data/fmic/CummingsExperiment_coarse" + ex + "/"
+directory = "data/fmic/CummingsExperiment" + ex + "/"
 
 rho    = genfromtxt(directory + "CummingsExperiment" + ex + "Density.txt")
 T      = genfromtxt(directory + "CummingsExperiment" + ex + "Temperature.txt")

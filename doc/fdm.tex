@@ -299,7 +299,7 @@ The variable \texttt{rhoCoef} is another dynamically-updated-coefficient vector 
 In order to find the vertical velocity the differential equation must be solved.  The weak formulation is:
 \begin{align*}
   f_{w} = 
-    \int_{\Omega} \rho \nabla{w} \eta\ d\Omega + \frac{d\rho}{dt} \eta\ d\Omega,
+    \int_{\Omega} \rho \nabla{w} \eta\ d\Omega + \int_{\Omega} \frac{d\rho}{dt} \eta\ d\Omega,
 \end{align*}
 and is created with FEniCS by:
 \footnotesize
@@ -310,7 +310,6 @@ f_w   = rho*grad(w_mid)*eta*dx + drhodt*eta*dx
 \end{minted}
 \normalsize
 We chose $\theta=0.878$ again due to the jump discontinuity at $\rho_m$.
-
 
 We can define the function space for the entire non-linear problem as 
 \begin{align*}

@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.1415926-1.40.10 (TeX Live 2009/Debian) (format=pdflatex 2013.2.21)  4 APR 2013 12:06
+This is pdfTeX, Version 3.1415926-1.40.10 (TeX Live 2009/Debian) (format=pdflatex 2012.5.16)  4 APR 2013 14:08
 entering extended mode
  \write18 enabled.
  %&-line parsing enabled.
@@ -6,7 +6,13 @@ entering extended mode
 (./fdm.tex
 LaTeX2e <2009/09/24>
 Babel <v3.8l> and hyphenation patterns for english, usenglishmax, dumylang, noh
-yphenation, loaded.
+yphenation, farsi, arabic, croatian, bulgarian, ukrainian, russian, czech, slov
+ak, danish, dutch, finnish, french, basque, ngerman, german, german-x-2009-06-1
+9, ngerman-x-2009-06-19, ibycus, monogreek, greek, ancientgreek, hungarian, san
+skrit, italian, latin, latvian, lithuanian, mongolian2a, mongolian, bokmal, nyn
+orsk, romanian, irish, coptic, serbian, turkish, welsh, esperanto, uppersorbian
+, estonian, indonesian, interlingua, icelandic, kurmanji, slovenian, polish, po
+rtuguese, spanish, galician, catalan, swedish, ukenglish, pinyin, loaded.
 (/usr/share/texmf-texlive/tex/latex/base/article.cls
 Document Class: article 2007/10/19 v1.4h Standard LaTeX document class
 (/usr/share/texmf-texlive/tex/latex/base/size10.clo
@@ -351,7 +357,8 @@ Package ifvtex Info: VTeX not detected.
 \Gm@odd@mp=\dimen129
 \Gm@even@mp=\dimen130
 \Gm@dimlist=\toks31
-) (./fdm.aux
+
+(/usr/share/texmf-texlive/tex/xelatex/xetexconfig/geometry.cfg)) (./fdm.aux
 
 LaTeX Warning: Label `fig:500 year orbit' multiply defined.
 
@@ -546,23 +553,23 @@ runsystem(rm fdm.out.pyg)...executed.
 runsystem(rm fdm.pyg)...executed.
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 356--358
+Underfull \hbox (badness 10000) in paragraph at lines 355--357
 
  []
 
 
-Overfull \hbox (7.07516pt too wide) in paragraph at lines 378--378
+Overfull \hbox (7.07516pt too wide) in paragraph at lines 377--377
 [] 
  []
 
 
-Overfull \hbox (0.14984pt too wide) in paragraph at lines 384--386
+Overfull \hbox (0.14984pt too wide) in paragraph at lines 383--385
 \OT1/ptm/m/n/10 The time dif-fer-en-tial in the last term can again be re-place
 d, 
  []
 
 
-Overfull \hbox (0.48398pt too wide) in paragraph at lines 422--422
+Overfull \hbox (0.48398pt too wide) in paragraph at lines 421--421
 [] 
  []
 
@@ -577,7 +584,7 @@ runsystem(rm fdm.out.pyg)...executed.
 runsystem(rm fdm.pyg)...executed.
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 439--441
+Underfull \hbox (badness 10000) in paragraph at lines 438--440
 
  []
 
@@ -606,7 +613,7 @@ runsystem(rm fdm.out.pyg)...executed.
 runsystem(rm fdm.pyg)...executed.
 
 
-Overfull \hbox (0.77162pt too wide) in paragraph at lines 506--507
+Overfull \hbox (0.77162pt too wide) in paragraph at lines 505--506
 \OT1/ptm/m/n/10 per-formed by the \OT1/pcr/m/n/10 update[]height \OT1/ptm/m/n/1
 0 func-tion of the \OT1/pcr/m/n/10 firn
  []
@@ -642,25 +649,25 @@ runsystem(rm fdm.out.pyg)...executed.
 runsystem(rm fdm.pyg)...executed.
 
 
-Overfull \hbox (2.98103pt too wide) in paragraph at lines 559--560
+Overfull \hbox (2.98103pt too wide) in paragraph at lines 558--559
 []\OT1/ptm/m/n/10 A func-tion has been pro-vided (\OT1/pcr/m/n/10 set[]ini[]con
 v\OT1/ptm/m/n/10 ) which
  []
 
 [6]
-Underfull \hbox (badness 10000) in paragraph at lines 569--570
+Underfull \hbox (badness 10000) in paragraph at lines 568--569
 
  []
 
 LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <10> not available
-(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 571.
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 570.
 
-Overfull \hbox (0.7556pt too wide) in paragraph at lines 574--595
+Overfull \hbox (0.7556pt too wide) in paragraph at lines 573--594
  [] 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 598--599
+Underfull \hbox (badness 10000) in paragraph at lines 597--598
 
  []
 
@@ -671,31 +678,31 @@ File: images/40yrDen.png Graphic file (type png)
 File: images/40yrHt.png Graphic file (type png)
 
 <use images/40yrHt.png>
-LaTeX Font Info:    Try loading font information for OMS+ptm on input line 683.
+LaTeX Font Info:    Try loading font information for OMS+ptm on input line 682.
 
  (/usr/share/texmf-texlive/tex/latex/psnfss/omsptm.fd
 File: omsptm.fd 
 )
 LaTeX Font Info:    Font shape `OMS/ptm/m/n' in size <10> not available
-(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 683.
+(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 682.
 
-Underfull \hbox (badness 2088) in paragraph at lines 690--691
+Underfull \hbox (badness 2088) in paragraph at lines 689--690
 []\OT1/ptm/m/n/10 Ligtenberg, S.R.M., Helsen, M.M., and van den
  []
 
 
-Underfull \hbox (badness 2418) in paragraph at lines 690--691
+Underfull \hbox (badness 2418) in paragraph at lines 689--690
 \OT1/ptm/m/n/10 Broeke, M.R. 2011. An im-proved semi[]empirical
  []
 
 
-Underfull \hbox (badness 1424) in paragraph at lines 690--691
+Underfull \hbox (badness 1424) in paragraph at lines 689--690
 \OT1/ptm/m/n/10 model for the den-si-fi-ca-tion of Antarc-tic firn. \OT1/ptm/m/
 it/10 The
  []
 
 
-Underfull \hbox (badness 3758) in paragraph at lines 696--697
+Underfull \hbox (badness 3758) in paragraph at lines 695--696
 \OT1/ptm/m/n/10 equa-tion, \OT1/ptm/m/it/10 Com-put. Meth-ods Appl. Mech. En-gr
 g.\OT1/ptm/m/n/10 ,
  []
@@ -706,12 +713,12 @@ LaTeX Warning: There were multiply-defined labels.
 
  ) 
 Here is how much of TeX's memory you used:
- 5957 strings out of 495061
- 80937 string characters out of 1182621
- 175268 words of memory out of 3000000
- 8958 multiletter control sequences out of 15000+50000
+ 5966 strings out of 493848
+ 81150 string characters out of 1152823
+ 176834 words of memory out of 3000000
+ 9063 multiletter control sequences out of 15000+50000
  30427 words of font info for 80 fonts, out of 3000000 for 9000
- 28 hyphenation exceptions out of 8191
+ 714 hyphenation exceptions out of 8191
  60i,21n,80p,853b,439s stack positions out of 5000i,500n,10000p,200000b,50000s
 {/usr/share/texmf-texlive/fonts/enc/dvips/base/8r.enc}</usr/share/texmf-texli
 ve/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/share/texmf-texlive/fonts/ty
@@ -732,7 +739,7 @@ sr/share/texmf-texlive/fonts/type1/urw/courier/ucrro8a.pfb></usr/share/texmf-te
 xlive/fonts/type1/urw/times/utmb8a.pfb></usr/share/texmf-texlive/fonts/type1/ur
 w/times/utmr8a.pfb></usr/share/texmf-texlive/fonts/type1/urw/times/utmri8a.pfb>
 
-Output written on fdm.pdf (8 pages, 572327 bytes).
+Output written on fdm.pdf (8 pages, 572325 bytes).
 PDF statistics:
  123 PDF objects out of 1000 (max. 8388607)
  0 named destinations out of 1000 (max. 500000)
