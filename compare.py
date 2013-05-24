@@ -1,11 +1,14 @@
 from pylab import *
 
+mpl.rcParams['font.family'] = 'serif'
+mpl.rcParams['legend.fontsize'] = 'medium'
+
 spy    = 31556926.0
 
 ex = sys.argv[1]
 ex = str(ex)
 
-directory = "data/fmic/CummingsExperiment" + ex + "/"
+directory = "data/fmic/newEnth/CummingsExperiment" + ex + "/"
 
 rho    = genfromtxt(directory + "CummingsExperiment" + ex + "Density.txt")
 T      = genfromtxt(directory + "CummingsExperiment" + ex + "Temperature.txt")
@@ -67,49 +70,53 @@ def plot100_age():
   for i in range(10):
     plot(age[:,i], z)
   title('First 100 Years of Age')
-  xlabel(r'$a$')
+  xlabel('$a$')
   ylabel(r'$z$')
   grid()
   show()
 
 def plot_rho():
-  for i in range(m):
-    plot(rho[:,i], z)
+  plot(rho[:,0],  z, 'k',   lw=2, label='initial')
+  plot(rho[:,-1], z, 'k--', lw=2, label='2000 years')
   title('Density')
   xlabel(r'$\rho$')
   ylabel(r'$z$')
+  legend()
   grid()
   show()
 
 def plot_temp():
-  for i in range(m):
-    plot(T[:,i], z)
+  plot(T[:,0],  z, 'k',   lw=2, label='initial')
+  plot(T[:,-1], z, 'k--', lw=2, label='2000 years')
   title('Temperature')
   xlabel(r'$T$')
   ylabel(r'$z$')
+  legend(loc='lower left')
   grid()
   show()
 
 def plot_drhodt():
-  for i in range(m):
-    plot(drhodt[:,i], z)
+  plot(drhodt[:,0],  z, 'k',   lw=2, label='initial')
+  plot(drhodt[:,-1], z, 'k--', lw=2, label='2000 years')
   title('Densification Rate')
   xlabel(r'$\frac{d\rho}{dt}$')
   ylabel(r'$z$')
+  legend(loc='lower right')
   grid()
   show()
 
 def plot_age():
-  for i in range(m):
-    plot(age[:,i], z)
+  plot(age[:,0],  z, 'k',   lw=2, label='initial')
+  plot(age[:,-1], z, 'k--', lw=2, label='2000 years')
   title('Age')
   xlabel(r'$a$')
   ylabel(r'$z$')
+  legend()
   grid()
   show()
 
 def plot_z815():
-  plot(t815, z815)
+  plot(t815, z815, 'k', lw=2)
   title(r'Depth at $\rho = 815$')
   xlabel(r'$t$')
   ylabel(r'$z$')
@@ -117,7 +124,7 @@ def plot_z815():
   show() 
 
 def plot_age815():
-  plot(t815, age815)
+  plot(t815, age815, 'k', lw=2)
   title(r'Age at $\rho = 815$')
   xlabel(r'$t$')
   ylabel(r'$a$')
@@ -125,7 +132,7 @@ def plot_age815():
   show() 
 
 def plot_por815():
-  plot(t815, por815)
+  plot(t815, por815, 'k', lw=2)
   title(r'Integrated Porosity up to $\rho = 815$')
   xlabel(r'$t$')
   ylabel(r'$\phi$')
@@ -133,7 +140,7 @@ def plot_por815():
   show() 
 
 def plot_porAll():
-  plot(t815, porAll)
+  plot(t815, porAll, 'k', lw=2)
   title('Integrated Porosity of Column')
   xlabel(r'$t$')
   ylabel(r'$\phi$')
