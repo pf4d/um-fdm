@@ -5,6 +5,8 @@ Evan Cummings
 
 FEniCS solution to firn enthalpy / density profile.
 
+First extra arg -- plot or not
+Second arg      -- experiment number
 """
 
 from numpy import *
@@ -69,7 +71,7 @@ elif ex == 6:
   adot  = 0.25                 # accumulation rate .............. m/a
   Tavg  = Tw - 30.0            # average temperature ............ degrees K
 else :
-  adot  = 0.10                 # accumulation rate .............. m/a
+  adot  = 0.20                 # accumulation rate .............. m/a
   Tavg  = Tw - 10.0            # average temperature ............ degrees K
 
 acc   = rhoi * adot / spy      # surface accumulation ........... kg/(m^2 s)
@@ -109,7 +111,7 @@ V      = FunctionSpace(mesh, 'Lagrange', 1)   # function space for rho, T
 MV     = MixedFunctionSpace([V, V, V])        # mixed function space
 
 # enthalpy surface condition with cyclical 2-meter air temperature :
-code   = 'c*( Tavg + 10.0*sin(2*omega*t) )'#+ 5*sin(pi*omega/4*t) )'
+code   = 'c*( Tavg + 10.0*sin(2*omega*t) + 5*sin(omega/4*t) )'
 Hs     = Expression(code, c=cp, Tavg=Tavg, omega=pi/spy, t=t0, T0=T0)
 
 # experimental surface density :
@@ -254,7 +256,6 @@ for t in times:
   # update boundary conditions :
   Hs.t      = t
   #Hs.c      = firn.c[-1]
-  #code   = 'dp*rhon + (1 - dp)*rhoi'
   rhoS.rhoi = firn.rho[-1]
   if firn.Ts > Tw:
     if firn.domega[-1] > 0:
@@ -283,8 +284,8 @@ for t in times:
   
   # update firn object :
   firn.update_vars()
-  firn.update_height_history()
   firn.update_height()
+  firn.update_height_history()
   
   # update model parameters :
   h_1.assign(h)
@@ -364,6 +365,7 @@ for t in times:
 tfin = time.clock()
 if bp:
   plt.ioff()
+  plt.savefig('end.png', dpi=300)
   plt.show()
 
 ttot   = tfin - tstart
@@ -372,5 +374,5 @@ print "total time to process 3,000 years:", thours, "hrs"
 
 #fmic.save_fmic_data(ex)
 # plot the surface height trend :
-plot.plot_height(times/spy, firn.ht, firn.origHt)
+plot.plot_height(times, firn.ht, firn.origHt)
 
