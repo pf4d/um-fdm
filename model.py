@@ -128,6 +128,9 @@ ageS   = Constant(0.0)
 code   = '- (rhoi * adot / spy) / rhos'
 wS     = Expression(code, rhoi=rhoi, adot=adot, spy=spy, rhos=rhos)
 
+# velocity of base :
+wB     = Constant(-4e-9)
+
 # define the Dirichlet boundarys :
 def surface(x, on_boundary):
   return on_boundary and x[0] == zs
@@ -138,6 +141,7 @@ def base(x, on_boundary):
 Hbc   = DirichletBC(MV.sub(0), Hs,   surface)    # enthalpy of surface
 Dbc   = DirichletBC(MV.sub(1), rhoS, surface)    # density of surface
 wbc   = DirichletBC(MV.sub(2), wS,   surface)    # velocity of surface
+wbcb  = DirichletBC(MV.sub(2), wB,   base)       # velocity of base
 ageBc = DirichletBC(V,         ageS, surface)    # age of surface
 
 
@@ -199,9 +203,10 @@ f_a       = (a - a_1)/dt*xi*dx - \
 # enthalpy residual :
 theta     = 0.5
 H_mid     = theta*H + (1 - theta)*H_1
-f_H       = rho*(H - H_1)/dt*psi*dx + \
-            k/c*Kcoef*inner(H_mid.dx(0), psi.dx(0))*dx# + \
-            #rho*w*H_mid.dx(0)*psi*dx
+f_H       = rho*w*H_mid.dx(0)*psi*dx - \
+            k/c*Kcoef*inner(H_mid.dx(0), psi.dx(0))*dx - \
+            rho*(H - H_1)/dt*psi*dx
+
 
 # density residual :
 # material derivative :
@@ -307,7 +312,7 @@ for t in times:
   if tr == 0.0:
     fmic.calc_fmic_variables()
     fmic()
-    #fmic.save_state(ex)
+    fmic.save_state(ex)
     print 'dt: ' + str(tr) + '\t=>\t815 SAVED'
     print 'dt: ' + str(tr) + '\t=>\tSAVED'
   
