@@ -38,7 +38,7 @@ z815   = rho815[2]
 
 n, m   = shape(rho)
 
-fig = figure()
+fig = figure(figsize=(20,15))
 ax1 = fig.add_subplot(331)
 ax2 = fig.add_subplot(332)
 ax3 = fig.add_subplot(333)
@@ -48,42 +48,46 @@ ax6 = fig.add_subplot(336)
 ax7 = fig.add_subplot(337)
 ax8 = fig.add_subplot(338)
 
-axs   = [ax1,ax2,ax3,ax4,ax5,ax6,ax7,ax8
-us    = [rho, T, drhodt, age, z815, age815, por815, porAll]
+axs1  = [ax1,ax2,ax3,ax4]
+axs2  = [ax5,ax6,ax7,ax8]
+us1   = [rho, T, drhodt, age]
+us2   = [z815, age815, por815, porAll]
 
-tits  = ['Density', 
+tits1 = ['Density', 
          'Temperature', 
          'Densification Rate', 
-         'Age', 
-         r'Depth at $\rho = 815$',
+         'Age']
+tits2 = [r'Depth at $\rho = 815$',
          r'Age at $\rho = 815$',
          r'Integrated Porosity up to $\rho = 815$',
          'Integrated Porosity of Column']
-xlabs = [r'$\rho$', 
-         r'$T$', 
-         r'$\frac{d\rho}{dt}$', 
-         r'$a$', 
-         r'$t$', 
-         r'$t$', 
-         r'$t$', 
-         r'$t$']
-ylabs = [r'$z$',
-         r'$z$',
-         r'$z$',
-         r'$z$',
-         r'$z$',
-         r'$a$',
-         r'$\phi$',
-         r'$\phi$']
+xlabs1 = [r'$\rho$', 
+          r'$T$', 
+          r'$\frac{d\rho}{dt}$', 
+          r'$a$']
+ylabs2 = [r'$z$',
+          r'$a$',
+          r'$\phi$',
+          r'$\phi$']
 
 def plot_all():
-  for ax, u, tit, xlab, ylab in zip(axs, us, tits, xlabs, ylabs):
+  for ax, u, tit, xlab in zip(axs1, us1, tits1, xlabs1):
     ax.plot(u[:,0],  z, 'k',   lw=2, label='initial')
-    ax.plot(u[:,-1], z, 'k--', lw=2, label='2000 years')
+    ax.plot(u[:,-1], z, 'r--', lw=2, label='2000 years')
     ax.set_xlabel(xlab)
+    ax.set_ylabel(r'$z$')
+    ax.set_ylim([-200, 0])
+    ax.grid()
+  for ax, u, tit, ylab in zip(axs2, us2, tits2, ylabs2):
+    ax.plot(t815, u, 'k', lw=2)
+    ax.set_xlabel(r'$t$')
     ax.set_ylabel(ylab)
     ax.grid()
-  show()
+  ax1.legend(loc="lower left")
+  ax2.legend(loc="lower right")
+  ax3.legend(loc="lower right")
+  ax4.legend(loc="upper right")
+  savefig('plot.png', dpi=300)
 
 
 def plot100_rho():
