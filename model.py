@@ -228,7 +228,7 @@ f_rho     = (rho - rho_1)/dt*phi*dx - \
 # velocity residual :
 theta     = 0.878
 w_mid     = theta*w + (1 - theta)*w_1
-f_w       = rho*w_mid.dx(0)*eta*dx + drhodt*eta*dx
+f_w       = rho*w_mid.dx(0)*eta*dx + 1/2. * drhodt*eta*dx
 
 # equation to be minimzed :
 f         = f_H + f_rho + f_w
@@ -379,7 +379,7 @@ ttot   = tfin - tstart
 thours = round(ttot*(3000/tf)*spy/60/60, 3)
 print "total time to process 3,000 years:", thours, "hrs"
 
-fmic.save_fmic_data(ex)
+#fmic.save_fmic_data(ex)
 # plot the surface height trend :
 #plot.plot_height(times, firn.ht, firn.origHt)
 

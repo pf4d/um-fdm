@@ -1,11 +1,14 @@
 from pylab import *
 
+mpl.rcParams['font.family'] = 'serif'
+mpl.rcParams['legend.fontsize'] = 'medium'
+
 spy    = 31556926.0
 
 ex = sys.argv[1]
 ex = str(ex)
 
-directory = "data/fmic/CummingsExperiment_coarse" + ex + "/"
+directory = "data/fmic/CummingsExperiment" + ex + "/"
 
 rho    = genfromtxt(directory + "CummingsExperiment" + ex + "Density.txt")
 T      = genfromtxt(directory + "CummingsExperiment" + ex + "Temperature.txt")
@@ -34,6 +37,53 @@ z815   = rho815[2]
 
 
 n, m   = shape(rho)
+
+fig = figure()
+ax1 = fig.add_subplot(331)
+ax2 = fig.add_subplot(332)
+ax3 = fig.add_subplot(333)
+ax4 = fig.add_subplot(334)
+ax5 = fig.add_subplot(335)
+ax6 = fig.add_subplot(336)
+ax7 = fig.add_subplot(337)
+ax8 = fig.add_subplot(338)
+
+axs   = [ax1,ax2,ax3,ax4,ax5,ax6,ax7,ax8
+us    = [rho, T, drhodt, age, z815, age815, por815, porAll]
+
+tits  = ['Density', 
+         'Temperature', 
+         'Densification Rate', 
+         'Age', 
+         r'Depth at $\rho = 815$',
+         r'Age at $\rho = 815$',
+         r'Integrated Porosity up to $\rho = 815$',
+         'Integrated Porosity of Column']
+xlabs = [r'$\rho$', 
+         r'$T$', 
+         r'$\frac{d\rho}{dt}$', 
+         r'$a$', 
+         r'$t$', 
+         r'$t$', 
+         r'$t$', 
+         r'$t$']
+ylabs = [r'$z$',
+         r'$z$',
+         r'$z$',
+         r'$z$',
+         r'$z$',
+         r'$a$',
+         r'$\phi$',
+         r'$\phi$']
+
+def plot_all():
+  for ax, u, tit, xlab, ylab in zip(axs, us, tits, xlabs, ylabs):
+    ax.plot(u[:,0],  z, 'k',   lw=2, label='initial')
+    ax.plot(u[:,-1], z, 'k--', lw=2, label='2000 years')
+    ax.set_xlabel(xlab)
+    ax.set_ylabel(ylab)
+    ax.grid()
+  show()
 
 
 def plot100_rho():
@@ -73,38 +123,42 @@ def plot100_age():
   show()
 
 def plot_rho():
-  for i in range(m):
-    plot(rho[:,i], z)
+  plot(rho[:,0],  z, 'k',   lw=2, label='initial')
+  plot(rho[:,-1], z, 'k--', lw=2, label='2000 years')
   title('Density')
   xlabel(r'$\rho$')
   ylabel(r'$z$')
+  legend()
   grid()
   show()
 
 def plot_temp():
-  for i in range(m):
-    plot(T[:,i], z)
+  plot(T[:,0],  z, 'k',   lw=2, label='initial')
+  plot(T[:,-1], z, 'k--', lw=2, label='2000 years')
   title('Temperature')
   xlabel(r'$T$')
   ylabel(r'$z$')
+  legend()
   grid()
   show()
 
 def plot_drhodt():
-  for i in range(m):
-    plot(drhodt[:,i], z)
+  plot(drhodt[:,0],  z, 'k',   lw=2, label='initial')
+  plot(drhodt[:,-1], z, 'k--', lw=2, label='2000 years')
   title('Densification Rate')
   xlabel(r'$\frac{d\rho}{dt}$')
   ylabel(r'$z$')
+  legend(loc="lower right")
   grid()
   show()
 
 def plot_age():
-  for i in range(m):
-    plot(age[:,i], z)
+  plot(age[:,0],  z, 'k',   lw=2, label='initial')
+  plot(age[:,-1], z, 'k--', lw=2, label='2000 years')
   title('Age')
   xlabel(r'$a$')
   ylabel(r'$z$')
+  legend()
   grid()
   show()
 
