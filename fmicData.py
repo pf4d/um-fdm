@@ -121,13 +121,13 @@ class FmicData():
     firn = self.firn
     ex   = str(ex)
 
-    savetxt("data/fmic/initialNew" + ex + "/z.txt",   firn.z)
-    savetxt("data/fmic/initialNew" + ex + "/l.txt",   firn.l)
-    savetxt("data/fmic/initialNew" + ex + "/a.txt",   firn.a)
-    savetxt("data/fmic/initialNew" + ex + "/rho.txt", firn.rho)
-    savetxt("data/fmic/initialNew" + ex + "/H.txt",   firn.H)
-    savetxt("data/fmic/initialNew" + ex + "/w.txt",   firn.w)
-    print "saved the current state of firn"
+    savetxt("data/fmic/initial/initial" + ex + "/z.txt",   firn.z)
+    savetxt("data/fmic/initial/initial" + ex + "/l.txt",   firn.l)
+    savetxt("data/fmic/initial/initial" + ex + "/a.txt",   firn.a)
+    savetxt("data/fmic/initial/initial" + ex + "/rho.txt", firn.rho)
+    savetxt("data/fmic/initial/initial" + ex + "/H.txt",   firn.H)
+    savetxt("data/fmic/initial/initial" + ex + "/w.txt",   firn.w)
+    print "saved the initial state of firn"
 
 
   def save_fmic_data(self, exp):
@@ -152,7 +152,7 @@ class FmicData():
     rho815 = vstack((t, age815, z815))
     por    = vstack((t, por815, porAll))
     
-    directory = 'data/fmic/CummingsExperiment' + exp + '/'
+    directory = 'data/fmic/results/CummingsExperiment' + exp + '/'
   
     savetxt(directory + 'CummingsExperiment' + exp + 'Age.txt',         a,
             delimiter='\t')

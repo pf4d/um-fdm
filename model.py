@@ -45,7 +45,7 @@ Lf    = const.Lf               # latent heat of fusion .......... J/kg
 Hsp   = const.Hsp              # Enthalpy of ice at Tw .......... J/kg
 
 # model variables :
-n     = 50                     # num of z-positions
+n     = 100                    # num of z-positions
 rhos  = 360.                   # initial density at surface ..... kg/m^3
 ex    = int(sys.argv[3])
 
@@ -305,8 +305,8 @@ for t in times:
   #print t/spy, min(firn.a)/spy, max(firn.a)/spy 
   #print ( Tavg + 10.0*sin(2*pi/spy*t) ) - Tw, firn.T[-1] - Tw
 
-  # only start capturing the data at 1000 years :
-  tr = round(t/spy,2) - 1000
+  # only start capturing the data at 5000 years :
+  tr = round(t/spy,2) - 5000
 
   # initialize the data : 
   if tr == 0.0:
@@ -317,10 +317,10 @@ for t in times:
     print 'dt: ' + str(tr) + '\t=>\tSAVED'
   
   # update fmic 815 data :
-  if tr > 0.0 and tr % 1 == 0.0:
-    print 'dt: ' + str(tr) + '\t=>\t815 SAVED'
+  if tr > 0.0:
     fmic.calc_fmic_variables()
     fmic.append_815(tr)
+    print 'dt: ' + str(tr) + '\t=>\t815 SAVED'
   
   # update the main fmic data:
   if tr > 0.0 and tr <= 100.0 and tr % 10 == 0.0:
@@ -379,7 +379,7 @@ ttot   = tfin - tstart
 thours = round(ttot*(3000/tf)*spy/60/60, 3)
 print "total time to process 3,000 years:", thours, "hrs"
 
-#fmic.save_fmic_data(ex)
+fmic.save_fmic_data(ex)
 # plot the surface height trend :
 #plot.plot_height(times, firn.ht, firn.origHt)
 

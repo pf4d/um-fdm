@@ -251,13 +251,13 @@ class Firn():
     """
     ex = str(ex)
 
-    self.rhoin = genfromtxt("data/fmic/initial" + ex + "/rho.txt")
+    self.rhoin = genfromtxt("data/fmic/initial/initial" + ex + "/rho.txt")
     self.rho   = self.rhoin
-    self.w     = genfromtxt("data/fmic/initial" + ex + "/w.txt")
-    self.z     = genfromtxt("data/fmic/initial" + ex + "/z.txt")
-    self.a     = genfromtxt("data/fmic/initial" + ex + "/a.txt")
-    self.H     = genfromtxt("data/fmic/initial" + ex + "/H.txt")
-    self.lin   = genfromtxt("data/fmic/initial" + ex + "/l.txt")
+    self.w     = genfromtxt("data/fmic/initial/initial" + ex + "/w.txt")
+    self.z     = genfromtxt("data/fmic/initial/initial" + ex + "/z.txt")
+    self.a     = genfromtxt("data/fmic/initial/initial" + ex + "/a.txt")
+    self.H     = genfromtxt("data/fmic/initial/initial" + ex + "/H.txt")
+    self.lin   = genfromtxt("data/fmic/initial/initial" + ex + "/l.txt")
     
     self.zs_1    = self.z[-1]                # previous time-step surface  
     self.zo      = self.z[-1]                # z-coordinate of initial surface
