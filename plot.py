@@ -137,8 +137,8 @@ class Firn():
     self.drhodt = project(self.drhodtF, self.V).vector().array()
     self.a      = self.aF.vector().array()
     self.w      = project(self.wF, self.V).vector().array()
-    self.k      = project(self.kF, self.V).vector().array()
-    self.c      = project(self.cF, self.V).vector().array()
+    #self.k      = project(self.kF, self.V).vector().array()
+    #self.c      = project(self.cF, self.V).vector().array()
     
     self.Ts     = self.H[-1] / self.c[-1]
     self.acc    = self.const.rhoi*self.adot/self.const.spy
@@ -213,8 +213,8 @@ class Firn():
     rhoCoefNew          = ones(n)
     rhoHigh             = where(self.rho >  550)[0]
     rhoLow              = where(self.rho <= 550)[0]
-    rhoCoefNew[rhoHigh] = kcHh*(2.366 - 0.293*np.log(self.A))
-    rhoCoefNew[rhoLow]  = kcLw*(1.435 - 0.151*np.log(self.A))
+    rhoCoefNew[rhoHigh] = kcHh #*(2.366 - 0.293*ln(self.A))
+    rhoCoefNew[rhoLow]  = kcLw #*(1.435 - 0.151*ln(self.A))
     rhoCoef.vector().set_local(rhoCoefNew)
   
     ## update coefficients used by enthalpy :
@@ -368,7 +368,8 @@ class Plot():
     self.Tax.set_ylabel('Depth [m]')
 
     self.rhoax.set_title('Density')
-    self.rhoax.set_xlabel(r'$\rho\ \left[\frac{\mathrm{kg}}{\mathrm{m}^3}\right]$')
+    self.rhoax.set_xlabel(r'$\rho\ \left[\frac{\mathrm{kg}}'\
+                          + '{\mathrm{m}^3}\right]$')
     
     self.wax.set_title('Velocity')
     self.wax.set_xlabel(r'$w\ \left[\frac{\mathrm{cm}}{\mathrm{a}}\right]$')

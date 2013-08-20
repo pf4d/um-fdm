@@ -7,12 +7,12 @@ FEniCS solution to firn enthalpy / density profile.
 
 """
 
-from numpy import *
-from fmicData import *
+from numpy     import *
+from fmicData  import *
 from functions import *
+from dolfin    import *
+from plot      import *
 import numpy as np
-from dolfin import *
-from plot import *
 import sys
 import time
 
@@ -76,7 +76,7 @@ acc   = rhoi * adot / spy      # surface accumulation ........... kg/(m^2 s)
 A     = spy*acc/rhos*1e3       # surface accumulation ........... mm/a
 cp    = 152.5 + 7.122*Tavg     # heat capacity of ice ........... J/(kg K)
 cp    = cpi                    # heat capacity of ice ........... J/(kg K)
-zs    = 500.                   # surface start .................. m
+zs    = 1000.                  # surface start .................. m
 zs_0  = zs                     # previous time-step surface ..... m
 zb    = 0.                     # depth .......................... m
 dz    = (zs - zb)/n            # initial z-spacing .............. m
@@ -95,11 +95,11 @@ bp    = int(sys.argv[2])       # plot or not .................... bool
 mesh  = IntervalMesh(n, zb, zs)
 z     = mesh.coordinates()[:,0]
 
-z, l, mesh, index = refine_mesh(mesh, divs=3, i=1.5, k=1.30)
-z, l, mesh, index = refine_mesh(mesh, divs=1, i=4,   k=1.30)
-z, l, mesh, index = refine_mesh(mesh, divs=1, i=33,  k=1.30)
-z, l, mesh, index = refine_mesh(mesh, divs=1, i=2,   k=1.30)
-z, l, mesh, index = refine_mesh(mesh, divs=1, i=2,   k=1.30)
+z, l, mesh, index = refine_mesh(mesh, divs=3, i=1/3.,  k=1/4.)
+z, l, mesh, index = refine_mesh(mesh, divs=1, i=1/8.,  k=1/4.)
+z, l, mesh, index = refine_mesh(mesh, divs=1, i=1/66., k=1/4.)
+z, l, mesh, index = refine_mesh(mesh, divs=1, i=1/4.,  k=1/4.)
+z, l, mesh, index = refine_mesh(mesh, divs=1, i=1/4.,  k=1/4.)
 
 n      = len(l)                               # new number of nodes
 rhoin  = rhoin*ones(n)                        # initial density
@@ -150,7 +150,7 @@ ageBc = DirichletBC(V,         ageS, surface)    # age of surface
 H_i        = interpolate(Constant(cp*(Tavg - T0)), V) # initial enthalpy vector
 rho_i      = interpolate(Constant(rhoin[0]), V)       # initial density vector
 a_i        = interpolate(Constant(1.0), V)            # initial age vector
-w_i        = interpolate(Constant(acc), V)            # initial velocity vector
+w_i        = interpolate(Constant(0.0), V)            # initial velocity vector
 
 epi             = Function(MV)
 h               = Function(MV)                # solution
@@ -194,18 +194,18 @@ T         = Tcoef * H / c                                 # temperature
 # uses Taylor-Galerkin upwinding :
 theta     = 0.5 
 a_mid     = theta*a + (1-theta)*a_1
-f_a       = (a - a_1)/dt*xi*dx - \
-            1.*xi*dx + \
-            w*a_mid.dx(0)*xi*dx + \
-            w**2*dt/2*inner(a_mid.dx(0), xi.dx(0))*dx - \
-            w*w.dx(0)*dt/2*a_mid.dx(0)*xi*dx
+f_a       = + (a - a_1)/dt * xi * dx \
+            - 1 * xi * dx \
+            + w * a_mid.dx(0) * xi * dx \
+            + w**2 * dt/2 * inner(a_mid.dx(0), xi.dx(0)) * dx \
+            - w * w.dx(0) * dt/2 * a_mid.dx(0) * xi * dx
 
 # enthalpy residual :
 theta     = 0.5
 H_mid     = theta*H + (1 - theta)*H_1
-f_H       = rho*w*H_mid.dx(0)*psi*dx - \
-            k/c*Kcoef*inner(H_mid.dx(0), psi.dx(0))*dx - \
-            rho*(H - H_1)/dt*psi*dx
+f_H       = + rho * w * H_mid.dx(0) * psi * dx \
+            - k/c * Kcoef * inner(H_mid.dx(0), psi.dx(0)) * dx \
+            - rho * (H - H_1)/dt * psi * dx
 
 
 # density residual :
@@ -221,14 +221,16 @@ phihat    = phi + cellh/(2*vnorm)*dot(w, phi.dx(0))
 theta     = 0.878
 rho_mid   = theta*rho + (1 - theta)*rho_1
 rhoCoef   = interpolate(Constant(kcHh), V)
-drhodt    = (bdot*g*rhoCoef/kg)*exp( -Ec/(R*T) + Eg/(R*Ta) )*(rhoi - rho_mid)
-f_rho     = (rho - rho_1)/dt*phi*dx - \
-            (drhodt - w*rho_mid.dx(0))*phihat*dx 
+drhodt    = bdot*g*rhoCoef/kg * exp( -Ec/(R*T) + Eg/(R*Ta) ) * (rhoi - rho_mid)
+f_rho     = + (rho - rho_1)/dt * phi * dx \
+            - drhodt * phihat * dx \
+            + w * rho_mid.dx(0) * phihat * dx 
 
 # velocity residual :
 theta     = 0.878
 w_mid     = theta*w + (1 - theta)*w_1
-f_w       = rho*w_mid.dx(0)*eta*dx + 1/2. * drhodt*eta*dx
+f_w       = + rho * w_mid.dx(0) * eta * dx \
+            + drhodt * eta * dx
 
 # equation to be minimzed :
 f         = f_H + f_rho + f_w
@@ -245,7 +247,7 @@ FEMdata = (mesh, V, MV, H_i, rho_i, w_i, a_i, h, H, T,
 firn    = Firn(const, FEMdata, data, Tavg, rhos, adot, A, acc, z, l, index, dt)
 
 # load initialization data :
-firn.set_ini_conv(ex)
+#firn.set_ini_conv(ex)
 
 if bp:
   plt.ion() 
@@ -257,7 +259,7 @@ fmic = FmicData(firn)
 #===============================================================================
 # Compute solution :
 tstart = time.clock()
-set_log_active(False)
+#set_log_active(False)
 problem = NonlinearVariationalProblem(f, h, [Hbc, Dbc, wbc], J=df)
 solver  = NonlinearVariationalSolver(problem)
 for t in times:

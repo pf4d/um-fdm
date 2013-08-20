@@ -12,7 +12,7 @@ def refine_mesh(mesh, divs, i, k,  m=1):
     mesh - mesh to refine
     divs - number of times to split mesh
     i    - fraction of the mesh from the surface to split
-    k    - multiple to increase i by each step to reduce the distance from the
+    k    - multiple to decrease i by each step to reduce the distance from the
            surface to split
     m    - counter used to keep track of calls
   OUTPUTS:
@@ -39,11 +39,11 @@ def refine_mesh(mesh, divs, i, k,  m=1):
     origin = Point(zs)
     for cell in cells(mesh):
       p  = cell.midpoint()
-      if p.distance(origin) < (zs - zb) / i:
+      if p.distance(origin) < (zs - zb) * i:
         cell_markers[cell] = True
     mesh = refine(mesh, cell_markers)
 
-    return refine_mesh(mesh, divs, i*k, k, m=m+1)
+    return refine_mesh(mesh, divs, k/i, k, m=m+1)
 
 
 def project_vars(V, H, T, rho, drhodt, a, w, k, c, omega):
