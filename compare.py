@@ -8,7 +8,7 @@ spy    = 31556926.0
 ex = sys.argv[1]
 ex = str(ex)
 
-directory = "data/fmic/CummingsExperiment" + ex + "/"
+directory = "data/fmic/results/CummingsExperiment" + ex + "/"
 
 rho    = genfromtxt(directory + "CummingsExperiment" + ex + "Density.txt")
 T      = genfromtxt(directory + "CummingsExperiment" + ex + "Temperature.txt")
@@ -65,15 +65,17 @@ xlabs1 = [r'$\rho$',
           r'$T$', 
           r'$\frac{d\rho}{dt}$', 
           r'$a$']
-ylabs2 = [r'$z$',
-          r'$a$',
-          r'$\phi$',
+ylabs2 = [r'$z_{815}$',
+          r'$a_{815}$',
+          r'$\phi_{815}$',
           r'$\phi$']
 
 def plot_all():
+  direc = "/home/pf4d/um-fdm/images/fmic_results/plot" + ex + ".png"
+  pts = where(z > -200)
   for ax, u, tit, xlab in zip(axs1, us1, tits1, xlabs1):
-    ax.plot(u[:,0],  z, 'k',   lw=2, label='initial')
-    ax.plot(u[:,-1], z, 'r--', lw=2, label='2000 years')
+    ax.plot(u[:,0][pts],  z[pts], 'k',   lw=2, label='initial')
+    ax.plot(u[:,-1][pts], z[pts], 'r--', lw=2, label='2000 years')
     ax.set_xlabel(xlab)
     ax.set_ylabel(r'$z$')
     ax.set_ylim([-200, 0])
@@ -87,7 +89,9 @@ def plot_all():
   ax2.legend(loc="lower right")
   ax3.legend(loc="lower right")
   ax4.legend(loc="upper right")
-  savefig('plot.png', dpi=300)
+  tit = "Experiment " + ex
+  figtext(0.5, 0.94, tit, fontsize=50, horizontalalignment='center')
+  savefig(direc, dpi=300)
 
 
 def plot100_rho():
