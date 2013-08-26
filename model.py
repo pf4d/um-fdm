@@ -259,7 +259,7 @@ fmic = FmicData(firn)
 #===============================================================================
 # Compute solution :
 tstart = time.clock()
-#set_log_active(False)
+set_log_active(False)
 problem = NonlinearVariationalProblem(f, h, [Hbc, Dbc, wbc], J=df)
 solver  = NonlinearVariationalSolver(problem)
 for t in times:
@@ -337,6 +337,9 @@ for t in times:
   elif tr > 250.0 and tr <= 2000.0 and tr % 10 == 0.0:
     print 'dt: ' + str(tr) + '\t=>\tSAVED'
     fmic.append_state(tr)
+  else:
+    print 'dt: ' + str(tr)
+
   
   # vary the temperature :
   if tr == 100.0 and ex == 1:
@@ -378,8 +381,8 @@ if bp:
   plt.show()
 
 ttot   = tfin - tstart
-thours = round(ttot*(3000/tf)*spy/60/60, 3)
-print "total time to process 3,000 years:", thours, "hrs"
+thours = round(ttot*(7000/tf)*spy/60/60, 3)
+print "total time to process 7,000 years:", thours, "hrs"
 
 fmic.save_fmic_data(ex)
 # plot the surface height trend :
