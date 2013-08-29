@@ -25,7 +25,7 @@
 %% Title =======================================================================
 
 \title{Development of a finite element firn densification model for converting volume changes to mass changes}
-\author{Evan Cummings \and Jesse Johnson}
+\author{Evan Cummings \and Jesse Johnson \and Douglas Brinkerhoff}
 \maketitle
 \begin{center}
 \includegraphics[width=4.455666122085252in]{images/logoPlain.png}
@@ -61,10 +61,10 @@ with heat sources from the deformation of ice omitted, $\rho$ density, $c_i$ hea
   \frac{\partial k_i}{\partial \rho} \frac{\partial \rho}{\partial z} + 
   \frac{\partial k_i}{\partial T} \frac{\partial T}{\partial z}.
 \end{align*}
-The thermal conductivity of firn is defined by \emph{Arthern et. al, 1998} as
-\begin{align*}
+The thermal conductivity of firn is defined by \emph{Arthern et al.}, [1998] as
+\begin{align}
   k_i = 2.1 \left(\frac{\rho}{\rho_i}\right)^2,
-\end{align*}
+\end{align}
 from which we find
 \begin{align*}
   \frac{\partial k_i}{\partial \rho} = 
@@ -76,9 +76,9 @@ and
     \frac{4.2}{\rho_i^2} \left( \frac{\partial \rho}{\partial T} \right).
 \end{align*}
 \emph{Patterson} [2001] defined the heat capacity $c_i$ of firn with the equation
-\begin{align*}
+\begin{align}
   c_i = 152.5 + 7.122 T,
-\end{align*}
+\end{align}
 where we make $T=T_{avg}$ to simplify calculations.  Contained within the same literature is an expression $\rho$ in terms of $T$ which leads to the equation:
 \begin{align}
   \frac{\partial \rho}{\partial T} = 
@@ -110,13 +110,13 @@ The densification process is defined with the material derivative
   w\frac{\partial \rho}{\partial z}.
 \end{align}
 \emph{Arthern et al.} [2010] described this derivative differently for density values above and below a critical value, $\rho_m$:  
-\begin{align*}
+\begin{align}
   \frac{d \rho}{dt} = 
   \begin{cases}
    c_0(\rho_i - \rho), &\rho \leq \rho_m\\
    c_1(\rho_i - \rho), &\rho > \rho_m
   \end{cases}.
-\end{align*}
+\end{align}
 \emph{Zwally and Li} [2002] defined a single multiplying constant $c$ with an Arrhenius-type relation
 \begin{align*}
   c_0 = c_1 = 
@@ -124,14 +124,14 @@ The densification process is defined with the material derivative
   K_{0G}(T)\exp \left( -\frac{E(T)}{RT} \right),
 \end{align*}
 with $K_{0G}(T) \exp(-E(T)/(RT)) = 8.36T^{-2.061}$ as described in \emph{Reeh} [2008], average annual accumulation rate $\dot{b}$ in units of kg m\sups{-2} s\sups{-1}, and $\beta(T)$ a unitless smoothing function to match a desired density rate.  \emph{Arthern et al} [2010] developed a semi-empirical formula by coupling the rate equations for Nabarro-Herring creep and normal grain-growth: 
-\begin{align*}
+\begin{align}
   \begin{cases}
     c_0 = M_0 \dot{b}g\frac{k_{c0}}{k_g}\exp\left(-\frac{E_c}{RT} + 
           \frac{E_g}{RT_{avg}}\right)\\
     c_1 = M_1 \dot{b}g\frac{k_{c1}}{k_g}\exp\left(-\frac{E_c}{RT} + 
           \frac{E_g}{RT_{avg}}\right)
   \end{cases},
-\end{align*}
+\end{align}
 with the creep coefficients defined as
 \begin{align*}
   \begin{cases}
@@ -152,7 +152,7 @@ and $M$ defined in \emph{Ligtenberg et al.} [2011] to better fit with observed d
 \section{Enthalpy Solution}
 
 As stated in \emph{Aschwanden et al.} [2012], we take 'enthalpy' to be synonymous with 'internal energy' due to the exclusion of work done with changing volume.  The equation used here is the shallow-enthalpy:
-\begin{align*}
+\begin{align}
   \rho \frac{\partial H}{\partial t} = \frac{\partial}{\partial z} 
     \left( 
       \begin{Bmatrix}
@@ -161,7 +161,7 @@ As stated in \emph{Aschwanden et al.} [2012], we take 'enthalpy' to be synonymou
       \end{Bmatrix}
       \frac{\partial H}{\partial z} 
     \right) + w \rho \frac{\partial H}{\partial z}.
-\end{align*}
+\end{align}
 Strain heating has been neglected and the advective term $w \rho\ \partial H / \partial z$ has been added.  The coefficient for cold ice is 
 \begin{align*}
   K_i = \frac{k_i}{c_i},
@@ -175,21 +175,21 @@ Temperate firn is defined as firn with $H > H_s$, cold firn with $H \leq H_s$, w
   H_s = \int_{T_0}^{T_w}{c_i(T)}dT,
 \end{align*}
 with $T_w = 273.15$ K and $T_0 = 0.0$ K.  The enthalpy can be found with a constant heat capacity of $2009$ J kg\sups{-1} K\sups{-1} by the linear equation
-\begin{align*}
+\begin{align}
   H = 
   \begin{cases}
     c_i(T - T_0), &\text{where } T \leq T_w\\
     c_i(T_w - T_0) + \omega L_f,  &\text{where } T > T_w
   \end{cases}
-\end{align*}
+\end{align}
 where $L_f$ is the latent heat of fusion and $\omega$ represents the water content percentage of firn given by
-\begin{align*}
+\begin{align}
   \omega L_f = H - c_i(T_w - T_0).
-\end{align*}
+\end{align}
 Temperature may be derived from enthalpy easily:
-\begin{align*}
+\begin{align}
   T = \frac{H}{c_i}.
-\end{align*}
+\end{align}
 The density of the firn column changes with the percentage of water content:
 \begin{align*}
   \rho^n = 
@@ -232,7 +232,7 @@ but when $T_s < T_w$, $\rho_{\dot{b}}^n$ is simply made to be $\rho_s$.
 %% Method ======================================================================
 \section{Finite Element Method}
 
-This section will focus on the enthalpy solution.  Solving these equations with FEniCS is done with Galerkin's method and requires finding the weak formulation:
+This section will focus on the enthalpy solution.  Solving these equations with FEniCS is done with Galerkin's method and requires finding the weak formulation of equation (9):
 \begin{align*}
     f_H = 0 =
     &\int_{\Omega} 
@@ -263,7 +263,7 @@ Here we have integrated the enthalpy equation over the entire domain, $\Omega$, 
     - \int_{\Omega} {\rho \frac{\partial H}{\partial t}} \psi\ d \Omega.
 \end{align*}
 The boundary surfaces ($\Gamma$) of our problem are all Dirichlet or free-Neumann, and thus the boundary term is required to vanish, i.e., $\int_{\Gamma} \nabla H \psi\ d \Gamma = 0$.  Our final residual is
-\begin{align*}
+\begin{align}
     f_H =
     &\int_{\Omega}w \rho \nabla H \psi\ d \Omega
     - \int_{\Omega} 
@@ -271,9 +271,9 @@ The boundary surfaces ($\Gamma$) of our problem are all Dirichlet or free-Neuman
           K_i\\
           K_0
         \end{Bmatrix}
-        \nabla H \nabla \psi\ d \Omega \\ 
+        \nabla H \nabla \psi\ d \Omega \notag \\ 
     &- \int_{\Omega} {\rho \frac{\partial H}{\partial t}} \psi\ d \Omega.
-\end{align*}
+\end{align}
 
 We can discretize the enthalpy time-differential with the second-order accurate formula
 \begin{align*}
@@ -307,13 +307,13 @@ The weak form for density is found similarly, with a upwinding necessary to elim
 \begin{align*}
     \hat{\phi} = \phi + \frac{h}{2||w||} w \cdot \nabla{\phi},
 \end{align*}
-where $h$ is the cellsize.  The density residual after integration by parts becomes:
-\begin{align*}
+where $h$ is the cellsize.  The density residual of equation (6) after integration by parts becomes:
+\begin{align}
   f_{\rho} = 
     \int_{\Omega} \frac{\partial \rho}{\partial t}\phi\ d \Omega + 
     \int_{\Omega} w\nabla \rho \hat{\phi}\ d \Omega -
     \int_{\Omega}\frac{d \rho}{dt}\hat{\phi}\ d \Omega.
-\end{align*}
+\end{align}
 With the partial-time differential of density defined identically to the enthalpy equation, this can be represented in FEniCS including the \emph{Arthern et al.} [2010] densification equation as:\par
 \footnotesize
 \begin{minted}[bgcolor=bg]{python}
@@ -331,11 +331,11 @@ f_rho   = (rho - rho_1)/dt*phi*dx -
 \normalsize
 The variable \texttt{rhoCoef} is another dynamically-updated-coefficient vector and is either $k_{c0}$ or $k_{c1}$ depending upon the density at the node.  We have chosen $\theta = 0.878$ corresponding to the semi-implicit first order time stepping Liniger method; this is needed due to the jump condition at $\rho_m$.
 
-In order to find the vertical velocity the differential equation must be solved.  The weak formulation is:
-\begin{align*}
+In order to find the vertical velocity, equation (5) must be solved.  The weak formulation of the residual is:
+\begin{align}
   f_{w} = 
     \int_{\Omega} \rho \nabla{w} \eta\ d\Omega + \int_{\Omega} \frac{d\rho}{dt} \eta\ d\Omega,
-\end{align*}
+\end{align}
 and is created with FEniCS by:
 \footnotesize
 \begin{minted}[bgcolor=bg]{python}
@@ -395,9 +395,9 @@ J  = derivative(f, h, dh)
 \section{Age Solution}
 
 The age of firn is described with the equation
-\begin{align*}
+\begin{align}
   \frac{\partial a}{\partial t} = 1 - w \nabla{a}.
-\end{align*}
+\end{align}
 Because this equation is purely advective, upwinding is needed; the method chosen here is \emph{Taylor-Galerkin} and is described in \emph{Codina} [1997].  The Taylor series expansion of $w$ is
 \begin{align*}
   a^{k+1} = a^{k} + \frac{\partial a^k}{\partial t}\Delta t + 
@@ -480,9 +480,9 @@ f_a   = (a - a_1)/dt*xi*dx
 A cyclical enthalpy boundary condition for the surface can be simulated with 
 \begin{align*}
     H_s &= c_i ( T_s - T_0 ),\\
-    T_s &= T_{avg} + \alpha \sin(\omega t),
+    T_s &= T_{avg} + \alpha \sin(\gamma t),
 \end{align*}
-where $\alpha$ is the amplitude of temperature variation and $\omega = 2\pi / spy$ is the frequency.  The surface-density boundary condition can be likewise described as (see Figure 1): 
+where $\alpha$ is the amplitude of temperature variation and $\gamma = 2\pi / spy$ is the frequency.  The surface-density boundary condition can be likewise described as (see Figure 1): 
 \begin{align*}
     \rho_s^{n+1} = \rho_{\dot{b}}^{n+1} d_p + \rho_s^{n} (1 - d_p).
 \end{align*}
@@ -669,7 +669,7 @@ $t_f$ & s & end-time\\
 %% Verification ================================================================
 \section{Verification of Program}
 
-A converging run of the program was done quickly by making $\Delta t$ equal $spy$: this has the effect of producing a steady-state solution.  After the density-profile converged the data was saved to a text file in the \texttt{data} folder.  The script was run again with the average surface air temperature $T_{avg}$ made so   that the surface temperature peaks at $8\degree$ C if $t < 10$ years, and $0\degree$ C if $t \geq 10$ years. This has the effect of halting any melting and refreezing after this time period.  For this run the method \texttt{set\_ini\_conv} was called to initialize the previous runs data and $\Delta t$ was set to $0.0025*spy$; the results are shown in Figures 2 and 3.
+A converging run of the program was done quickly by making $\Delta t$ equal $spy$: this has the effect of producing a steady-state solution.  After the density-profile converged the data was saved to a text file in the \texttt{data} folder.  The script was run again with the average surface air temperature $T_{avg}$ made so   that the surface temperature peaks at $8\degree$ C if $t < 10$ years, and $0\degree$ C if $t \geq 10$ years. This has the effect of halting any melting and refreezing after this time period.  For this run the method \texttt{set\_ini\_conv} was called to initialize the previous runs data and $\Delta t$ was set to $0.0025*spy$; the results are shown in Figures 3 and 4.
 
 
 %% Interpretation ==============================================================
@@ -679,7 +679,7 @@ The surface-density equation has two values for new accumulation: $\rho_s$ and $
 
 Testing with real-world temperature and accumulation data-sets is required to validate the model.  The simulation's surface-height- and density-profile outputs while using these data may then be compared against cataloged surface-height and density-profile data to verify its accuracy.
 
-Above the ice lens in Figure 2 you will see numerical distortion: this is caused by the sudden rise in density where the lens begins.  This distortion is a source of inaccuracies and needs also to be corrected.
+Above the ice lens in Figure 3 you will see numerical distortion: this is caused by the sudden rise in density where the lens begins.  This distortion is a source of inaccuracies and needs also to be corrected.
 
 %% Current Work ================================================================
 \section{Work in Progress}

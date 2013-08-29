@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.1415926-1.40.10 (TeX Live 2009/Debian) (format=pdflatex 2012.5.16)  23 MAY 2013 17:44
+This is pdfTeX, Version 3.1415926-1.40.10 (TeX Live 2009/Debian) (format=pdflatex 2013.8.10)  28 AUG 2013 20:45
 entering extended mode
  \write18 enabled.
  %&-line parsing enabled.
@@ -6,13 +6,7 @@ entering extended mode
 (./fdm.tex
 LaTeX2e <2009/09/24>
 Babel <v3.8l> and hyphenation patterns for english, usenglishmax, dumylang, noh
-yphenation, farsi, arabic, croatian, bulgarian, ukrainian, russian, czech, slov
-ak, danish, dutch, finnish, french, basque, ngerman, german, german-x-2009-06-1
-9, ngerman-x-2009-06-19, ibycus, monogreek, greek, ancientgreek, hungarian, san
-skrit, italian, latin, latvian, lithuanian, mongolian2a, mongolian, bokmal, nyn
-orsk, romanian, irish, coptic, serbian, turkish, welsh, esperanto, uppersorbian
-, estonian, indonesian, interlingua, icelandic, kurmanji, slovenian, polish, po
-rtuguese, spanish, galician, catalan, swedish, ukenglish, pinyin, loaded.
+yphenation, loaded.
 (/usr/share/texmf-texlive/tex/latex/base/article.cls
 Document Class: article 2007/10/19 v1.4h Standard LaTeX document class
 (/usr/share/texmf-texlive/tex/latex/base/size10.clo
@@ -355,8 +349,7 @@ Package ifvtex Info: VTeX not detected.
 \Gm@odd@mp=\dimen129
 \Gm@even@mp=\dimen130
 \Gm@dimlist=\toks31
-
-(/usr/share/texmf-texlive/tex/xelatex/xetexconfig/geometry.cfg)) (./fdm.aux
+) (./fdm.aux
 
 LaTeX Warning: Label `fig:500 year orbit' multiply defined.
 
@@ -485,6 +478,11 @@ deriva-
 File: images/surfaceDensity.png Graphic file (type png)
 
 <use images/surfaceDensity.png> [3]
+Overfull \hbox (1.39067pt too wide) in paragraph at lines 235--236
+\OT1/ptm/m/n/10 method and re-quires find-ing the weak for-mu-la-tion of equa-
+ []
+
+
 Overfull \hbox (3.6022pt too wide) in paragraph at lines 281--283
 \OT1/ptm/m/n/10 with su-per-scripts re-fer-ring to time in-dex. Us-ing a $\OML/
 cmm/m/it/10 ^^R$\OT1/ptm/m/n/10 -scheme
@@ -572,12 +570,13 @@ Overfull \hbox (0.48398pt too wide) in paragraph at lines 456--456
 [] 
  []
 
+[5]
 \openout3 = `fdm.pyg'.
 
 runsystem(pygmentize -l python -f latex -F tokenmerge             -P "verboptio
 ns= " -o fdm.out.pyg fdm.pyg)...executed.
 
-(./fdm.out.pyg)
+ (./fdm.out.pyg)
 runsystem(rm fdm.out.pyg)...executed.
 
 runsystem(rm fdm.pyg)...executed.
@@ -587,13 +586,12 @@ Underfull \hbox (badness 10000) in paragraph at lines 473--475
 
  []
 
-[5]
 \openout3 = `fdm.pyg'.
 
 runsystem(pygmentize -l python -f latex -F tokenmerge             -P "verboptio
 ns= " -o fdm.out.pyg fdm.pyg)...executed.
 
- (./fdm.out.pyg
+(./fdm.out.pyg
 LaTeX Font Info:    Font shape `OT1/pcr/bx/n' in size <8> not available
 (Font)              Font shape `OT1/pcr/b/n' tried instead on input line 17.
 )
@@ -620,7 +618,7 @@ Overfull \hbox (5.0pt too wide) in paragraph at lines 535--536
  [][] 
  []
 
-
+[6 <./images/surfaceTemp.png>]
 Overfull \hbox (0.77162pt too wide) in paragraph at lines 547--548
 \OT1/ptm/m/n/10 per-formed by the \OT1/pcr/m/n/10 update[]height \OT1/ptm/m/n/1
 0 func-tion of the \OT1/pcr/m/n/10 firn
@@ -636,7 +634,6 @@ runsystem(rm fdm.out.pyg)...executed.
 
 runsystem(rm fdm.pyg)...executed.
 
- [6 <./images/surfaceTemp.png>]
 \openout3 = `fdm.pyg'.
 
 runsystem(pygmentize -l python -f latex -F tokenmerge             -P "verboptio
@@ -686,15 +683,15 @@ File: images/40yrDen.png Graphic file (type png)
 <use images/40yrDen.png> <images/40yrHt.png, id=52, 597.6729pt x 457.4691pt>
 File: images/40yrHt.png Graphic file (type png)
 
-<use images/40yrHt.png> <images/end.png, id=53, 1092.9633pt x 442.5333pt>
+<use images/40yrHt.png> [8 <./images/40yrDen.png>]
+<images/end.png, id=57, 1092.9633pt x 442.5333pt>
 File: images/end.png Graphic file (type png)
-
-<use images/end.png>
+ <use images/end.png>
 Overfull \hbox (5.0pt too wide) in paragraph at lines 723--724
  [][] 
  []
 
-<images/density_height.png, id=54, 1113.9216pt x 433.62pt>
+<images/density_height.png, id=58, 1113.9216pt x 433.62pt>
 File: images/density_height.png Graphic file (type png)
 
 <use images/density_height.png>
@@ -702,9 +699,7 @@ Overfull \hbox (5.0pt too wide) in paragraph at lines 729--730
  [][] 
  []
 
-[8 <./images/40yrDen.png> <./images/40yrHt.png> <./images/end.png>]
 LaTeX Font Info:    Try loading font information for OMS+ptm on input line 736.
-
 
 (/usr/share/texmf-texlive/tex/latex/psnfss/omsptm.fd
 File: omsptm.fd 
@@ -733,18 +728,19 @@ Underfull \hbox (badness 3758) in paragraph at lines 749--750
 g.\OT1/ptm/m/n/10 ,
  []
 
-[9 <./images/density_height.png>] (./fdm.aux)
+[9 <./images/40yrHt.png> <./images/end.png> <./images/density_height.png>]
+(./fdm.aux)
 
 LaTeX Warning: There were multiply-defined labels.
 
  ) 
 Here is how much of TeX's memory you used:
- 5996 strings out of 493848
- 81625 string characters out of 1152823
- 177053 words of memory out of 3000000
- 9093 multiletter control sequences out of 15000+50000
+ 5987 strings out of 495061
+ 81412 string characters out of 1182621
+ 176929 words of memory out of 3000000
+ 8988 multiletter control sequences out of 15000+50000
  29810 words of font info for 78 fonts, out of 3000000 for 9000
- 714 hyphenation exceptions out of 8191
+ 28 hyphenation exceptions out of 8191
  60i,21n,80p,952b,441s stack positions out of 5000i,500n,10000p,200000b,50000s
 {/usr/share/texmf-texlive/fonts/enc/dvips/base/8r.enc}</usr/share/texmf-texli
 ve/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/share/texmf-texlive/fonts/ty
@@ -764,7 +760,7 @@ ier/ucrb8a.pfb></usr/share/texmf-texlive/fonts/type1/urw/courier/ucrr8a.pfb></u
 sr/share/texmf-texlive/fonts/type1/urw/times/utmb8a.pfb></usr/share/texmf-texli
 ve/fonts/type1/urw/times/utmr8a.pfb></usr/share/texmf-texlive/fonts/type1/urw/t
 imes/utmri8a.pfb>
-Output written on fdm.pdf (9 pages, 1274007 bytes).
+Output written on fdm.pdf (9 pages, 1273189 bytes).
 PDF statistics:
  128 PDF objects out of 1000 (max. 8388607)
  0 named destinations out of 1000 (max. 500000)
