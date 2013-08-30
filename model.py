@@ -111,7 +111,7 @@ V      = FunctionSpace(mesh, 'Lagrange', 1)   # function space for rho, T
 MV     = MixedFunctionSpace([V, V, V])        # mixed function space
 
 # enthalpy surface condition with cyclical 2-meter air temperature :
-code   = 'c*( Tavg + 10.0*sin(2*omega*t) )'
+code   = 'c*( Tavg + 10.0*(cos(2*omega*t) + 0.3*cos(4*omega*t)))'
 Hs     = Expression(code, c=cp, Tavg=Tavg, omega=pi/spy, t=t0, T0=T0)
 
 # experimental surface density :
@@ -287,7 +287,9 @@ for t in times:
   #solve(f == 0, h, [Hbc, Dbc, wbc], J=df)
 
   # solve for age :
-  solve(f_a == 0, a, ageBc)
+  params = {'newton_solver' : {'relaxation_parameter' : 0.90,
+                               'maximum_iterations'   : 100}}
+  solve(f_a == 0, a, ageBc, solver_parameters=params)
   
   # adjust the coefficient vectors :
   firn.adjust_vectors(Kcoef, Tcoef, rhoCoef)
@@ -337,7 +339,7 @@ for t in times:
   elif tr > 250.0 and tr <= 2000.0 and tr % 10 == 0.0:
     print 'dt: ' + str(tr) + '\t=>\tSAVED'
     fmic.append_state(tr)
-  else:
+  elif tr < 0.0:
     print 'dt: ' + str(tr)
 
   
