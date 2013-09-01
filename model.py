@@ -81,7 +81,7 @@ zs_0  = zs                     # previous time-step surface ..... m
 zb    = 0.                     # depth .......................... m
 dz    = (zs - zb)/n            # initial z-spacing .............. m
 l     = dz*ones(n+1)           # height vector .................. m
-dt    = 0.05*spy               # time-step ...................... s
+dt    = 10.0*spy               # time-step ...................... s
 t0    = 0.0                    # begin time ..................... s
 tf    = sys.argv[1]            # end-time ....................... string
 tf    = float(tf)*spy          # end-time ....................... s
@@ -179,7 +179,7 @@ a_1.vector().set_local(a_i.vector().array())  # initialize age in prev. sol
 
 #===============================================================================
 # Define equations to be solved :
-bdot      = interpolate(Constant(rhoi * adot), V)         # average annual acc
+bdot      = interpolate(Constant(rhoi * adot / spy), V)   # average annual acc
 #c         = (152.5 + sqrt(152.5**2 + 4*7.122*H)) / 2      # Patterson 1994
 Ta        = interpolate(Constant(Tavg), V)
 c         = cp
@@ -231,6 +231,8 @@ theta     = 0.878
 w_mid     = theta*w + (1 - theta)*w_1
 f_w       = + rho * w_mid.dx(0) * eta * dx \
             + drhodt * eta * dx
+f_w       = + rho**2 * w_mid.dx(0) * eta * dx \
+            + bdot * rho.dx(0) * eta * dx
 
 # equation to be minimzed :
 f         = f_H + f_rho + f_w
@@ -306,11 +308,9 @@ for t in times:
   # update the plotting parameters :
   if bp:
     plot.update_plot(firn, t/spy)
-  #print t/spy, min(firn.a)/spy, max(firn.a)/spy 
-  #print ( Tavg + 10.0*sin(2*pi/spy*t) ) - Tw, firn.T[-1] - Tw
 
   # only start capturing the data at 5000 years :
-  tr = round(t/spy,2) - 5000
+  tr = round(t/spy,2) - 100
 
   # initialize the data : 
   if tr == 0.0:
@@ -360,23 +360,25 @@ for t in times:
   # vary the accumulation :
   elif tr == 100 and ex == 4:
     firn.adot = 0.07
-    bdotNew = ones(n)*(rhoi * firn.adot)
+    bdotNew = ones(n)*(rhoi * firn.adot / spy)
     bdot.vector().set_local(bdotNew)
     wS.adot = firn.adot
   elif tr == 100 and ex == 5:
     firn.adot = 0.20  
-    bdotNew = ones(n)*(rhoi * firn.adot)
+    bdotNew = ones(n)*(rhoi * firn.adot / spy)
     bdot.vector().set_local(bdotNew)
     wS.adot = firn.adot
   elif tr == 100 and ex == 6:
     firn.adot = 0.30
-    bdotNew = ones(n)*(rhoi * firn.adot)
+    bdotNew = ones(n)*(rhoi * firn.adot / spy)
     bdot.vector().set_local(bdotNew)
     wS.adot = firn.adot
   
+  # update the graph
   if bp:
-    plt.draw()  # update the graph
+    plt.draw()
 
+# calculate total time to compute :
 tfin = time.clock()
 if bp:
   plt.ioff()
