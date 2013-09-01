@@ -72,8 +72,8 @@ else :
   adot  = 0.10                 # accumulation rate .............. m/a
   Tavg  = Tw - 50.0            # average temperature ............ degrees K
 
-acc   = rhoi * adot / spy      # surface accumulation ........... kg/(m^2 s)
-A     = spy*acc/rhos*1e3       # surface accumulation ........... mm/a
+acc   = rhoi * adot            # surface accumulation ........... kg/(m^2 s)
+A     = acc/rhos*1e3           # surface accumulation ........... mm/a
 cp    = 152.5 + 7.122*Tavg     # heat capacity of ice ........... J/(kg K)
 cp    = cpi                    # heat capacity of ice ........... J/(kg K)
 zs    = 1000.                  # surface start .................. m
@@ -179,7 +179,7 @@ a_1.vector().set_local(a_i.vector().array())  # initialize age in prev. sol
 
 #===============================================================================
 # Define equations to be solved :
-bdot      = interpolate(Constant(rhoi * adot / spy), V)   # average annual acc
+bdot      = interpolate(Constant(rhoi * adot), V)         # average annual acc
 #c         = (152.5 + sqrt(152.5**2 + 4*7.122*H)) / 2      # Patterson 1994
 Ta        = interpolate(Constant(Tavg), V)
 c         = cp
@@ -358,17 +358,17 @@ for t in times:
   # vary the accumulation :
   elif tr == 100 and ex == 4:
     firn.adot = 0.07
-    bdotNew = ones(n)*(rhoi * firn.adot / spy)
+    bdotNew = ones(n)*(rhoi * firn.adot)
     bdot.vector().set_local(bdotNew)
     wS.adot = firn.adot
   elif tr == 100 and ex == 5:
     firn.adot = 0.20  
-    bdotNew = ones(n)*(rhoi * firn.adot / spy)
+    bdotNew = ones(n)*(rhoi * firn.adot)
     bdot.vector().set_local(bdotNew)
     wS.adot = firn.adot
   elif tr == 100 and ex == 6:
     firn.adot = 0.30
-    bdotNew = ones(n)*(rhoi * firn.adot / spy)
+    bdotNew = ones(n)*(rhoi * firn.adot)
     bdot.vector().set_local(bdotNew)
     wS.adot = firn.adot
   
