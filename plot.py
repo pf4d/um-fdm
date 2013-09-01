@@ -368,8 +368,7 @@ class Plot():
     self.Tax.set_ylabel('Depth [m]')
 
     self.rhoax.set_title('Density')
-    self.rhoax.set_xlabel(r'$\rho\ \left[\frac{\mathrm{kg}}'\
-                          + '{\mathrm{m}^3}\right]$')
+    self.rhoax.set_xlabel(r'$\rho\ \left[\frac{\mathrm{kg}}{\mathrm{m}^3}\right]$')
     
     self.wax.set_title('Velocity')
     self.wax.set_xlabel(r'$w\ \left[\frac{\mathrm{cm}}{\mathrm{a}}\right]$')
