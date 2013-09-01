@@ -81,7 +81,7 @@ zs_0  = zs                     # previous time-step surface ..... m
 zb    = 0.                     # depth .......................... m
 dz    = (zs - zb)/n            # initial z-spacing .............. m
 l     = dz*ones(n+1)           # height vector .................. m
-dt    = 10.0*spy               # time-step ...................... s
+dt    = 0.05*spy               # time-step ...................... s
 t0    = 0.0                    # begin time ..................... s
 tf    = sys.argv[1]            # end-time ....................... string
 tf    = float(tf)*spy          # end-time ....................... s
@@ -229,8 +229,10 @@ f_rho     = + (rho - rho_1)/dt * phi * dx \
 # velocity residual :
 theta     = 0.878
 w_mid     = theta*w + (1 - theta)*w_1
+# Zwally equation for surface velocity :
 f_w       = + rho * w_mid.dx(0) * eta * dx \
             + drhodt * eta * dx
+# Arthern equation of strain rate :
 f_w       = + rho**2 * w_mid.dx(0) * eta * dx \
             + bdot * rho.dx(0) * eta * dx
 
