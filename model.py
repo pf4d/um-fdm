@@ -312,7 +312,7 @@ for t in times:
     plot.update_plot(firn, t/spy)
 
   # only start capturing the data at 5000 years :
-  tr = round(t/spy,2) - 100
+  tr = round(t/spy,2) - 5000
 
   # initialize the data : 
   if tr == 0.0:
