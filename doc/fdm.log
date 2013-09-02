@@ -1,6 +1,5 @@
-This is pdfTeX, Version 3.1415926-1.40.10 (TeX Live 2009/Debian) (format=pdflatex 2013.8.10)  28 AUG 2013 21:03
+This is pdfTeX, Version 3.1415926-1.40.10 (TeX Live 2009/Debian) (format=pdflatex 2013.8.10)  2 SEP 2013 10:36
 entering extended mode
- \write18 enabled.
  %&-line parsing enabled.
 **fdm.tex
 (./fdm.tex
@@ -152,27 +151,51 @@ File: pdftex.def 2010/03/12 v0.04p Graphics/color for pdfTeX
 \Gin@req@height=\dimen112
 \Gin@req@width=\dimen113
 )
-(/usr/share/texmf-texlive/tex/latex/minted.sty
-Package: minted 2011/09/17 v1.7 Yet another Pygments shim for LaTeX
+(/usr/share/texmf-texlive/tex/latex/listings/listings.sty
+\lst@mode=\count102
+\lst@gtempboxa=\box34
+\lst@token=\toks22
+\lst@length=\count103
+\lst@currlwidth=\dimen114
+\lst@column=\count104
+\lst@pos=\count105
+\lst@lostspace=\dimen115
+\lst@width=\dimen116
+\lst@newlines=\count106
+\lst@lineno=\count107
+\lst@maxwidth=\dimen117
 
-(/usr/share/texmf-texlive/tex/latex/fancyvrb/fancyvrb.sty
-Package: fancyvrb 2008/02/07
+(/usr/share/texmf-texlive/tex/latex/listings/lstmisc.sty
+File: lstmisc.sty 2007/02/22 1.4 (Carsten Heinz)
+\c@lstnumber=\count108
+\lst@skipnumbers=\count109
+\lst@framebox=\box35
+)
+(/usr/share/texmf-texlive/tex/latex/listings/listings.cfg
+File: listings.cfg 2007/02/22 1.4 listings configuration
+))
+Package: listings 2007/02/22 1.4 (Carsten Heinz)
+LaTeX Font Info:    Try loading font information for T1+txtt on input line 24.
 
-Style option: `fancyvrb' v2.7a, with DG/SPQR fixes, and firstline=lastline fix 
-<2008/02/07> (tvz)
-\FV@CodeLineNo=\count102
-\FV@InFile=\read1
-\FV@TabBox=\box34
-\c@FancyVerbLine=\count103
-\FV@StepNumber=\count104
-\FV@OutFile=\write3
-) (/usr/share/texmf/tex/latex/xcolor/xcolor.sty
+(/usr/share/texmf-texlive/tex/latex/txfonts/t1txtt.fd
+File: t1txtt.fd 2000/12/15 v3.1
+)
+(/usr/share/texmf-texlive/tex/latex/graphics/color.sty
+Package: color 2005/11/14 v1.0j Standard LaTeX Color (DPC)
+
+(/etc/texmf/tex/latex/config/color.cfg
+File: color.cfg 2007/01/18 v1.5 color configuration of teTeX/TeXLive
+)
+Package color Info: Driver file: pdftex.def on input line 130.
+)
+(/usr/share/texmf/tex/latex/xcolor/xcolor.sty
 Package: xcolor 2007/01/21 v2.11 LaTeX color extensions (UK)
 
 (/etc/texmf/tex/latex/config/color.cfg
 File: color.cfg 2007/01/18 v1.5 color configuration of teTeX/TeXLive
 )
 Package xcolor Info: Driver file: pdftex.def on input line 225.
+LaTeX Info: Redefining \color on input line 702.
 Package xcolor Info: Model `cmy' substituted by `cmy0' on input line 1337.
 Package xcolor Info: Model `hsb' substituted by `rgb' on input line 1341.
 Package xcolor Info: Model `RGB' extended on input line 1353.
@@ -183,79 +206,14 @@ Package xcolor Info: Model `HSB' substituted by `hsb' on input line 1358.
 Package xcolor Info: Model `Gray' substituted by `gray' on input line 1359.
 Package xcolor Info: Model `wave' substituted by `hsb' on input line 1360.
 )
-(/usr/share/texmf-texlive/tex/latex/float/float.sty
-Package: float 2001/11/08 v1.3d Float enhancements (AL)
-\c@float@type=\count105
-\float@exts=\toks22
-\float@box=\box35
-\@float@everytoks=\toks23
-\@floatcapt=\box36
-)
-(/usr/share/texmf-texlive/tex/latex/base/ifthen.sty
-Package: ifthen 2001/05/26 v1.1c Standard LaTeX ifthen package (DPC)
-)
-(/usr/share/texmf-texlive/tex/latex/tools/calc.sty
-Package: calc 2007/08/22 v4.3 Infix arithmetic (KKT,FJ)
-\calc@Acount=\count106
-\calc@Bcount=\count107
-\calc@Adimen=\dimen114
-\calc@Bdimen=\dimen115
-\calc@Askip=\skip51
-\calc@Bskip=\skip52
-LaTeX Info: Redefining \setlength on input line 76.
-LaTeX Info: Redefining \addtolength on input line 77.
-\calc@Ccount=\count108
-\calc@Cskip=\skip53
-)
-(/usr/share/texmf-texlive/tex/latex/ifplatform/ifplatform.sty
-Package: ifplatform 2009/09/10 v0.3a Testing for the operating system
-
-(/usr/share/texmf-texlive/tex/generic/oberdiek/pdftexcmds.sty
-Package: pdftexcmds 2009/09/23 v0.6 LuaTeX support for pdfTeX utility functions
- (HO)
-
-(/usr/share/texmf-texlive/tex/generic/oberdiek/infwarerr.sty
-Package: infwarerr 2007/09/09 v1.2 Providing info/warning/message (HO)
-)
-(/usr/share/texmf-texlive/tex/generic/oberdiek/ifluatex.sty
-Package: ifluatex 2009/04/17 v1.2 Provides the ifluatex switch (HO)
-Package ifluatex Info: LuaTeX not detected.
-)
-(/usr/share/texmf-texlive/tex/generic/oberdiek/ltxcmds.sty
-Package: ltxcmds 2009/08/05 v1.0 Some LaTeX kernel commands for general use (HO
-)
-)
-Package pdftexcmds Info: LuaTeX not detected.
-Package pdftexcmds Info: \pdf@primitive is available.
-Package pdftexcmds Info: \pdf@ifprimitive is available.
-)
-(/usr/share/texmf-texlive/tex/generic/oberdiek/catchfile.sty
-Package: catchfile 2007/11/11 v1.2 Catches the contents of a file (HO)
-)
-runsystem(uname -s > "fdm.w18")...executed.
-
- (./fdm.w18)
-runsystem(rm -- "fdm.w18")...executed.
-
-)
-\minted@bgbox=\box37
-\minted@code=\write4
-\@float@every@listing=\toks24
-\c@listing=\count109
-)
-runsystem(which pygmentize && touch fdm.aex)...executed.
-
-runsystem(rm fdm.aex)...executed.
-
-
 (/usr/share/texmf-texlive/tex/latex/amsmath/amsmath.sty
 Package: amsmath 2000/07/18 v2.13 AMS math features
-\@mathmargin=\skip54
+\@mathmargin=\skip51
 
 For additional information on amsmath, use the `?' option.
 (/usr/share/texmf-texlive/tex/latex/amsmath/amsbsy.sty
 Package: amsbsy 1999/11/29 v1.2d
-\pmbraise@=\dimen116
+\pmbraise@=\dimen118
 )
 (/usr/share/texmf-texlive/tex/latex/amsmath/amsopn.sty
 Package: amsopn 1999/12/14 v2.01 operator names
@@ -270,9 +228,9 @@ LaTeX Info: Redefining \overline on input line 307.
 LaTeX Info: Redefining \ldots on input line 379.
 LaTeX Info: Redefining \dots on input line 382.
 LaTeX Info: Redefining \cdots on input line 467.
-\Mathstrutbox@=\box38
-\strutbox@=\box39
-\big@size=\dimen117
+\Mathstrutbox@=\box36
+\strutbox@=\box37
+\big@size=\dimen119
 LaTeX Font Info:    Redeclaring font encoding OML on input line 567.
 LaTeX Font Info:    Redeclaring font encoding OMS on input line 568.
 \macc@depth=\count115
@@ -280,21 +238,21 @@ LaTeX Font Info:    Redeclaring font encoding OMS on input line 568.
 \dotsspace@=\muskip11
 \c@parentequation=\count117
 \dspbrk@lvl=\count118
-\tag@help=\toks25
+\tag@help=\toks23
 \row@=\count119
 \column@=\count120
 \maxfields@=\count121
-\andhelp@=\toks26
-\eqnshift@=\dimen118
-\alignsep@=\dimen119
-\tagshift@=\dimen120
-\tagwidth@=\dimen121
-\totwidth@=\dimen122
-\lineht@=\dimen123
-\@envbody=\toks27
-\multlinegap=\skip55
-\multlinetaggap=\skip56
-\mathdisplay@stack=\toks28
+\andhelp@=\toks24
+\eqnshift@=\dimen120
+\alignsep@=\dimen121
+\tagshift@=\dimen122
+\tagwidth@=\dimen123
+\totwidth@=\dimen124
+\lineht@=\dimen125
+\@envbody=\toks25
+\multlinegap=\skip52
+\multlinetaggap=\skip53
+\mathdisplay@stack=\toks26
 LaTeX Info: Redefining \[ on input line 2666.
 LaTeX Info: Redefining \] on input line 2667.
 )
@@ -310,25 +268,37 @@ LaTeX Font Info:    Overwriting math alphabet `\mathfrak' in version `bold'
 ))
 (/usr/share/texmf-texlive/tex/latex/amsmath/amscd.sty
 Package: amscd 1999/11/29 v1.2d
-\athelp@=\toks29
-\minaw@=\dimen124
-\bigaw@=\dimen125
-\minCDarrowwidth=\dimen126
+\athelp@=\toks27
+\minaw@=\dimen126
+\bigaw@=\dimen127
+\minCDarrowwidth=\dimen128
 )
 (/usr/share/texmf-texlive/tex/latex/algorithms/algorithm.sty
 Package: algorithm 2009/08/24 v0.1 Document Style `algorithm' - floating enviro
 nment
+
+(/usr/share/texmf-texlive/tex/latex/float/float.sty
+Package: float 2001/11/08 v1.3d Float enhancements (AL)
+\c@float@type=\count122
+\float@exts=\toks28
+\float@box=\box38
+\@float@everytoks=\toks29
+\@floatcapt=\box39
+)
+(/usr/share/texmf-texlive/tex/latex/base/ifthen.sty
+Package: ifthen 2001/05/26 v1.1c Standard LaTeX ifthen package (DPC)
+)
 \@float@every@algorithm=\toks30
-\c@algorithm=\count122
+\c@algorithm=\count123
 )
 (/usr/share/texmf-texlive/tex/latex/algorithms/algorithmic.sty
 Package: algorithmic 2009/08/24 v0.1 Document Style `algorithmic'
-\c@ALC@unique=\count123
-\c@ALC@line=\count124
-\c@ALC@rem=\count125
-\c@ALC@depth=\count126
-\ALC@tlm=\skip57
-\algorithmicindent=\skip58
+\c@ALC@unique=\count124
+\c@ALC@line=\count125
+\c@ALC@rem=\count126
+\c@ALC@depth=\count127
+\ALC@tlm=\skip54
+\algorithmicindent=\skip55
 )
 (/usr/share/texmf-texlive/tex/latex/geometry/geometry.sty
 Package: geometry 2008/12/21 v4.2 Page Geometry
@@ -341,13 +311,13 @@ Package ifpdf Info: pdfTeX in pdf mode detected.
 Package: ifvtex 2008/11/04 v1.4 Switches for detecting VTeX and its modes (HO)
 Package ifvtex Info: VTeX not detected.
 )
-\Gm@cnth=\count127
-\Gm@cntv=\count128
-\c@Gm@tempcnt=\count129
-\Gm@bindingoffset=\dimen127
-\Gm@wd@mp=\dimen128
-\Gm@odd@mp=\dimen129
-\Gm@even@mp=\dimen130
+\Gm@cnth=\count128
+\Gm@cntv=\count129
+\c@Gm@tempcnt=\count130
+\Gm@bindingoffset=\dimen129
+\Gm@wd@mp=\dimen130
+\Gm@odd@mp=\dimen131
+\Gm@even@mp=\dimen132
 \Gm@dimlist=\toks31
 ) (./fdm.aux
 
@@ -359,49 +329,50 @@ LaTeX Warning: Label `fig:500 year orbit' multiply defined.
 )
 \openout1 = `fdm.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 23.
-LaTeX Font Info:    ... okay on input line 23.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 23.
-LaTeX Font Info:    ... okay on input line 23.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 23.
-LaTeX Font Info:    ... okay on input line 23.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 23.
-LaTeX Font Info:    ... okay on input line 23.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 23.
-LaTeX Font Info:    ... okay on input line 23.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 23.
-LaTeX Font Info:    ... okay on input line 23.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 23.
-LaTeX Font Info:    Try loading font information for TS1+cmr on input line 23.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 165.
+LaTeX Font Info:    ... okay on input line 165.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 165.
+LaTeX Font Info:    ... okay on input line 165.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 165.
+LaTeX Font Info:    ... okay on input line 165.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 165.
+LaTeX Font Info:    ... okay on input line 165.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 165.
+LaTeX Font Info:    ... okay on input line 165.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 165.
+LaTeX Font Info:    ... okay on input line 165.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 165.
+LaTeX Font Info:    Try loading font information for TS1+cmr on input line 165.
+
  (/usr/share/texmf-texlive/tex/latex/base/ts1cmr.fd
 File: ts1cmr.fd 1999/05/25 v2.5h Standard LaTeX font definitions
 )
-LaTeX Font Info:    ... okay on input line 23.
-LaTeX Font Info:    Try loading font information for OT1+ptm on input line 23.
+LaTeX Font Info:    ... okay on input line 165.
+LaTeX Font Info:    Try loading font information for OT1+ptm on input line 165.
+
 
 (/usr/share/texmf-texlive/tex/latex/psnfss/ot1ptm.fd
 File: ot1ptm.fd 2001/06/04 font definitions for OT1/ptm.
 )
 Package siunitx Info: xfrac package unavailable
 (siunitx)             using `fraction=sfrac' will fall back on
-(siunitx)             nicefrac-like method on input line 23.
+(siunitx)             nicefrac-like method on input line 165.
 
 (/usr/share/texmf-texlive/tex/context/base/supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
-\scratchcounter=\count130
-\scratchdimen=\dimen131
+\scratchcounter=\count131
+\scratchdimen=\dimen133
 \scratchbox=\box40
-\nofMPsegments=\count131
-\nofMParguments=\count132
+\nofMPsegments=\count132
+\nofMParguments=\count133
 \everyMPshowfont=\toks32
-\MPscratchCnt=\count133
-\MPscratchDim=\dimen132
-\MPnumerator=\count134
+\MPscratchCnt=\count134
+\MPscratchDim=\dimen134
+\MPnumerator=\count135
 \everyMPtoPDFconversion=\toks33
 )
-runsystem(pygmentize -S default -f latex > fdm.pyg)...executed.
+\c@lstlisting=\count136
 
- (./fdm.pyg)
 *geometry auto-detecting driver*
 *geometry detected driver: pdftex*
 -------------------- Geometry parameters
@@ -443,11 +414,11 @@ driver: pdftex
 
 (1in=72.27pt, 1cm=28.45pt)
 -----------------------
-LaTeX Font Info:    Try loading font information for U+msa on input line 23.
+LaTeX Font Info:    Try loading font information for U+msa on input line 165.
 (/usr/share/texmf-texlive/tex/latex/amsfonts/umsa.fd
 File: umsa.fd 2009/06/22 v3.00 AMS symbols A
 )
-LaTeX Font Info:    Try loading font information for U+msb on input line 23.
+LaTeX Font Info:    Try loading font information for U+msb on input line 165.
 
 (/usr/share/texmf-texlive/tex/latex/amsfonts/umsb.fd
 File: umsb.fd 2009/06/22 v3.00 AMS symbols B
@@ -459,15 +430,15 @@ File: images/logoPlain.png Graphic file (type png)
 
 {/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map} <./images/logoPlain.png>]
 LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <14.4> not available
-(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 38.
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 180.
 
-Overfull \hbox (7.05019pt too wide) in paragraph at lines 43--44
+Overfull \hbox (7.05019pt too wide) in paragraph at lines 185--186
 \OT1/ptm/m/n/10 den-si-fi-ca-tion model based on Arrhenius-type equa-tions with
 
  []
 
 
-Overfull \hbox (8.6698pt too wide) in paragraph at lines 107--108
+Overfull \hbox (8.6698pt too wide) in paragraph at lines 249--250
 \OT1/ptm/m/n/10 The den-si-fi-ca-tion pro-cess is de-fined with the ma-te-rial 
 deriva-
  []
@@ -478,201 +449,81 @@ deriva-
 File: images/surfaceDensity.png Graphic file (type png)
 
 <use images/surfaceDensity.png> [3]
-Overfull \hbox (1.39067pt too wide) in paragraph at lines 235--236
+Overfull \hbox (1.39067pt too wide) in paragraph at lines 377--378
 \OT1/ptm/m/n/10 method and re-quires find-ing the weak for-mu-la-tion of equa-
  []
 
 
-Overfull \hbox (3.6022pt too wide) in paragraph at lines 281--283
+Overfull \hbox (3.6022pt too wide) in paragraph at lines 423--425
 \OT1/ptm/m/n/10 with su-per-scripts re-fer-ring to time in-dex. Us-ing a $\OML/
 cmm/m/it/10 ^^R$\OT1/ptm/m/n/10 -scheme
  []
 
-\openout3 = `fdm.pyg'.
+(/usr/share/texmf-texlive/tex/latex/listings/lstlang1.sty
+File: lstlang1.sty 2004/09/05 1.3 listings language file
+)
+LaTeX Font Info:    Try loading font information for OT1+pcr on input line 436.
 
-runsystem(pygmentize -l python -f latex -F tokenmerge             -P "verboptio
-ns= " -o fdm.out.pyg fdm.pyg)...executed.
 
-(./fdm.out.pyg
-LaTeX Font Info:    Try loading font information for OT1+pcr on input line 1.
- (/usr/share/texmf-texlive/tex/latex/psnfss/ot1pcr.fd
+(/usr/share/texmf-texlive/tex/latex/psnfss/ot1pcr.fd
 File: ot1pcr.fd 2001/06/04 font definitions for OT1/pcr.
-))
-runsystem(rm fdm.out.pyg)...executed.
-
-runsystem(rm fdm.pyg)...executed.
-
-
-Overfull \hbox (10.54004pt too wide) in paragraph at lines 306--307
+)
+Overfull \hbox (10.54004pt too wide) in paragraph at lines 446--447
 \OT1/ptm/m/n/10 method used here is the Streamline-Upwind-Petrov-Galerkin
  []
 
-\openout3 = `fdm.pyg'.
-
-runsystem(pygmentize -l python -f latex -F tokenmerge             -P "verboptio
-ns= " -o fdm.out.pyg fdm.pyg)...executed.
-
-(./fdm.out.pyg)
-runsystem(rm fdm.out.pyg)...executed.
-
-runsystem(rm fdm.pyg)...executed.
-
- [4 <./images/surfaceDensity.png>]
-\openout3 = `fdm.pyg'.
-
-runsystem(pygmentize -l python -f latex -F tokenmerge             -P "verboptio
-ns= " -o fdm.out.pyg fdm.pyg)...executed.
-
- (./fdm.out.pyg)
-runsystem(rm fdm.out.pyg)...executed.
-
-runsystem(rm fdm.pyg)...executed.
-
-\openout3 = `fdm.pyg'.
-
-runsystem(pygmentize -l python -f latex -F tokenmerge             -P "verboptio
-ns= " -o fdm.out.pyg fdm.pyg)...executed.
-
-
-(./fdm.out.pyg)
-runsystem(rm fdm.out.pyg)...executed.
-
-runsystem(rm fdm.pyg)...executed.
-
-\openout3 = `fdm.pyg'.
-
-runsystem(pygmentize -l python -f latex -F tokenmerge             -P "verboptio
-ns= " -o fdm.out.pyg fdm.pyg)...executed.
-
- (./fdm.out.pyg)
-runsystem(rm fdm.out.pyg)...executed.
-
-runsystem(rm fdm.pyg)...executed.
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 390--392
-
- []
-
-
-Overfull \hbox (7.07516pt too wide) in paragraph at lines 412--412
+[4 <./images/surfaceDensity.png>]
+Overfull \hbox (7.07516pt too wide) in paragraph at lines 544--544
 [] 
  []
 
 
-Overfull \hbox (0.14984pt too wide) in paragraph at lines 418--420
+Overfull \hbox (0.14984pt too wide) in paragraph at lines 550--552
 \OT1/ptm/m/n/10 The time dif-fer-en-tial in the last term can again be re-place
 d, 
  []
 
 [5]
-Overfull \hbox (0.48398pt too wide) in paragraph at lines 456--456
+Overfull \hbox (0.48398pt too wide) in paragraph at lines 588--588
 [] 
  []
 
-\openout3 = `fdm.pyg'.
+LaTeX Font Info:    Font shape `OT1/pcr/bx/n' in size <8> not available
+(Font)              Font shape `OT1/pcr/b/n' tried instead on input line 642.
 
-runsystem(pygmentize -l python -f latex -F tokenmerge             -P "verboptio
-ns= " -o fdm.out.pyg fdm.pyg)...executed.
-
-(./fdm.out.pyg)
-runsystem(rm fdm.out.pyg)...executed.
-
-runsystem(rm fdm.pyg)...executed.
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 473--475
-
+Overfull \hbox (3.83054pt too wide) in paragraph at lines 657--658
+\OT1/ptm/m/n/10 to solve the non-linear en-thalpy, den-sity, and ve-loc-ity res
+id-
  []
 
-\openout3 = `fdm.pyg'.
 
-runsystem(pygmentize -l python -f latex -F tokenmerge             -P "verboptio
-ns= " -o fdm.out.pyg fdm.pyg)...executed.
-
-(./fdm.out.pyg
-LaTeX Font Info:    Font shape `OT1/pcr/bx/n' in size <8> not available
-(Font)              Font shape `OT1/pcr/b/n' tried instead on input line 17.
-)
-runsystem(rm fdm.out.pyg)...executed.
-
-runsystem(rm fdm.pyg)...executed.
-
-\openout3 = `fdm.pyg'.
-
-runsystem(pygmentize -l python -f latex -F tokenmerge             -P "verboptio
-ns= " -o fdm.out.pyg fdm.pyg)...executed.
-
- (./fdm.out.pyg)
-runsystem(rm fdm.out.pyg)...executed.
-
-runsystem(rm fdm.pyg)...executed.
-
+Overfull \hbox (2.1504pt too wide) in paragraph at lines 657--658
+\OT1/ptm/m/n/10 dated with these calls by spec-i-fy-ing the list [][][][][][][]
+[][][]
+ []
 
 <images/surfaceTemp.png, id=35, 722.7pt x 433.62pt>
 File: images/surfaceTemp.png Graphic file (type png)
 
 <use images/surfaceTemp.png>
-Overfull \hbox (5.0pt too wide) in paragraph at lines 535--536
+Overfull \hbox (5.0pt too wide) in paragraph at lines 661--662
  [][] 
  []
 
 [6 <./images/surfaceTemp.png>]
-Overfull \hbox (0.77162pt too wide) in paragraph at lines 547--548
-\OT1/ptm/m/n/10 per-formed by the \OT1/pcr/m/n/10 update[]height \OT1/ptm/m/n/1
-0 func-tion of the \OT1/pcr/m/n/10 firn
- []
-
-\openout3 = `fdm.pyg'.
-
-runsystem(pygmentize -l python -f latex -F tokenmerge             -P "verboptio
-ns= " -o fdm.out.pyg fdm.pyg)...executed.
-
-(./fdm.out.pyg)
-runsystem(rm fdm.out.pyg)...executed.
-
-runsystem(rm fdm.pyg)...executed.
-
-\openout3 = `fdm.pyg'.
-
-runsystem(pygmentize -l python -f latex -F tokenmerge             -P "verboptio
-ns= " -o fdm.out.pyg fdm.pyg)...executed.
-
- (./fdm.out.pyg)
-runsystem(rm fdm.out.pyg)...executed.
-
-runsystem(rm fdm.pyg)...executed.
-
-\openout3 = `fdm.pyg'.
-
-runsystem(pygmentize -l python -f latex -F tokenmerge             -P "verboptio
-ns= " -o fdm.out.pyg fdm.pyg)...executed.
-
- (./fdm.out.pyg)
-runsystem(rm fdm.out.pyg)...executed.
-
-runsystem(rm fdm.pyg)...executed.
-
-
-Overfull \hbox (2.98103pt too wide) in paragraph at lines 600--601
-[]\OT1/ptm/m/n/10 A func-tion has been pro-vided (\OT1/pcr/m/n/10 set[]ini[]con
-v\OT1/ptm/m/n/10 ) which
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 610--611
+Underfull \hbox (badness 10000) in paragraph at lines 730--731
 
  []
 
 LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <10> not available
-(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 612.
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 732.
 
-Overfull \hbox (0.7556pt too wide) in paragraph at lines 615--636
+Overfull \hbox (0.7556pt too wide) in paragraph at lines 735--756
  [] 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 639--640
+Underfull \hbox (badness 10000) in paragraph at lines 759--760
 
  []
 
@@ -686,7 +537,7 @@ File: images/40yrHt.png Graphic file (type png)
 <images/end.png, id=57, 1092.9633pt x 442.5333pt>
 File: images/end.png Graphic file (type png)
  <use images/end.png>
-Overfull \hbox (5.0pt too wide) in paragraph at lines 723--724
+Overfull \hbox (5.0pt too wide) in paragraph at lines 843--844
  [][] 
  []
 
@@ -694,35 +545,35 @@ Overfull \hbox (5.0pt too wide) in paragraph at lines 723--724
 File: images/density_height.png Graphic file (type png)
 
 <use images/density_height.png>
-Overfull \hbox (5.0pt too wide) in paragraph at lines 729--730
+Overfull \hbox (5.0pt too wide) in paragraph at lines 849--850
  [][] 
  []
 
-LaTeX Font Info:    Try loading font information for OMS+ptm on input line 736.
+LaTeX Font Info:    Try loading font information for OMS+ptm on input line 856.
 
 (/usr/share/texmf-texlive/tex/latex/psnfss/omsptm.fd
 File: omsptm.fd 
 )
 LaTeX Font Info:    Font shape `OMS/ptm/m/n' in size <10> not available
-(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 736.
+(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 856.
 
-Underfull \hbox (badness 2088) in paragraph at lines 743--744
+Underfull \hbox (badness 2088) in paragraph at lines 863--864
 []\OT1/ptm/m/n/10 Ligtenberg, S.R.M., Helsen, M.M., and van den
  []
 
 
-Underfull \hbox (badness 2418) in paragraph at lines 743--744
+Underfull \hbox (badness 2418) in paragraph at lines 863--864
 \OT1/ptm/m/n/10 Broeke, M.R. 2011. An im-proved semi[]empirical
  []
 
 
-Underfull \hbox (badness 1424) in paragraph at lines 743--744
+Underfull \hbox (badness 1424) in paragraph at lines 863--864
 \OT1/ptm/m/n/10 model for the den-si-fi-ca-tion of Antarc-tic firn. \OT1/ptm/m/
 it/10 The
  []
 
 
-Underfull \hbox (badness 3758) in paragraph at lines 749--750
+Underfull \hbox (badness 3758) in paragraph at lines 869--870
 \OT1/ptm/m/n/10 equa-tion, \OT1/ptm/m/it/10 Com-put. Meth-ods Appl. Mech. En-gr
 g.\OT1/ptm/m/n/10 ,
  []
@@ -734,13 +585,13 @@ LaTeX Warning: There were multiply-defined labels.
 
  ) 
 Here is how much of TeX's memory you used:
- 5987 strings out of 495061
- 81412 string characters out of 1182621
- 176929 words of memory out of 3000000
- 8988 multiletter control sequences out of 15000+50000
- 29810 words of font info for 78 fonts, out of 3000000 for 9000
+ 6959 strings out of 495061
+ 92845 string characters out of 1182621
+ 270312 words of memory out of 3000000
+ 9996 multiletter control sequences out of 15000+50000
+ 30467 words of font info for 80 fonts, out of 3000000 for 9000
  28 hyphenation exceptions out of 8191
- 60i,21n,80p,952b,441s stack positions out of 5000i,500n,10000p,200000b,50000s
+ 60i,21n,80p,952b,1675s stack positions out of 5000i,500n,10000p,200000b,50000s
 {/usr/share/texmf-texlive/fonts/enc/dvips/base/8r.enc}</usr/share/texmf-texli
 ve/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/share/texmf-texlive/fonts/ty
 pe1/public/amsfonts/cm/cmmi10.pfb></usr/share/texmf-texlive/fonts/type1/public/
@@ -759,7 +610,7 @@ ier/ucrb8a.pfb></usr/share/texmf-texlive/fonts/type1/urw/courier/ucrr8a.pfb></u
 sr/share/texmf-texlive/fonts/type1/urw/times/utmb8a.pfb></usr/share/texmf-texli
 ve/fonts/type1/urw/times/utmr8a.pfb></usr/share/texmf-texlive/fonts/type1/urw/t
 imes/utmri8a.pfb>
-Output written on fdm.pdf (9 pages, 1273200 bytes).
+Output written on fdm.pdf (9 pages, 1277889 bytes).
 PDF statistics:
  128 PDF objects out of 1000 (max. 8388607)
  0 named destinations out of 1000 (max. 500000)

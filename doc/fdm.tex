@@ -1,3 +1,15 @@
+%%
+%  firn densification model
+%  University of Montana
+%  created by Evan Cummings
+%  
+%  Thanks to Olivier Verdier <olivier@maths.lth.se> for code highlighting taken
+%  from the FEniCS book source : 
+%     
+%    https://bitbucket.org/fenics-project/fenics-book
+%
+%%
+
 \documentclass{article}%You can define the type of paper here.
 %%Useful packages that I commonly use.
 \usepackage{cite}%Bibliography package (help at http://merkel.zoneo.net/Latex/natbib.php).
@@ -6,9 +18,139 @@
 \usepackage{siunitx}
 \usepackage{alltt}%Allows the use of verbatim (good for printing out code).
 \usepackage{graphicx}%Used to import images.
-\usepackage{minted}
+\usepackage{listings}
+
+% Default fixed font does not support bold face
+\DeclareFixedFont{\ttb}{T1}{txtt}{bx}{n}{8} % for bold
+\DeclareFixedFont{\ttm}{T1}{txtt}{m}{n}{8}  % for normal
+
+% define custom colors :
+\usepackage{color}
 \definecolor{bg}{rgb}{0.96,0.96,0.85}
-%\usemintedstyle{bw}
+\definecolor{deepblue}{rgb}{0,0,0.5}
+\definecolor{deepred}{rgb}{0.6,0,0}
+\definecolor{deepgreen}{rgb}{0,0.5,0}
+
+\usepackage{xcolor}
+\renewcommand{\lstlistlistingname}{Code Listings}
+\renewcommand{\lstlistingname}{Code Listing}
+\definecolor{gray}{gray}{0.5}
+\colorlet{commentcolour}{green!50!black}
+
+\colorlet{stringcolour}{red!60!black}
+\colorlet{keywordcolour}{magenta!90!black}
+\colorlet{exceptioncolour}{yellow!50!red}
+\colorlet{commandcolour}{blue!60!black}
+\colorlet{numpycolour}{blue!60!green}
+\colorlet{literatecolour}{magenta!90!black}
+\colorlet{promptcolour}{green!50!black}
+\colorlet{specmethodcolour}{violet}
+\colorlet{indendifiercolour}{green!70!white}
+
+%% Python style for highlighting
+%\newcommand\pythonstyle{\lstset{
+%  language=Python,
+%  basicstyle=\ttm,
+%  otherkeywords={self},             % Add keywords here
+%  keywordstyle=\ttb\color{deepblue},
+%  emph={MyClass,__init__},          % Custom highlighting
+%  emphstyle=\ttb\color{deepred},    % Custom highlighting style
+%  stringstyle=\color{deepgreen},
+%  frame=tb,                         % Any extra options here
+%  showstringspaces=falser,          % 
+%  backgroundcolor=\color{bg}
+%}}
+
+\newcommand{\framemargin}{5ex}
+
+\newcommand{\literatecolour}{\textcolor{literatecolour}}
+
+\newcommand\pythonstyle{\lstset{
+%keepspaces=true,
+language=python,
+showtabs=true,
+tab=,
+tabsize=2,
+basicstyle=\ttfamily\footnotesize,%\setstretch{.5},
+stringstyle=\color{stringcolour},
+showstringspaces=false,
+alsoletter={1234567890},
+otherkeywords={\ , \}, \{, \%, \&, \|},
+keywordstyle=\color{keywordcolour}\bfseries,
+emph={and,break,class,continue,def,yield,del,elif ,else,%
+except,exec,finally,for,from,global,if,import,in,%
+lambda,not,or,pass,print,raise,return,try,while,assert},
+emphstyle=\color{blue}\bfseries,
+emph={[2]True, False, None},
+emphstyle=[2]\color{keywordcolour},
+emph={[3]object,type,isinstance,copy,deepcopy,zip,enumerate,reversed,list,len,dict,tuple,xrange,append,execfile,real,imag,reduce,str,repr},
+emphstyle=[3]\color{commandcolour},
+emph={Exception,NameError,IndexError,SyntaxError,TypeError,ValueError,OverflowError,ZeroDivisionError},
+emphstyle=\color{exceptioncolour}\bfseries,
+%upquote=true,
+morestring=[s]{"""}{"""},
+morestring=[s]{'''}{'''},
+commentstyle=\color{commentcolour}\slshape,
+%emph={[4]1, 2, 3, 4, 5, 6, 7, 8, 9, 0},
+emph={[4]ode, fsolve, sqrt, exp, sin, cos, arccos, pi,  array, norm, solve, dot, arange, , isscalar, max, sum, flatten, shape, reshape, find, any, all, abs, linspace, legend, quad, polyval,polyfit, hstack, concatenate,vstack,column_stack,empty,zeros,ones,rand,vander,grid,pcolor,eig,eigs,eigvals,svd,qr,tan,det,logspace,roll,min,mean,cumsum,cumprod,diff,vectorize,lstsq,cla,eye,xlabel,ylabel,squeeze},
+emphstyle=[4]\color{numpycolour},
+emph={[5]__init__,__add__,__mul__,__div__,__sub__,__call__,__getitem__,__setitem__,__eq__,__ne__,__nonzero__,__rmul__,__radd__,__repr__,__str__,__get__,__truediv__,__pow__,__name__,__future__,__all__},
+emphstyle=[5]\color{specmethodcolour},
+emph={[6]assert,range,yield},
+emphstyle=[6]\color{keywordcolour}\bfseries,
+% emph={[7]self},
+% emphstyle=[7]\bfseries,
+literate=*%
+{:}{{\literatecolour:}}{1}%
+{=}{{\literatecolour=}}{1}%
+{-}{{\literatecolour-}}{1}%
+{+}{{\literatecolour+}}{1}%
+{*}{{\literatecolour*}}{1}%
+{/}{{\literatecolour/}}{1}%
+{!}{{\literatecolour!}}{1}%
+%{(}{{\literatecolour(}}{1}%
+%{)}{{\literatecolour)}}{1}%
+{[}{{\literatecolour[}}{1}%
+{]}{{\literatecolour]}}{1}%
+{<}{{\literatecolour<}}{1}%
+{>}{{\literatecolour>}}{1}%
+{>>>}{{\textcolor{promptcolour}{>>>}}}{1}%
+,%
+breaklines=true,
+breakatwhitespace= true,
+%xleftmargin=\framemargin,
+%xrightmargin=\framemargin,
+aboveskip=1ex,
+frame=trbl,
+%frameround=tttt,
+rulecolor=\color{black!40},
+%framexleftmargin=\framemargin,
+%framextopmargin=.1ex,
+%framexbottommargin=.1ex,
+%framexrightmargin=\framemargin,
+%framexleftmargin=1mm, framextopmargin=1mm, frame=shadowbox, rulesepcolor=\color{blue},#1
+%frame=tb,
+backgroundcolor=\color{yellow!10}
+}}
+
+% Python environment
+\lstnewenvironment{python}[1][]
+{
+  \pythonstyle
+  \lstset{#1}
+}
+{}
+
+% Python for external files
+\newcommand\pythonexternal[1]
+{{
+  \pythonstyle
+  \lstinputlisting{#1}
+}}
+
+% Python for inline
+\newcommand\pythoninline[1]{{\pythonstyle\lstinline!#1!}}
+
 \usepackage{amsmath, amssymb, amscd}%Contains the AMS expanded math symbols library.
 \usepackage{algorithm, algorithmic} %pseudo-code
 %%For those who want smaller margins, you can use this:
@@ -77,9 +219,9 @@ and
 \end{align*}
 \emph{Patterson} [2001] defined the heat capacity $c_i$ of firn with the equation
 \begin{align}
-  c_i = 152.5 + 7.122 T,
+  c_i = 152.5 + 7.122 T.
 \end{align}
-where we make $T=T_{avg}$ to simplify calculations.  Contained within the same literature is an expression $\rho$ in terms of $T$ which leads to the equation:
+However, we use a constant heat capacity for simplification.  Contained within the same literature is an expression $\rho$ in terms of $T$ which leads to the equation:
 \begin{align}
   \frac{\partial \rho}{\partial T} = 
     (\SI{5.6e-2}) \exp ((\SI{-5.7e-3})T).
@@ -291,17 +433,15 @@ with superscripts referring to time index.  Using a $\theta$-scheme as given by 
     \end{cases}
 \end{align*}
 The entire enthalpy residual can be represented in FEniCS as:\par
-\footnotesize
-\begin{minted}[bgcolor=bg]{python}
+\begin{python}
 theta = 0.5
 H_mid = theta*H + (1 - theta)*H_1
 f_H   = rho*w*H_mid.dx(0)*psi*dx - \
         k/c*Kcoef * \ 
         inner(H_mid.dx(0), psi.dx(0))*dx - \
         rho*(H - H_1)/dt*psi*dx
-\end{minted}
-\normalsize
-The variable \texttt{Kcoef} is a coefficient vector which will be updated dynamically depending on the temperature of firn (either $1.0$ or $0.1$ corresponding to $K_i$ and $K_0$).
+\end{python}
+The variable \pythoninline{Kcoef} is a coefficient vector which will be updated dynamically depending on the temperature of firn (either $1.0$ or $0.1$ corresponding to $K_i$ and $K_0$).
 
 The weak form for density is found similarly, with a upwinding necessary to eliminate artifacts due to the sudden increase in density where ice lenses formed.  The method used here is the Streamline-Upwind-Petrov-Galerkin (SUPG) method:
 \begin{align*}
@@ -315,8 +455,7 @@ where $h$ is the cellsize.  The density residual of equation (6) after integrati
     \int_{\Omega}\frac{d \rho}{dt}\hat{\phi}\ d \Omega.
 \end{align}
 With the partial-time differential of density defined identically to the enthalpy equation, this can be represented in FEniCS including the \emph{Arthern et al.} [2010] densification equation as:\par
-\footnotesize
-\begin{minted}[bgcolor=bg]{python}
+\begin{python}
 vnorm   = sqrt(dot(w, w) + 1e-10)
 cellh   = CellSize(mesh)
 phihat  = phi+cellh/(2*vnorm)*dot(w,grad(phi))
@@ -327,9 +466,8 @@ theta   = 0.878
 rho_mid = theta*rho + (1 - theta)*rho_1
 f_rho   = (rho - rho_1)/dt*phi*dx - 
           (drhodt - w*grad(rho_mid))*phihat*dx
-\end{minted}
-\normalsize
-The variable \texttt{rhoCoef} is another dynamically-updated-coefficient vector and is either $k_{c0}$ or $k_{c1}$ depending upon the density at the node.  We have chosen $\theta = 0.878$ corresponding to the semi-implicit first order time stepping Liniger method; this is needed due to the jump condition at $\rho_m$.
+\end{python}
+The variable \pythoninline{rhoCoef} is another dynamically updated coefficient vector and is either $k_{c0}$ or $k_{c1}$ depending upon the density at the node.  We have chosen $\theta = 0.878$ corresponding to the semi-implicit first order time stepping Liniger method; this is needed due to the jump condition at $\rho_m$.
 
 In order to find the vertical velocity, equation (5) must be solved.  The weak formulation of the residual is:
 \begin{align}
@@ -337,13 +475,11 @@ In order to find the vertical velocity, equation (5) must be solved.  The weak f
     \int_{\Omega} \rho \nabla{w} \eta\ d\Omega + \int_{\Omega} \frac{d\rho}{dt} \eta\ d\Omega,
 \end{align}
 and is created with FEniCS by:
-\footnotesize
-\begin{minted}[bgcolor=bg]{python}
+\begin{python}
 theta = 0.878
 w_mid = theta*w + (1 - theta)*w_1
 f_w   = rho*grad(w_mid)*eta*dx + drhodt*eta*dx
-\end{minted}
-\normalsize
+\end{python}
 We chose $\theta=0.878$ again due to the jump discontinuity at $\rho_m$.
 
 We can define the function space for the entire non-linear problem as 
@@ -359,8 +495,7 @@ The test functions for each function can now be described as
     \psi, \phi, \eta \subset j.
 \end{align*}
 In FEniCS these spaces can be defined by this:
-\footnotesize
-\begin{minted}[bgcolor=bg]{python}
+\begin{python}
 mesh        = IntervalMesh(n, zb, zs)
 V           = FunctionSpace(mesh,'Lagrange',1)
 MV          = MixedFunctionSpace([V, V, V])
@@ -370,9 +505,8 @@ dh          = TrialFunction(MV)
 dH,drho,dw  = split(dh)
 j           = TestFunction(MV)
 psi,phi,eta = split(j)
-\end{minted}
-\normalsize
-The variable \texttt{zb} is the z-position of the base of the firn column which does not change and \texttt{n} is the number of nodes; the \texttt{mesh} variable defines the spacial dimensions of the system to be solved and is here created in one dimension.  The mesh may also be created in three dimensions if desired, or made to fit a custom grid.  The variables \texttt{dH} and \texttt{drho} are the trial functions for the enthalpy and density functions and are not utilized in this code, but are included for reference later on.
+\end{python}
+The variable \pythoninline{zb} is the z-position of the base of the firn column which does not change and \pythoninline{n} is the number of nodes; the \pythoninline{mesh} variable defines the spacial dimensions of the system to be solved and is here created in one dimension.  The mesh may also be created in three dimensions if desired, or made to fit a custom grid.  The variables \pythoninline{dH} and \pythoninline{drho} are the trial functions for the enthalpy and density functions and are not utilized in this code, but are included for reference later on.
 
 We define the complete non-linear residual as the sum of equations (13), (14), and (15): 
 \begin{align*}
@@ -383,12 +517,10 @@ Solving this system can be accomplished with \emph{Newton's Method} which requir
     J = \frac{\partial f}{\partial d_h}.
 \end{align*}
 In FEniCS this is done with:
-\footnotesize
-\begin{minted}[bgcolor=bg]{python}
+\begin{python}
 f  = f_H + f_rho + f_w
 J  = derivative(f, h, dh)
-\end{minted}
-\normalsize
+\end{python}
 
 
 %% Age =========================================================================
@@ -428,7 +560,7 @@ reduced to
         + \frac{w \Delta t}{2} 
           \left( \nabla [w \nabla a^{k+\theta}] \right),
 \end{align*}
-and finally evauated using the product rule as
+and finally evaluated using the product rule as
 \begin{align*}
   \frac{a^{k+1} - a^{k}}{\Delta t} = &1 - w \nabla{a}^k\\
         &+ \frac{w \Delta t}{2} 
@@ -454,10 +586,9 @@ Integrating the second to last term by parts and disregarding the boundary term 
   - \int_{\Omega} \frac{w \Delta t}{2} 
     \nabla w \nabla a^{k+\theta} \xi\ d\Omega.
 \end{align*}
-This final residual may be created in fenics as:
+This final residual may be created in FEniCS as:
 
-\footnotesize
-\begin{minted}[bgcolor=bg]{python}
+\begin{python}
 a     = Function(V)
 da    = TrialFunction(V)
 xi    = TestFunction(V)
@@ -470,8 +601,7 @@ f_a   = (a - a_1)/dt*xi*dx
         + w*grad(a_mid)*xi*dx 
         + w**2*dt/2*grad(a_mid)*grad(xi)*dx 
         - w*grad(w)*dt/2*grad(a_mid)*xi*dx
-\end{minted}
-\normalsize
+\end{python}
 
 
 %% Boundary Conditions =========================================================
@@ -493,8 +623,7 @@ The velocity of the surface can be described as
 Where $\dot{a}$ is the accumulation rate in m a\sups{-1}.
 The age of the firn on the surface will always be 0.
 Each of these of these can be created with FEniCS by
-\footnotesize
-\begin{minted}[bgcolor=bg]{python}
+\begin{python}
 code = 'c*(Tavg + 9.9*sin(omega*t) - T0)'
 Hs   = Expression(code, c=cp, Tavg=Tavg, 
                   omega=freq, t=t0, T0=T0)
@@ -517,23 +646,20 @@ Hbc   = DirichletBC(MV.sub(0), Hs,   surface)
 Dbc   = DirichletBC(MV.sub(1), rhoS, surface)
 wbc   = DirichletBC(MV.sub(2), wS,   surface)
 ageBc = DirichletBC(V,         ageS, surface)
-\end{minted}
-\normalsize
-Within the time-loop the variables in each \texttt{Expression} object can be updated as needed by utilizing the dot operator.
+\end{python}
+Within the time-loop the variables in each \pythoninline{Expression} object can be updated as needed by utilizing the dot operator.
 
-Now all that is left is to iterate through time and call the \texttt{solve} method at each step:\par
-\footnotesize
-\begin{minted}[bgcolor=bg]{python}
+Now all that is left is to iterate through time and call the \pythoninline{solve} method at each step:\par
+\begin{python}
 solve(f == 0, h, [Hbc, Dbc, wbc], J=J)
 solve(f_a == 0, a, ageBc)
-\end{minted}
-\normalsize
-The \texttt{solve} function chooses \emph{Newton's Method} by default to solve the non-linear enthaply, density, and velocity residual by minimizing \texttt{f}.  The boundary conditions are updated with these calls by specifying the list \texttt{[Hbc, Dbc, wbc]} and \texttt{ageBc} in solver parameters.
+\end{python}
+The \pythoninline{solve} function chooses \emph{Newton's Method} by default to solve the non-linear enthalpy, density, and velocity residual by minimizing \pythoninline{f}.  The boundary conditions are updated with these calls by specifying the list \pythoninline{[Hbc, Dbc, wbc]} and \pythoninline{ageBc} in solver parameters.
 
 \begin{figure}[H]
   \centering
     \includegraphics[width=0.50\textwidth]{images/surfaceTemp.png}
-	\caption{\footnotesize The surface 2-meter air temperature using the equation above with $\alpha = 10$ and $\beta = 5$.  Temperatures above 0$\degree$ C are shaded.}
+	\caption{\footnotesize The surface 2-meter air temperature using the equation above with $\alpha = 10$ and $\beta = 5$.  Temperatures above 0$^{\circ}$ C are shaded.}
 \end{figure}
 
 
@@ -545,9 +671,8 @@ Within the time-loop there are a number of parameters which need to be updated. 
 \begin{align*}
   l_{new} = l_{ini} \frac{\rho_{ini}}{\rho},
 \end{align*}
-where $\rho_{ini}$ abd $l_{ini}$ are the density and height vectors of the firn column when the system was initialized.  With the height of the nodes calculated, the z-positions may be found by iterating through the heights and setting the z vector's corresponding cell equal to the current sum.  These tasks may be completed with the following code performed by the \texttt{update\_height} function of the \texttt{firn} class:\par
-\footnotesize
-\begin{minted}[bgcolor=bg]{python}
+where $\rho_{ini}$ abd $l_{ini}$ are the density and height vectors of the firn column when the system was initialized.  With the height of the nodes calculated, the z-positions may be found by iterating through the heights and setting the z vector's corresponding cell equal to the current sum.  These tasks may be completed with the following code performed by the \pythoninline{update\_height} function of the \pythoninline{firn} class:\par
+\begin{python}
 avg_rhoin = (self.rhoin[1:] + self.rhoin[:-1])
             / 2
 avg_rho   = (self.rho[1:] + self.rho[:-1]) / 2
@@ -561,18 +686,16 @@ self.z    = zTemp
 self.l    = lnew
 index     = self.index
 self.mesh.coordinates()[:,0][index] = self.z
-\end{minted}
-\normalsize
-The variable \texttt{index} is an array of positions corresponding to the correct ordering of the nodes, necessary after mesh refinement.  
+\end{python}
+The variable \pythoninline{index} is an array of positions corresponding to the correct ordering of the nodes, necessary after mesh refinement.  
 
 The height $z_o$ at time index $n$ of the original surface may be calculated as follows:
 \begin{align*}
   z_o^{n} = (z_s^0 - z_b) \frac{z_o^{n-1} - z_b}{z_s^{n-1} - z_b}
            + w_{z_o} \Delta t.
 \end{align*}
-This maintains the relative location of the original surface to the current surface and moves downward proportional to $w$.  This is accomplished in the class named \texttt{firn} with\par
-\footnotesize
-\begin{minted}[bgcolor=bg]{python}
+This maintains the relative location of the original surface to the current surface and moves downward proportional to $w$.  This is accomplished in the class named \pythoninline{firn} with\par
+\begin{python}
 interp  = interp1d(self.z, self.w,
                    bounds_error=False,
                    fill_value=self.w[0])
@@ -585,23 +708,20 @@ zs_1    = self.zs_1
 zo      = self.zo
 self.zo = (zs - zb) * (zo - zb) / (zs_1 - zb) 
           + wzo * dt
-\end{minted}
-\normalsize
-The indexes to \texttt{self.z} refers to the surface, \texttt{[-1]}, or the base, \texttt{[0]}.  For all operations it is convenient to store all the state data from the simulation in an object for ease of access.  It was for this purpose the \texttt{firn} class was created and contains the signature\par 
-\footnotesize
-\begin{minted}[bgcolor=bg]{python}
+\end{python}
+The indexes to \pythoninline{self.z} refers to the surface, \pythoninline{[-1]}, or the base, \pythoninline{[0]}.  For all operations it is convenient to store all the state data from the simulation in an object for ease of access.  It was for this purpose the \pythoninline{firn} class was created and contains the signature\par 
+\begin{python}
 firn(data, z, l, index, dt)
-\end{minted}
-\normalsize
-with \texttt{data} a tuple containing the main variables, \texttt{z} the node z-positions as defined above, \texttt{l} the height vector of the elements, \texttt{index} the index of re-ordered mesh locations, and \texttt{dt} the time step of the program, $\Delta t$.
+\end{python}
+with \pythoninline{data} a tuple containing the main variables, \pythoninline{z} the node z-positions as defined above, \pythoninline{l} the height vector of the elements, \pythoninline{index} the index of re-ordered mesh locations, and \pythoninline{dt} the time step of the program, $\Delta t$.
 
-The variables for accumulation and surface temperature are the main driving forces in the simulation, and data from a specific site may be used in the model by interpolating the data in increments of $\Delta t$ and inserting the values into the equations.  This may be accomplished with the \texttt{set\_local(n)} method of the \texttt{vector} class, which takes as input a NumPy array \texttt{n} with indexes corresponding to node positions within the \texttt{mesh} object.  If the variable is used in the surface boundary condition, this may be updated within the FEniCS \texttt{Expression} object with the dot operator.
+The variables for accumulation and surface temperature are the main driving forces in the simulation, and data from a specific site may be used in the model by interpolating the data in increments of $\Delta t$ and inserting the values into the equations.  This may be accomplished with the \pythoninline{set\_local(n)} method of the \pythoninline{vector} class, which takes as input a NumPy array \pythoninline{n} with indexes corresponding to node positions within the \pythoninline{mesh} object.  If the variable is used in the surface boundary condition, this may be updated within the FEniCS \pythoninline{Expression} object with the dot operator.
 
-A function has been provided (\texttt{set\_ini\_conv}) which initializes the density to a previously derived density.  The density may also be initialized to a set of real-world data if desired, and is demonstrated in the temperature equation model, \texttt{objModel.py}.
+A function has been provided (\pythoninline{set\_ini\_conv}) which initializes the density to a previously derived density.  The density may also be initialized to a set of real-world data if desired, and is demonstrated in the temperature equation model, \texttt{objModel.py}.
 
-The \texttt{plot.py} file contains the class \texttt{firn} and the previously undescribed \texttt{plot} class.  This class uses the plotting package MatPlotLib to display the data contained in the \texttt{firn} object.  The method \texttt{plot\_all\_height()} plots the height history for a group of simulations and is useful for comparing the effects of model parameters. 
+The \texttt{plot.py} file contains the class \pythoninline{firn} and the previously undescribed \pythoninline{plot} class.  This class uses the plotting package MatPlotLib to display the data contained in the \pythoninline{firn} object.  The method \pythoninline{plot\_all\_height()} plots the height history for a group of simulations and is useful for comparing the effects of model parameters. 
 
-Another version of \texttt{enthModel}, the main simulation class, has been created which uses collected data for density and surface temperature.  When using this version, it is important to make $\Delta t$ less than or equal to the time interval of recorded events so all data points are included. 
+Another version of \pythoninline{Model}, the main simulation class, has been created which uses collected data for density and surface temperature.  When using this version, it is important to make $\Delta t$ less than or equal to the time interval of recorded events so all data points are included. 
 
 
 %% Variable Definition =========================================================
@@ -669,7 +789,7 @@ $t_f$ & s & end-time\\
 %% Verification ================================================================
 \section{Verification of Program}
 
-A converging run of the program was done quickly by making $\Delta t$ equal $spy$: this has the effect of producing a steady-state solution.  After the density-profile converged the data was saved to a text file in the \texttt{data} folder.  The script was run again with the average surface air temperature $T_{avg}$ made so   that the surface temperature peaks at $8\degree$ C if $t < 10$ years, and $0\degree$ C if $t \geq 10$ years. This has the effect of halting any melting and refreezing after this time period.  For this run the method \texttt{set\_ini\_conv} was called to initialize the previous runs data and $\Delta t$ was set to $0.0025*spy$; the results are shown in Figures 3 and 4.
+A converging run of the program was done quickly by making $\Delta t$ equal $spy$: this has the effect of producing a steady-state solution.  After the density-profile converged the data was saved to a text file in the \pythoninline{data} folder.  The script was run again with the average surface air temperature $T_{avg}$ made so   that the surface temperature peaks at $8^{\circ}$ C if $t < 10$ years, and $0^{\circ}$ C if $t \geq 10$ years. This has the effect of halting any melting and refreezing after this time period.  For this run the method \pythoninline{set\_ini\_conv} was called to initialize the previous runs data and $\Delta t$ was set to $0.0025*spy$; the results are shown in Figures 3 and 4.
 
 
 %% Interpretation ==============================================================
@@ -687,7 +807,7 @@ At its current state of development the model does not take into account water t
 \begin{align*}
     q = \frac{-k}{\mu}\nabla P, \ \  v = \frac{q}{\phi},
 \end{align*}
-where $k$ is permeability, $\mu =$ \SI{1.787e-3} Pa$\cdot$s is the viscosity of water at $0\degree$ C, $\nabla P$ is the pressure gradient vector, and $\phi = 1- \rho/\rho_i$ is porosity.
+where $k$ is permeability, $\mu =$ \SI{1.787e-3} Pa$\cdot$s is the viscosity of water at $0^{\circ}$ C, $\nabla P$ is the pressure gradient vector, and $\phi = 1- \rho/\rho_i$ is porosity.
 
 \emph{Waldner et al.} [2002] introduces this issue and provides references to numerous models which simulate this phenomenon.  \emph{Coleou et al.} [1998] supplies an equation for the irreducible water content of snow
 \begin{align*}
