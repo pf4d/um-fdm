@@ -128,9 +128,6 @@ ageS   = Constant(0.0)
 code   = '- (rhoi * adot / spy) / rhos'
 wS     = Expression(code, rhoi=rhoi, adot=adot, spy=spy, rhos=rhos)
 
-# velocity of base :
-wB     = Constant(-4e-9)
-
 # define the Dirichlet boundarys :
 def surface(x, on_boundary):
   return on_boundary and x[0] == zs
@@ -139,11 +136,11 @@ def base(x, on_boundary):
   return on_boundary and x[0] == zb
 
 Hbc   = DirichletBC(MV.sub(0), Hs,   surface)    # enthalpy of surface
-Dbc   = DirichletBC(MV.sub(1), rhoS, surface)    # density of surface
+rhoBc = DirichletBC(MV.sub(1), rhoS, surface)    # density of surface
 wbc   = DirichletBC(MV.sub(2), wS,   surface)    # velocity of surface
-wbcb  = DirichletBC(MV.sub(2), wB,   base)       # velocity of base
 ageBc = DirichletBC(V,         ageS, surface)    # age of surface
-
+bcs   = [Hbc, rhoBc, wbc]
+srf_exp = [Hs, rhoS, wS]
 
 #===============================================================================
 # Define variational problem spaces :
@@ -232,9 +229,9 @@ w_mid     = theta*w + (1 - theta)*w_1
 # Zwally equation for surface velocity :
 f_w       = + rho * w_mid.dx(0) * eta * dx \
             + drhodt * eta * dx
-# Arthern equation of strain rate :
+# Arthern equation of strain rate from 'Sorge's Law' :
 f_w       = + rho**2 * w_mid.dx(0) * eta * dx \
-            + bdot * rho.dx(0) * eta * dx
+            - bdot * rho.dx(0) * eta * dx
 
 # equation to be minimzed :
 f         = f_H + f_rho + f_w
@@ -248,7 +245,8 @@ df_a      = derivative(f_a, a, da) # age jacobian
 data    = project_vars(V, H, T, rho, drhodt, a, w, k, c, omega)
 FEMdata = (mesh, V, MV, H_i, rho_i, w_i, a_i, h, H, T, 
            rho, drhodt, w, a, h_1, a_1, k, c)
-firn    = Firn(const, FEMdata, data, Tavg, rhos, adot, A, acc, z, l, index, dt)
+firn    = Firn(const, FEMdata, data, bcs, srf_exp, Tavg, rhos, 
+               adot, A, acc, z, l, index, dt)
 
 # load initialization data :
 #firn.set_ini_conv(ex)
@@ -264,31 +262,18 @@ fmic = FmicData(firn)
 # Compute solution :
 tstart = time.clock()
 set_log_active(False)
-problem = NonlinearVariationalProblem(f, h, [Hbc, Dbc, wbc], J=df)
+problem = NonlinearVariationalProblem(f, h, bcs, J=df)
 solver  = NonlinearVariationalSolver(problem)
 for t in times:
   # update boundary conditions :
-  Hs.t      = t
-  #Hs.c      = firn.c[-1]
-  #rhoS.rhoi = firn.rho[-1]
-  #if firn.Ts > Tw:
-  #  if domega[-1] > 0:
-  #    if rhoS.rhon < rhoi:
-  #      rhoS.rhon = rhoS.rhon + domega[-1]*rhow
-  #  else:
-  #    rhoS.rhon = rhoS.rhon + domega[-1]*83.0
-  #else:
-  #  rhoS.rhon = rhos
-  #ltop      = lnew[-1]
-  #dnew      = -firn.w[-1]*dt
-  #rhoS.dp = dnew/ltop
-  #rhoS.Ts = firn.T[-1]
+  firn.update_Hbc()
+  #firn.update_rhoBc()
   
   #h.vector().set_local(h.vector().array() + rand())
   solver.solve()
 
   # newton's iterative method :
-  #solve(f == 0, h, [Hbc, Dbc, wbc], J=df)
+  #solve(f == 0, h, bcs, J=df)
 
   # solve for age :
   params = {'newton_solver' : {'relaxation_parameter' : 0.90,
@@ -299,7 +284,7 @@ for t in times:
   firn.adjust_vectors(Kcoef, Tcoef, rhoCoef)
   
   # update firn object :
-  firn.update_vars()
+  firn.update_vars(t)
   #firn.update_height_history()
   #firn.update_height()
   
@@ -309,7 +294,7 @@ for t in times:
 
   # update the plotting parameters :
   if bp:
-    plot.update_plot(firn, t/spy)
+    plot.update_plot()
 
   # only start capturing the data at 5000 years :
   tr = round(t/spy,2) - 5000

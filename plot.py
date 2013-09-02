@@ -66,7 +66,7 @@ class Firn():
   """
   Data structure to hold firn model state data.
   """
-  def __init__(self, const, FEMdata, data, Tavg, 
+  def __init__(self, const, FEMdata, data, bcs, srf_exp, Tavg, 
                rhos, adot, A, acc, z, l, index, dt):
 
     self.const   = const                     # constants
@@ -99,6 +99,14 @@ class Firn():
     self.k       = data[6]                   # thermal conductivity
     self.c       = data[7]                   # heat capacity
     self.omega   = data[8]                   # percentage of water content
+    
+    self.Hbc     = bcs[0]
+    self.rhoBc   = bcs[1]
+    self.wbc     = bcs[2]
+
+    self.Hs      = srf_exp[0]
+    self.rhoS    = srf_exp[1]
+    self.wS      = srf_exp[2]
 
     self.Tavg    = Tavg                      # average surface temperature
     self.rhos    = rhos                      # initial density at surface
@@ -110,6 +118,7 @@ class Firn():
     self.lini    = l                         # initial height vector
     self.index   = index                     # index of ordered, refined mesh
     self.dt      = dt                        # time step
+    self.t       = 0.0                       # initialize time
     
     self.n       = len(self.H)               # system DOF
     self.rhoin   = self.rho                  # initial density vector
@@ -126,11 +135,40 @@ class Firn():
     self.z815    = 0.0                       # depth of rhoc
     self.age815  = 0.0                       # age of rhoc
 
+ 
+  def update_Hbc(self): 
+    """
+    Adjust the enthalpy at the surface.
+    """
+    self.Hs.t      = self.t
+    self.Hs.c      = self.c[-1]
+    
+  
+  def update_rhoBc(self):
+    """
+    Adjust the density at the surface.
+    """
+    self.rhoS.rhoi = self.rho[-1]
+    if self.Ts > self.const.Tw:
+      if domega[-1] > 0:
+        if self.rhoS.rhon < self.const.rhoi:
+          self.rhoS.rhon = self.rhoS.rhon + domega[-1]*self.const.rhow
+      else:
+        self.rhoS.rhon = self.rhoS.rhon + domega[-1]*83.0
+    else:
+      self.rhoS.rhon = self.rhos
+    ltop      = lnew[-1]
+    dnew      = -self.w[-1]*dt
+    self.rhoS.dp = dnew/ltop
+    self.rhoS.Ts = self.T[-1]
 
-  def update_vars(self):
+
+  def update_vars(self, t):
     """
     Project the variables onto the space V and update firn object.
     """
+    self.t      = t
+
     self.H      = project(self.HF, self.V).vector().array()
     self.T      = project(self.TF, self.V).vector().array()
     self.rho    = project(self.rhoF, self.V).vector().array()
@@ -283,7 +321,8 @@ class Plot():
     """
     Initialize plots with firn object as input.
     """   
-    self.spy  = 31556926.0
+    self.spy  = firn.const.spy
+    self.firn = firn
      
     # x-values :
     T      = firn.T
@@ -377,17 +416,18 @@ class Plot():
     self.aax.set_xlabel(r'$a\ [\mathrm{a}]$')
     
 
-  def update_plot(self, firn, t):
+  def update_plot(self):
     """
     Update the plot for each time step at time t.
     """    
-    T     = firn.T
-    rho   = firn.rho
-    w     = firn.w * self.spy * 1e2
-    a     = firn.a/self.spy
-    z     = firn.z
-    zo    = firn.zo
-    Ts    = firn.Ts - 273.15
+    T     = self.firn.T
+    rho   = self.firn.rho
+    w     = self.firn.w * self.spy * 1e2
+    a     = self.firn.a/self.spy
+    z     = self.firn.z
+    zo    = self.firn.zo
+    Ts    = self.firn.Ts - 273.15
+    t     = self.firn.t / self.spy
 
     self.fig_text.set_text('Time = %.2f yr' % t) 
     
