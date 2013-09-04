@@ -73,7 +73,7 @@ else :
   Tavg  = Tw - 50.0            # average temperature ............ degrees K
 
 acc   = rhoi * adot            # surface accumulation ........... kg/(m^2 s)
-A     = acc/rhos*1e3           # surface accumulation ........... mm/a
+A     = acc/rhos               # surface accumulation ........... m/a
 cp    = 152.5 + 7.122*Tavg     # heat capacity of ice ........... J/(kg K)
 cp    = cpi                    # heat capacity of ice ........... J/(kg K)
 zs    = 1000.                  # surface start .................. m
@@ -230,8 +230,8 @@ w_mid     = theta*w + (1 - theta)*w_1
 f_w       = + rho * w_mid.dx(0) * eta * dx \
             + drhodt * eta * dx
 # Arthern equation of strain rate from 'Sorge's Law' :
-f_w       = + rho**2 * w_mid.dx(0) * eta * dx \
-            - bdot * rho.dx(0) * eta * dx
+#f_w       = + rho**2 * w_mid.dx(0) * eta * dx \
+#            - bdot * rho.dx(0) * eta * dx
 
 # equation to be minimzed :
 f         = f_H + f_rho + f_w
@@ -347,16 +347,19 @@ for t in times:
   # vary the accumulation :
   elif tr == 100 and ex == 4:
     firn.adot = 0.07
+    firn.A = (rhoi * firn.adot) / spy
     bdotNew = ones(n)*(rhoi * firn.adot / spy)
     bdot.vector().set_local(bdotNew)
     wS.adot = firn.adot
   elif tr == 100 and ex == 5:
     firn.adot = 0.20  
+    firn.A = (rhoi * firn.adot) / spy
     bdotNew = ones(n)*(rhoi * firn.adot / spy)
     bdot.vector().set_local(bdotNew)
     wS.adot = firn.adot
   elif tr == 100 and ex == 6:
     firn.adot = 0.30
+    firn.A = (rhoi * firn.adot) / spy
     bdotNew = ones(n)*(rhoi * firn.adot / spy)
     bdot.vector().set_local(bdotNew)
     wS.adot = firn.adot

@@ -251,8 +251,8 @@ class Firn():
     rhoCoefNew          = ones(n)
     rhoHigh             = where(self.rho >  550)[0]
     rhoLow              = where(self.rho <= 550)[0]
-    rhoCoefNew[rhoHigh] = kcHh #*(2.366 - 0.293*ln(self.A))
-    rhoCoefNew[rhoLow]  = kcLw #*(1.435 - 0.151*ln(self.A))
+    rhoCoefNew[rhoHigh] = kcHh * (2.366 - 0.293*ln(self.A))
+    rhoCoefNew[rhoLow]  = kcLw * (1.435 - 0.151*ln(self.A))
     rhoCoef.vector().set_local(rhoCoefNew)
   
     ## update coefficients used by enthalpy :
