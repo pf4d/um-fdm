@@ -73,7 +73,7 @@ else :
   Tavg  = Tw - 50.0            # average temperature ............ degrees K
 
 acc   = rhoi * adot            # surface accumulation ........... kg/(m^2 s)
-A     = acc/rhos               # surface accumulation ........... m/a
+A     = acc/spy                # surface accumulation ........... m/a
 cp    = 152.5 + 7.122*Tavg     # heat capacity of ice ........... J/(kg K)
 cp    = cpi                    # heat capacity of ice ........... J/(kg K)
 zs    = 1000.                  # surface start .................. m
