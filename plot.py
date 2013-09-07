@@ -178,7 +178,7 @@ class Firn():
     #self.c      = project(self.cF, self.V).vector().array()
     
     self.Ts     = self.H[-1] / self.c[-1]
-    self.A      = (self.adot * self.rhoi)/self.spy
+    self.A      = (self.adot * self.const.rhoi)/self.const.spy
 
 
   def update_height_history(self):

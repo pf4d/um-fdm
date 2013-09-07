@@ -248,7 +248,7 @@ firn    = Firn(const, FEMdata, data, bcs, srf_exp, Tavg, rhos,
                adot, A, z, l, index, dt)
 
 # load initialization data :
-#firn.set_ini_conv(ex)
+firn.set_ini_conv(ex)
 
 if bp:
   plt.ion() 
@@ -346,19 +346,16 @@ for t in times:
   # vary the accumulation :
   elif tr == 100 and ex == 4:
     firn.adot = 0.07
-    firn.A = (rhoi * firn.adot) / spy
     bdotNew = ones(n) * firn.A
     bdot.vector().set_local(bdotNew)
     wS.adot = firn.adot
   elif tr == 100 and ex == 5:
     firn.adot = 0.20  
-    firn.A = (rhoi * firn.adot) / spy
     bdotNew = ones(n) * firn.A
     bdot.vector().set_local(bdotNew)
     wS.adot = firn.adot
   elif tr == 100 and ex == 6:
     firn.adot = 0.30
-    firn.A = (rhoi * firn.adot) / spy
     bdotNew = ones(n) * firn.A
     bdot.vector().set_local(bdotNew)
     wS.adot = firn.adot
