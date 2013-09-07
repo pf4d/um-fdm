@@ -72,8 +72,7 @@ else :
   adot  = 0.10                 # accumulation rate .............. m/a
   Tavg  = Tw - 50.0            # average temperature ............ degrees K
 
-acc   = rhoi * adot            # surface accumulation ........... kg/(m^2 s)
-A     = acc/spy                # surface accumulation ........... m/a
+A     = (rhoi * adot)/spy      # surface accumulation ........... m/s
 cp    = 152.5 + 7.122*Tavg     # heat capacity of ice ........... J/(kg K)
 cp    = cpi                    # heat capacity of ice ........... J/(kg K)
 zs    = 1000.                  # surface start .................. m
@@ -176,7 +175,7 @@ a_1.vector().set_local(a_i.vector().array())  # initialize age in prev. sol
 
 #===============================================================================
 # Define equations to be solved :
-bdot      = interpolate(Constant(rhoi * adot / spy), V)   # average annual acc
+bdot      = interpolate(Constant((rhoi * adot) / spy), V)  # average annual acc
 #c         = (152.5 + sqrt(152.5**2 + 4*7.122*H)) / 2      # Patterson 1994
 Ta        = interpolate(Constant(Tavg), V)
 c         = cp
@@ -246,7 +245,7 @@ data    = project_vars(V, H, T, rho, drhodt, a, w, k, c, omega)
 FEMdata = (mesh, V, MV, H_i, rho_i, w_i, a_i, h, H, T, 
            rho, drhodt, w, a, h_1, a_1, k, c)
 firn    = Firn(const, FEMdata, data, bcs, srf_exp, Tavg, rhos, 
-               adot, A, acc, z, l, index, dt)
+               adot, A, z, l, index, dt)
 
 # load initialization data :
 #firn.set_ini_conv(ex)
@@ -348,19 +347,19 @@ for t in times:
   elif tr == 100 and ex == 4:
     firn.adot = 0.07
     firn.A = (rhoi * firn.adot) / spy
-    bdotNew = ones(n)*(rhoi * firn.adot / spy)
+    bdotNew = ones(n) * firn.A
     bdot.vector().set_local(bdotNew)
     wS.adot = firn.adot
   elif tr == 100 and ex == 5:
     firn.adot = 0.20  
     firn.A = (rhoi * firn.adot) / spy
-    bdotNew = ones(n)*(rhoi * firn.adot / spy)
+    bdotNew = ones(n) * firn.A
     bdot.vector().set_local(bdotNew)
     wS.adot = firn.adot
   elif tr == 100 and ex == 6:
     firn.adot = 0.30
     firn.A = (rhoi * firn.adot) / spy
-    bdotNew = ones(n)*(rhoi * firn.adot / spy)
+    bdotNew = ones(n) * firn.A
     bdot.vector().set_local(bdotNew)
     wS.adot = firn.adot
   

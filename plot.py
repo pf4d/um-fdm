@@ -67,7 +67,7 @@ class Firn():
   Data structure to hold firn model state data.
   """
   def __init__(self, const, FEMdata, data, bcs, srf_exp, Tavg, 
-               rhos, adot, A, acc, z, l, index, dt):
+               rhos, adot, A, z, l, index, dt):
 
     self.const   = const                     # constants
 
@@ -112,7 +112,6 @@ class Firn():
     self.rhos    = rhos                      # initial density at surface
     self.adot    = adot                      # accumulation rate
     self.A       = A                         # surface accumulation
-    self.acc     = acc                       # surface accumulation
     self.z       = z[index]                  # z-coordinates of mesh
     self.l       = l                         # height vector
     self.lini    = l                         # initial height vector
@@ -179,8 +178,7 @@ class Firn():
     #self.c      = project(self.cF, self.V).vector().array()
     
     self.Ts     = self.H[-1] / self.c[-1]
-    self.acc    = self.const.rhoi*self.adot/self.const.spy
-    self.A      = self.const.spy*self.acc/self.rhos*1e3
+    self.A      = (self.adot * self.rhoi)/self.spy
 
 
   def update_height_history(self):
