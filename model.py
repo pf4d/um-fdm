@@ -72,7 +72,7 @@ else :
   adot  = 0.10                 # accumulation rate .............. m/a
   Tavg  = Tw - 50.0            # average temperature ............ degrees K
 
-A     = (rhoi * adot)/spy      # surface accumulation ........... m/s
+A     = (rhoi * adot)/(1e3*spy)# surface accumulation ........... mm/s
 cp    = 152.5 + 7.122*Tavg     # heat capacity of ice ........... J/(kg K)
 cp    = cpi                    # heat capacity of ice ........... J/(kg K)
 zs    = 1000.                  # surface start .................. m
@@ -248,7 +248,7 @@ firn    = Firn(const, FEMdata, data, bcs, srf_exp, Tavg, rhos,
                adot, A, z, l, index, dt)
 
 # load initialization data :
-firn.set_ini_conv(ex)
+#firn.set_ini_conv(ex)
 
 if bp:
   plt.ion() 
@@ -346,19 +346,22 @@ for t in times:
   # vary the accumulation :
   elif tr == 100 and ex == 4:
     firn.adot = 0.07
-    bdotNew = ones(n) * firn.A
+    firn.A    = (firn.adot * rhoi) / (1e3 * spy)
+    bdotNew   = ones(n) * (firn.adot * rhoi) / spy
     bdot.vector().set_local(bdotNew)
-    wS.adot = firn.adot
+    wS.adot   = firn.adot
   elif tr == 100 and ex == 5:
     firn.adot = 0.20  
-    bdotNew = ones(n) * firn.A
+    firn.A    = (firn.adot * rhoi) / (1e3 * spy)
+    bdotNew   = ones(n) * (firn.adot * rhoi) / spy
     bdot.vector().set_local(bdotNew)
-    wS.adot = firn.adot
+    wS.adot   = firn.adot
   elif tr == 100 and ex == 6:
     firn.adot = 0.30
-    bdotNew = ones(n) * firn.A
+    firn.A    = (firn.adot * rhoi) / (1e3 * spy)
+    bdotNew   = ones(n) * (firn.adot * rhoi) / spy
     bdot.vector().set_local(bdotNew)
-    wS.adot = firn.adot
+    wS.adot   = firn.adot
   
   # update the graph
   if bp:
