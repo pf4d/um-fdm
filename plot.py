@@ -167,6 +167,10 @@ class Firn():
     Project the variables onto the space V and update firn object.
     """
     self.t      = t
+    rhoi        = self.const.rhoi
+    rhow        = self.const.rhow
+    spy         = self.const.spy
+    adot        = self.adot
 
     self.H      = project(self.HF, self.V).vector().array()
     self.T      = project(self.TF, self.V).vector().array()
@@ -178,7 +182,7 @@ class Firn():
     #self.c      = project(self.cF, self.V).vector().array()
     
     self.Ts     = self.H[-1] / self.c[-1]
-    self.A      = (self.adot * self.const.rhoi)/ (self.const.spy * 1e3)
+    self.A      = rhoi/rhow * 1e3 * adot
 
 
   def update_height_history(self):
