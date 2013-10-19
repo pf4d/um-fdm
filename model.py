@@ -80,7 +80,7 @@ zs_0  = zs                     # previous time-step surface ..... m
 zb    = 0.                     # depth .......................... m
 dz    = (zs - zb)/n            # initial z-spacing .............. m
 l     = dz*ones(n+1)           # height vector .................. m
-dt    = 0.05*spy               # time-step ...................... s
+dt    = 0.01*spy               # time-step ...................... s
 t0    = 0.0                    # begin time ..................... s
 tf    = sys.argv[1]            # end-time ....................... string
 tf    = float(tf)*spy          # end-time ....................... s
@@ -124,7 +124,7 @@ rhoS   = Expression('rhon', rhon=rhos)
 ageS   = Constant(0.0)
 
 # velocity of surface (-acc / rhos) [m/s] :
-code   = '- (rhoi * adot / spy) / rhos'
+code   = '- rhoi/rhos * adot / spy'
 wS     = Expression(code, rhoi=rhoi, adot=adot, spy=spy, rhos=rhos)
 
 # define the Dirichlet boundarys :
@@ -275,8 +275,8 @@ for t in times:
   #solve(f == 0, h, bcs, J=df)
 
   # solve for age :
-  params = {'newton_solver' : {'relaxation_parameter' : 0.90,
-                               'maximum_iterations'   : 100}}
+  params = {'newton_solver' : {'relaxation_parameter' : 0.60,
+                               'maximum_iterations'   : 1000}}
   solve(f_a == 0, a, ageBc, solver_parameters=params)
   
   # adjust the coefficient vectors :
@@ -330,16 +330,24 @@ for t in times:
 
   
   # vary the temperature :
-  if tr == 100.0 and ex == 1:
-    firn.Tavg = Tw - 45.0
+  dtr  = 1.0
+  tr_n = 100.0 + dtr
+  if tr == 100.0 and tr <= tr_n and ex == 1:
+    dT         = firn.Tavg - (Tw - 45.0)
+    firn.Tavg += dT/dtr
+    #firn.Tavg = Tw - 45.0
     Ta.vector().set_local(ones(n)*firn.Tavg)
     Hs.Tavg   = firn.Tavg
-  elif tr == 100.0 and ex == 2:
-    firn.Tavg = Tw - 35.0
+  elif tr == 100.0 and tr <= tr_n and ex == 2:
+    dT         = firn.Tavg - (Tw - 35.0)
+    firn.Tavg += dT/dtr
+    #firn.Tavg = Tw - 35.0
     Ta.vector().set_local(ones(n)*firn.Tavg)
     Hs.Tavg   = firn.Tavg
-  elif tr == 100.0 and ex == 3:
-    firn.Tavg = Tw - 25.0
+  elif tr == 100.0 and tr <= tr_n and ex == 3:
+    dT         = firn.Tavg - (Tw - 25.0)
+    firn.Tavg += dT/dtr
+    #firn.Tavg = Tw - 25.0
     Ta.vector().set_local(ones(n)*firn.Tavg)
     Hs.Tavg   = firn.Tavg
 
