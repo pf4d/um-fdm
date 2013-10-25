@@ -80,7 +80,7 @@ zs_0  = zs                     # previous time-step surface ..... m
 zb    = 0.                     # depth .......................... m
 dz    = (zs - zb)/n            # initial z-spacing .............. m
 l     = dz*ones(n+1)           # height vector .................. m
-dt    = 0.01*spy               # time-step ...................... s
+dt    = 0.05*spy               # time-step ...................... s
 t0    = 0.0                    # begin time ..................... s
 tf    = sys.argv[1]            # end-time ....................... string
 tf    = float(tf)*spy          # end-time ....................... s
@@ -248,7 +248,7 @@ firn    = Firn(const, FEMdata, data, bcs, srf_exp, Tavg, rhos,
                adot, A, z, l, index, dt)
 
 # load initialization data :
-#firn.set_ini_conv(ex)
+firn.set_ini_conv(ex)
 
 if bp:
   plt.ion() 
@@ -275,7 +275,7 @@ for t in times:
   #solve(f == 0, h, bcs, J=df)
 
   # solve for age :
-  params = {'newton_solver' : {'relaxation_parameter' : 0.60,
+  params = {'newton_solver' : {'relaxation_parameter' : 0.50,
                                'maximum_iterations'   : 1000}}
   solve(f_a == 0, a, ageBc, solver_parameters=params)
   
@@ -330,7 +330,7 @@ for t in times:
 
   
   # vary the temperature :
-  dtr  = 1.0
+  dtr  = 5.0               # ramp size in years
   tr_n = 100.0 + dtr
   if tr == 100.0 and tr <= tr_n and ex == 1:
     dT         = firn.Tavg - (Tw - 45.0)
