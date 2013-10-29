@@ -63,7 +63,7 @@ for i in range(6):
   z815s.append(z815)
 
 
-def plot_all(ex, skip):
+def plot_all(ex, skip, name):
   i      = ex - 1
   rho    = rhos[i]
   T      = Ts[i]
@@ -113,7 +113,7 @@ def plot_all(ex, skip):
             r'$\phi$']
   filename = inspect.getframeinfo(inspect.currentframe()).filename
   home     = os.path.dirname(os.path.abspath(filename))
-  direc    = home + "/images/fmic_results/plot" + str(ex) + ".png"
+  direc    = home + "/images/fmic_results/" + name + str(ex) + ".png"
   pts      = where(z > -200)
   for ax, u, tit, xlab in zip(axs1, us1, tits1, xlabs1):
     ax.plot(u[:,0][pts],  z[pts], 'k',   lw=2, label='initial')

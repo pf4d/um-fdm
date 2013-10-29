@@ -80,7 +80,7 @@ zs_0  = zs                     # previous time-step surface ..... m
 zb    = 0.                     # depth .......................... m
 dz    = (zs - zb)/n            # initial z-spacing .............. m
 l     = dz*ones(n+1)           # height vector .................. m
-dt    = 0.05*spy               # time-step ...................... s
+dt    = 0.05*spy              # time-step ...................... s
 t0    = 0.0                    # begin time ..................... s
 tf    = sys.argv[1]            # end-time ....................... string
 tf    = float(tf)*spy          # end-time ....................... s
@@ -275,8 +275,10 @@ for t in times:
   #solve(f == 0, h, bcs, J=df)
 
   # solve for age :
-  params = {'newton_solver' : {'relaxation_parameter' : 0.50,
-                               'maximum_iterations'   : 1000}}
+  params = {'newton_solver' : {'relaxation_parameter'    : 0.50,
+                               'maximum_iterations'      : 1000,
+                               'error_on_nonconvergence' : False,
+                               'relative_tolerance'      : 0.8e-3}}
   solve(f_a == 0, a, ageBc, solver_parameters=params)
   
   # adjust the coefficient vectors :
@@ -332,19 +334,19 @@ for t in times:
   # vary the temperature :
   dtr  = 5.0               # ramp size in years
   tr_n = 100.0 + dtr
-  if tr == 100.0 and tr <= tr_n and ex == 1:
+  if tr > 100.0 and tr <= tr_n and ex == 1:
     dT         = firn.Tavg - (Tw - 45.0)
     firn.Tavg += dT/dtr
     #firn.Tavg = Tw - 45.0
     Ta.vector().set_local(ones(n)*firn.Tavg)
     Hs.Tavg   = firn.Tavg
-  elif tr == 100.0 and tr <= tr_n and ex == 2:
+  elif tr > 100.0 and tr <= tr_n and ex == 2:
     dT         = firn.Tavg - (Tw - 35.0)
     firn.Tavg += dT/dtr
     #firn.Tavg = Tw - 35.0
     Ta.vector().set_local(ones(n)*firn.Tavg)
     Hs.Tavg   = firn.Tavg
-  elif tr == 100.0 and tr <= tr_n and ex == 3:
+  elif tr > 100.0 and tr <= tr_n and ex == 3:
     dT         = firn.Tavg - (Tw - 25.0)
     firn.Tavg += dT/dtr
     #firn.Tavg = Tw - 25.0
