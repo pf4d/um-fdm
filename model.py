@@ -23,11 +23,9 @@ FEniCS solution to firn enthalpy / density profile.
 """
 
 from numpy     import *
-from fmicData  import *
-from functions import *
 from dolfin    import *
 from plot      import *
-import numpy as np
+from firn      import *
 import sys
 import time
 
@@ -62,40 +60,20 @@ Hsp   = const.Hsp              # Enthalpy of ice at Tw .......... J/kg
 # model variables :
 n     = 100                    # num of z-positions
 rhos  = 360.                   # initial density at surface ..... kg/m^3
-ex    = int(sys.argv[3])
 
 # fmic experiment :
-if ex == 1:
-  adot  = 0.10                 # accumulation rate .............. m/a
-  Tavg  = Tw - 50.0            # average temperature ............ degrees K
-elif ex == 2:
-  adot  = 0.10                 # accumulation rate .............. m/a
-  Tavg  = Tw - 40.0            # average temperature ............ degrees K
-elif ex == 3:
-  adot  = 0.10                 # accumulation rate .............. m/a
-  Tavg  = Tw - 30.0            # average temperature ............ degrees K
-elif ex == 4:
-  adot  = 0.02                 # accumulation rate .............. m/a
-  Tavg  = Tw - 30.0            # average temperature ............ degrees K
-elif ex == 5:
-  adot  = 0.15                 # accumulation rate .............. m/a
-  Tavg  = Tw - 30.0            # average temperature ............ degrees K
-elif ex == 6:
-  adot  = 0.25                 # accumulation rate .............. m/a
-  Tavg  = Tw - 30.0            # average temperature ............ degrees K
-else :
-  adot  = 0.10                 # accumulation rate .............. m/a
-  Tavg  = Tw - 50.0            # average temperature ............ degrees K
+adot  = 0.75                   # accumulation rate .............. m/a
+Tavg  = Tw - 50.0              # average temperature ............ degrees K
 
 A     = rhoi/rhow * 1e3 * adot # surface accumulation ........... mm/a
 cp    = 152.5 + 7.122*Tavg     # heat capacity of ice ........... J/(kg K)
 cp    = cpi                    # heat capacity of ice ........... J/(kg K)
-zs    = 1000.                  # surface start .................. m
+zs    = 0.                     # surface start .................. m
 zs_0  = zs                     # previous time-step surface ..... m
-zb    = 0.                     # depth .......................... m
+zb    = -1000.                 # depth .......................... m
 dz    = (zs - zb)/n            # initial z-spacing .............. m
 l     = dz*ones(n+1)           # height vector .................. m
-dt    = 0.05*spy              # time-step ...................... s
+dt    = 10.0*spy               # time-step ...................... s
 t0    = 0.0                    # begin time ..................... s
 tf    = sys.argv[1]            # end-time ....................... string
 tf    = float(tf)*spy          # end-time ....................... s
@@ -199,24 +177,12 @@ Tcoef     = interpolate(Constant(1.0), V)                 # T above Tw = 0.0
 Kcoef     = interpolate(Constant(1.0), V)                 # enthalpy coef.
 T         = Tcoef * H / c                                 # temperature
 
-# age residual :
-# theta scheme (1=Backwards-Euler, 0.667=Galerkin, 0.878=Liniger, 
-#               0.5=Crank-Nicolson, 0=Forward-Euler) :
-# uses Taylor-Galerkin upwinding :
-theta     = 0.5 
-a_mid     = theta*a + (1-theta)*a_1
-f_a       = + (a - a_1)/dt * xi * dx \
-            - 1 * xi * dx \
-            + w * a_mid.dx(0) * xi * dx \
-            + w**2 * dt/2 * inner(a_mid.dx(0), xi.dx(0)) * dx \
-            - w * w.dx(0) * dt/2 * a_mid.dx(0) * xi * dx
-
 # enthalpy residual :
 theta     = 0.5
 H_mid     = theta*H + (1 - theta)*H_1
-f_H       = + rho * w * H_mid.dx(0) * psi * dx \
-            - k/c * Kcoef * inner(H_mid.dx(0), psi.dx(0)) * dx \
-            - rho * (H - H_1)/dt * psi * dx
+f_H       = - k/(rho*c) * Kcoef * inner(H_mid.dx(0), psi.dx(0)) * dx \
+            + w * H_mid.dx(0) * psi * dx \
+            - (H - H_1)/dt * psi * dx
 
 
 # density residual :
@@ -247,6 +213,19 @@ f_w       = + rho * w_mid.dx(0) * eta * dx \
 #f_w       = + rho**2 * w_mid.dx(0) * eta * dx \
 #            - bdot * rho.dx(0) * eta * dx
 
+# age residual :
+# theta scheme (1=Backwards-Euler, 0.667=Galerkin, 0.878=Liniger, 
+#               0.5=Crank-Nicolson, 0=Forward-Euler) :
+# uses Taylor-Galerkin upwinding :
+theta     = 0.5 
+a_mid     = theta*a + (1-theta)*a_1
+f_a       = + (a - a_1)/dt * xi * dx \
+            - 1 * xi * dx \
+            + w * a_mid.dx(0) * xi * dx \
+            - 0.5 * (w - w_1) * a_mid.dx(0) * xi * dx \
+            + w**2 * dt/2 * inner(a_mid.dx(0), xi.dx(0)) * dx \
+            - w * w.dx(0) * dt/2 * a_mid.dx(0) * xi * dx
+
 # equation to be minimzed :
 f         = f_H + f_rho + f_w
 df        = derivative(f, h, dh)   # temp/density jacobian
@@ -263,124 +242,50 @@ firn    = Firn(const, FEMdata, data, bcs, srf_exp, Tavg, rhos,
                adot, A, z, l, index, dt)
 
 # load initialization data :
-firn.set_ini_conv(ex)
+#firn.set_ini_conv(ex)
 
 if bp:
   plt.ion() 
   plot = Plot(firn)
   plt.draw()
-fmic = FmicData(firn)
 
 
 #===============================================================================
 # Compute solution :
 tstart = time.clock()
-set_log_active(False)
-problem = NonlinearVariationalProblem(f, h, bcs, J=df)
-solver  = NonlinearVariationalSolver(problem)
+#set_log_active(False)
+params = {'newton_solver' : {'relaxation_parameter'    : 1.00,
+                             'maximum_iterations'      : 25,
+                             'error_on_nonconvergence' : False,
+                             'relative_tolerance'      : 1e-10,
+                             'absolute_tolerance'      : 1e-10}}
 for t in times:
   # update boundary conditions :
   firn.update_Hbc()
   #firn.update_rhoBc()
-  
-  #h.vector().set_local(h.vector().array() + rand())
-  solver.solve()
 
   # newton's iterative method :
-  #solve(f == 0, h, bcs, J=df)
+  #h.vector().set_local(h.vector().array() + rand())
+  solve(f == 0, h, bcs, J=df, solver_parameters=params)
 
   # solve for age :
-  params = {'newton_solver' : {'relaxation_parameter'    : 0.50,
-                               'maximum_iterations'      : 1000,
-                               'error_on_nonconvergence' : False,
-                               'relative_tolerance'      : 0.9e-3}}
-  solve(f_a == 0, a, ageBc, solver_parameters=params)
+  solve(f_a == 0, a, ageBc, J=df_a, solver_parameters=params)
   
   # adjust the coefficient vectors :
   firn.adjust_vectors(Kcoef, Tcoef, rhoCoef)
   
   # update firn object :
   firn.update_vars(t)
-  #firn.update_height_history()
+  firn.update_height_history()
   #firn.update_height()
   
   # update model parameters :
-  h_1.assign(h)
-  a_1.assign(a)
+  if t != times[-1]: h_1.assign(h)
+  if t != times[-1]: a_1.assign(a)
 
   # update the plotting parameters :
   if bp:
     plot.update_plot()
-
-  # only start capturing the data at 5000 years :
-  tr = round(t/spy,2) - 5000
-
-  # initialize the data : 
-  if tr == 0.0:
-    fmic.calc_fmic_variables()
-    fmic()
-    fmic.save_state(ex)
-    print 'dt: ' + str(tr) + '\t=>\t815 SAVED'
-    print 'dt: ' + str(tr) + '\t=>\tSAVED'
-  
-  # update fmic 815 data :
-  if tr > 0.0:
-    fmic.calc_fmic_variables()
-    fmic.append_815(tr)
-    print 'dt: ' + str(tr) + '\t=>\t815 SAVED'
-  
-  # update the main fmic data:
-  if tr > 0.0 and tr <= 100.0 and tr % 10 == 0.0:
-    print 'dt: ' + str(tr) + '\t=>\tSAVED'
-    fmic.append_state(tr)
-  elif tr > 100.0 and tr <= 150.0 and tr % 1 == 0.0:
-    print 'dt: ' + str(tr) + '\t=>\tSAVED'
-    fmic.append_state(tr)
-  elif tr > 150.0 and tr <= 250.0 and tr % 5 == 0.0:
-    print 'dt: ' + str(tr) + '\t=>\tSAVED'
-    fmic.append_state(tr)
-  elif tr > 250.0 and tr <= 2000.0 and tr % 10 == 0.0:
-    print 'dt: ' + str(tr) + '\t=>\tSAVED'
-    fmic.append_state(tr)
-  elif tr < 0.0:
-    print 'dt: ' + str(tr)
-
-  # vary the temperature :
-  dtr  = 5.0               # ramp size in years
-  dT   = 5.0               # change in temp in Kelvin
-  tr_n = 100.0 + dtr
-  if tr > 100.0 and tr <= tr_n and ex == 1:
-    firn.Tavg += dT/dtr
-    Ta.vector().set_local(ones(n)*firn.Tavg)
-    Hs.Tavg   = firn.Tavg
-  elif tr > 100.0 and tr <= tr_n and ex == 2:
-    firn.Tavg += dT/dtr
-    Ta.vector().set_local(ones(n)*firn.Tavg)
-    Hs.Tavg   = firn.Tavg
-  elif tr > 100.0 and tr <= tr_n and ex == 3:
-    firn.Tavg += dT/dtr
-    Ta.vector().set_local(ones(n)*firn.Tavg)
-    Hs.Tavg   = firn.Tavg
-
-  # vary the accumulation :
-  elif tr == 100 and ex == 4:
-    firn.adot = 0.07
-    bdotNew   = ones(n) * (firn.adot * rhoi) / spy
-    bdot.vector().set_local(bdotNew)
-    wS.adot   = firn.adot
-  elif tr == 100 and ex == 5:
-    firn.adot = 0.20  
-    bdotNew   = ones(n) * (firn.adot * rhoi) / spy
-    bdot.vector().set_local(bdotNew)
-    wS.adot   = firn.adot
-  elif tr == 100 and ex == 6:
-    firn.adot = 0.30
-    bdotNew   = ones(n) * (firn.adot * rhoi) / spy
-    bdot.vector().set_local(bdotNew)
-    wS.adot   = firn.adot
-  
-  # update the graph
-  if bp:
     plt.draw()
 
 # calculate total time to compute :
@@ -390,10 +295,9 @@ if bp:
   plt.show()
 
 ttot   = tfin - tstart
-thours = round(ttot*(7000/tf)*spy/60/60, 3)
-print "total time to process 7,000 years:", thours, "hrs"
+thours = ttot/60
+print "total time to process %i years: %.2e mins" % ((tf - t0)/spy, thours)
 
-fmic.save_fmic_data(ex)
 # plot the surface height trend :
 #plot.plot_height(times, firn.ht, firn.origHt)
 

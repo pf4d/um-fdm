@@ -57,7 +57,7 @@ language=python,
 showtabs=true,
 tab=,
 tabsize=2,
-basicstyle=\ttfamily\footnotesize,%\setstretch{.5},
+basicstyle=\ttfamily\scriptsize,%\setstretch{.5},
 stringstyle=\color{stringcolour},
 showstringspaces=false,
 alsoletter={1234567890},
@@ -140,7 +140,7 @@ backgroundcolor=\color{yellow!10}
 \usepackage{amsmath, amssymb, amscd}%Contains the AMS expanded math symbols library.
 \usepackage{algorithm, algorithmic} %pseudo-code
 %%For those who want smaller margins, you can use this:
-\usepackage[top=1in, bottom=1in, left=1in, right=1in]{geometry}
+\usepackage[top=.5in, bottom=.5in, left=.5in, right=.5in]{geometry}
 \newcommand{\sups}[1]{\ensuremath{^{\textrm{#1}}}}
 \newcommand{\subs}[1]{\ensuremath{_{\textrm{#1}}}}
 
@@ -151,6 +151,8 @@ backgroundcolor=\color{yellow!10}
 \begin{document}
 
 %% Title =======================================================================
+
+\small
 
 \title{Development of a finite element firn densification model for converting volume changes to mass changes}
 \author{Evan Cummings \and Jesse Johnson \and Douglas Brinkerhoff}
@@ -279,20 +281,20 @@ and $M$ defined in \emph{Ligtenberg et al.} [2011] to better fit with observed d
 %% Enthalpy ====================================================================
 \section{Enthalpy Solution}
 
-As stated in \emph{Aschwanden et al.} [2012], we take 'enthalpy' to be synonymous with 'internal energy' due to the exclusion of work done with changing volume.  The equation used here is the shallow-enthalpy:
+As stated in \emph{Aschwanden et al.} [2012], we take `enthalpy' to be synonymous with `internal energy' due to the exclusion of work done with changing volume.  The equation used here is the shallow-enthalpy:
 \begin{align}
-  \rho \frac{\partial H}{\partial t} = \frac{\partial}{\partial z} 
+  \frac{\partial H}{\partial t} = \frac{\partial}{\partial z} 
     \left( 
       \begin{Bmatrix}
         K_i, &\text{Cold}\\
         K_0, &\text{Temperate}
       \end{Bmatrix}
       \frac{\partial H}{\partial z} 
-    \right) + w \rho \frac{\partial H}{\partial z}.
+    \right) + w \frac{\partial H}{\partial z}.
 \end{align}
-Strain heating has been neglected and the advective term $w \rho\ \partial H / \partial z$ has been added.  The coefficient for cold ice is 
+Strain heating has been neglected and the advective term $w \partial_z H$ has been added.  The coefficient for cold ice is 
 \begin{align*}
-  K_i = \frac{k_i}{c_i},
+  K_i = \frac{k}{\rho c_i},
 \end{align*}
 and the coefficient for temperate ice is
 \begin{align*}
@@ -360,7 +362,7 @@ but when $T_s < T_w$, $\rho_{\dot{b}}^n$ is simply made to be $\rho_s$.
 %% Method ======================================================================
 \section{Finite Element Method}
 
-This section will focus on the enthalpy solution.  Solving these equations with FEniCS is done with Galerkin's method and requires finding the weak formulation of equation (9):
+This section will focus on the enthalpy solution.  Solving these equations with FEniCS is done with Galerkin's method and requires finding the weak formulation of Equation 9:
 \begin{align*}
     f_H = 0 =
     &\int_{\Omega} 
@@ -369,8 +371,8 @@ This section will focus on the enthalpy solution.  Solving these equations with 
         K_0
       \end{Bmatrix}
       \nabla^2 H \psi\ d \Omega 
-    + \int_{\Omega}w \rho \nabla H \psi\ d \Omega \\
-    &- \int_{\Omega} {\rho \frac{\partial H}{\partial t}} \psi\ d \Omega.
+    + \int_{\Omega} w \nabla H \psi\ d \Omega \\
+    &- \int_{\Omega} {\frac{\partial H}{\partial t}} \psi\ d \Omega.
 \end{align*}
 Here we have integrated the enthalpy equation over the entire domain, $\Omega$, and multiplied by a test function $\psi$.  Note that we have used the gradient operator.  Although our simulation is one-dimensional, it can easily be extended to two or three and thus we use the gradient operator for clarity of notation.  For the purposes of this paper, take $\nabla{\alpha} = \frac{\partial \alpha}{\partial z}$.  After integrating the diffusive term by parts the above equation becomes
 \begin{align*}
@@ -386,21 +388,21 @@ Here we have integrated the enthalpy equation over the entire domain, $\Omega$, 
           K_i\\
           K_0
         \end{Bmatrix}
-        \nabla H \nabla \psi\ d \Omega \\ 
-    &+ \int_{\Omega}w \rho \nabla H \psi\ d \Omega
-    - \int_{\Omega} {\rho \frac{\partial H}{\partial t}} \psi\ d \Omega.
+        \nabla H \nabla \psi\ d\Omega \\ 
+    &+ \int_{\Omega}w \nabla H \psi\ d\Omega
+    - \int_{\Omega} {\frac{\partial H}{\partial t}} \psi\ d\Omega.
 \end{align*}
 The boundary surfaces ($\Gamma$) of our problem are all Dirichlet or free-Neumann, and thus the boundary term is required to vanish, i.e., $\int_{\Gamma} \nabla H \psi\ d \Gamma = 0$.  Our final residual is
 \begin{align}
     f_H =
-    &\int_{\Omega}w \rho \nabla H \psi\ d \Omega
+    &\int_{\Omega}w \nabla H \psi\ d\Omega
     - \int_{\Omega} 
         \begin{Bmatrix}
           K_i\\
           K_0
         \end{Bmatrix}
         \nabla H \nabla \psi\ d \Omega \notag \\ 
-    &- \int_{\Omega} {\rho \frac{\partial H}{\partial t}} \psi\ d \Omega.
+    &- \int_{\Omega} {\frac{\partial H}{\partial t}} \psi\ d \Omega.
 \end{align}
 
 We can discretize the enthalpy time-differential with the second-order accurate formula
@@ -518,58 +520,65 @@ The age of firn is described with the equation
 \end{align}
 Because this equation is purely advective, upwinding is needed; the method chosen here is \emph{Taylor-Galerkin} and is described in \emph{Codina} [1997].  The Taylor series expansion of $w$ is
 \begin{align*}
-  a^{k+1} = a^{k} + \frac{\partial a^k}{\partial t}\Delta t + 
+  a^{k+1} = a^{k} + \frac{\partial a^{k+\theta}}{\partial t}\Delta t + 
             \frac{1}{2}\frac{\partial^2 a^{k+\theta}}{\partial t^2}\Delta t^2 + 
-            \mathrm{O} (\Delta t^3).
+            \mathcal{O} (\Delta t^3).
 \end{align*}
-Replacing the time partials with the previous equation and eliminating the $\Delta t^3$ term, we have
+Replacing the time partials with Equation 16 and eliminating the $\Delta t^3$ term, we have
 \begin{align*}
-  a^{k+1} = a^{k} + \left[1 - w \nabla{a}^k \right] \Delta t
+  a^{k+1} = a^{k} + \left[1 - w \nabla{a}^{k+\theta} \right] \Delta t
             - \frac{1}{2}\frac{\partial}{\partial t}
               \left[1 - w \nabla{a}^{k+\theta} \right] \Delta t^2. 
 \end{align*}
 Rearranging and simplifying,
 \begin{align*}
-  \frac{a^{k+1} - a^{k}}{\Delta t} = 1 - w \nabla{a}^k
-        - \frac{w \Delta t}{2} 
-          \left( \nabla \frac{\partial a^{k+\theta}}{\partial t} \right).
+  \frac{a^{k+1} - a^{k}}{\Delta t} = 1 - w \nabla{a}^{k+\theta}
+    - \frac{1}{2} \left[\frac{\partial w}{\partial t} \nabla{a}^{k+\theta}
+      + w \nabla{\frac{\partial a^{k+\theta}}{\partial t}} \right] \Delta t. 
 \end{align*}
 The time differential in the last term can again be replaced, 
 \begin{align*}
-  \frac{a^{k+1} - a^{k}}{\Delta t} = 1 - w \nabla{a}^k
-        - \frac{w \Delta t}{2} 
-          \left( \nabla [1 - w \nabla a^{k+\theta}] \right),
+  \frac{a^{k+1} - a^{k}}{\Delta t} = 1 - w \nabla{a}^{k+\theta}
+  - \frac{\Delta t}{2} \left[\frac{\partial w}{\partial t} \nabla{a}^{k+\theta}
+    + w \nabla \left[1 - w \nabla{a^{k+\theta}} \right] \right],
 \end{align*}
 reduced to
 \begin{align*}
-  \frac{a^{k+1} - a^{k}}{\Delta t} &= 1 - w \nabla{a}^k
-        + \frac{w \Delta t}{2} 
-          \left( \nabla [w \nabla a^{k+\theta}] \right),
+  \frac{a^{k+1} - a^{k}}{\Delta t} = 1 - w \nabla{a}^{k+\theta}
+  - \frac{\Delta t}{2} \left[\frac{\partial w}{\partial t} \nabla{a}^{k+\theta}
+    - w \nabla \left[ w \nabla{a^{k+\theta}} \right] \right],
 \end{align*}
 and finally evaluated using the product rule as
 \begin{align*}
-  \frac{a^{k+1} - a^{k}}{\Delta t} = &1 - w \nabla{a}^k\\
+  \frac{a^{k+1} - a^{k}}{\Delta t} = &1 - w \nabla{a}^{k+\theta} 
+    - \frac{\Delta t}{2} \frac{\partial w}{\partial t} \nabla a^{k+\theta} \\
         &+ \frac{w \Delta t}{2} 
           \left( w \nabla^2 a^{k+\theta} + \nabla w \nabla a^{k+\theta} \right).
 \end{align*}
 After moving all the terms to one side, multiplying by the test function $\xi$, and integrating over $\Omega$ we have
 \begin{align*}
-  f_a = \int_{\Omega} \frac{a^{k+1} - a^{k}}{\Delta t}\xi\ d\Omega - 
-      \int_{\Omega} 1\xi\ d\Omega
-  + \int_{\Omega} w \nabla{a}^k \xi\ d\Omega \\
+  f_a = 
+  &+ \int_{\Omega} \frac{a^{k+1} - a^{k}}{\Delta t}\xi\ d\Omega 
+  - \int_{\Omega} 1\xi\ d\Omega
+  + \int_{\Omega} w \nabla{a}^{k+\theta} \xi\ d\Omega \\
+  &- \int_{\Omega} \frac{\Delta t}{2} \frac{\partial w}{\partial t} 
+    \nabla a^{k+\theta} \xi\ d\Omega 
   - \int_{\Omega} \frac{w^2 \Delta t}{2} 
-    \nabla^2 a^{k+\theta} \xi\ d\Omega.
-  - \int_{\Omega} \frac{w \Delta t}{2} 
+    \nabla^2 a^{k+\theta} \xi\ d\Omega \\
+  &- \int_{\Omega} \frac{w \Delta t}{2} 
     \nabla w \nabla a^{k+\theta} \xi\ d\Omega.
 \end{align*}
 Integrating the second to last term by parts and disregarding the boundary term results in
 \begin{align*}
-  f_a = \int_{\Omega} \frac{a^{k+1} - a^{k}}{\Delta t}\xi\ d\Omega - 
-      \int_{\Omega} 1\xi\ d\Omega
-  + \int_{\Omega} w \nabla{a}^k \xi\ d\Omega \\
+  f_a = 
+  &+ \int_{\Omega} \frac{a^{k+1} - a^{k}}{\Delta t}\xi\ d\Omega 
+  - \int_{\Omega} 1\xi\ d\Omega
+  + \int_{\Omega} w \nabla{a}^{k+\theta} \xi\ d\Omega \\
+  &- \int_{\Omega} \frac{\Delta t}{2} \frac{\partial w}{\partial t} 
+    \nabla a^{k+\theta} \xi\ d\Omega 
   + \int_{\Omega} \frac{w^2 \Delta t}{2} 
-    \nabla a^{k+\theta} \cdot \nabla \xi\ d\Omega.
-  - \int_{\Omega} \frac{w \Delta t}{2} 
+    \nabla a^{k+\theta} \cdot \nabla \xi\ d\Omega \\
+  &- \int_{\Omega} \frac{w \Delta t}{2} 
     \nabla w \nabla a^{k+\theta} \xi\ d\Omega.
 \end{align*}
 This final residual may be created in FEniCS as:
@@ -580,13 +589,14 @@ da    = TrialFunction(V)
 xi    = TestFunction(V)
 a_1   = Function(V)
 
-theta = 0.5
+theta = 0.5 
 a_mid = theta*a + (1-theta)*a_1
-f_a   = (a - a_1)/dt*xi*dx 
-        - 1.*xi*dx 
-        + w*grad(a_mid)*xi*dx 
-        + w**2*dt/2*grad(a_mid)*grad(xi)*dx 
-        - w*grad(w)*dt/2*grad(a_mid)*xi*dx
+f_a   = + (a - a_1)/dt * xi * dx \
+        - 1 * xi * dx \
+        + w * a_mid.dx(0) * xi * dx \
+        - 0.5 * (w - w_1) * a_mid.dx(0) * xi * dx \
+        + w**2 * dt/2 * inner(a_mid.dx(0), xi.dx(0)) * dx \
+        - w * w.dx(0) * dt/2 * a_mid.dx(0) * xi * dx
 \end{python}
 
 
@@ -837,7 +847,6 @@ This model is a good start towards accurately modeling the densification of firn
 \end{figure}
 
 
-\newpage
 %% Bibliography ================================================================
 \begin{thebibliography}{1}
 
