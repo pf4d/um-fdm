@@ -52,6 +52,7 @@ class Plot():
     Initialize plots with firn object as input.
     """   
     self.spy  = firn.const.spy
+    Tw        = firn.const.Tw
     self.firn = firn
      
     # x-values :
@@ -72,8 +73,8 @@ class Plot():
     zmax   = zs + (zs - zb) / 5                   # max z-coord
     zmin   = zb                                   # min z-coord
 
-    Tmin   = -65                                  # T x-coord min
-    Tmax   = -35                                  # T x-coord max
+    Tmin   = firn.Tavg - Tw - 15                  # T x-coord min
+    Tmax   = firn.Tavg - Tw + 15                  # T x-coord max
     Th     = Tmin + 0.1*(Tmax - Tmin) / 2         # T height x-coord
     Tz     = zmax - 0.15*(zmax - zmin) / 2        # z-coord of Ts
 
@@ -86,7 +87,7 @@ class Plot():
     wh     = wMin + 0.1*(wMax - wMin) / 2
 
     aMin   = 0.0
-    aMax   = 1000.0
+    aMax   = 400.0
     #kh     = kMin + 0.1*(kMax - kMin) / 2
 
     self.fig   = figure(figsize=(15,6))
@@ -104,7 +105,7 @@ class Plot():
     self.wax.axis([wMin, wMax, zmin, zmax])
     self.wax.grid()
     self.aax.axis([aMin, aMax, zmin, zmax])
-    self.aax.xaxis.set_major_formatter(FixedOrderFormatter(3))
+    #self.aax.xaxis.set_major_formatter(FixedOrderFormatter(3))
     self.aax.grid()
 
     # plots :
