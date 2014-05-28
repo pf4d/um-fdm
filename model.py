@@ -62,7 +62,7 @@ n     = 100                    # num of z-positions
 rhos  = 360.                   # initial density at surface ..... kg/m^3
 
 # fmic experiment :
-adot  = 0.75                   # accumulation rate .............. m/a
+adot  = 0.25                   # accumulation rate .............. m/a
 Tavg  = Tw - 50.0              # average temperature ............ degrees K
 
 A     = rhoi/rhow * 1e3 * adot # surface accumulation ........... mm/a
@@ -70,7 +70,7 @@ cp    = 152.5 + 7.122*Tavg     # heat capacity of ice ........... J/(kg K)
 cp    = cpi                    # heat capacity of ice ........... J/(kg K)
 zs    = 0.                     # surface start .................. m
 zs_0  = zs                     # previous time-step surface ..... m
-zb    = -1000.                 # depth .......................... m
+zb    = -300.                  # depth .......................... m
 dz    = (zs - zb)/n            # initial z-spacing .............. m
 l     = dz*ones(n+1)           # height vector .................. m
 dt    = 10.0*spy               # time-step ...................... s
@@ -88,10 +88,7 @@ mesh  = IntervalMesh(n, zb, zs)
 z     = mesh.coordinates()[:,0]
 
 z, l, mesh, index = refine_mesh(mesh, divs=3, i=1/3.,  k=1/4.)
-z, l, mesh, index = refine_mesh(mesh, divs=1, i=1/8.,  k=1/4.)
-z, l, mesh, index = refine_mesh(mesh, divs=1, i=1/66., k=1/4.)
-z, l, mesh, index = refine_mesh(mesh, divs=1, i=1/4.,  k=1/4.)
-z, l, mesh, index = refine_mesh(mesh, divs=1, i=1/4.,  k=1/4.)
+z, l, mesh, index = refine_mesh(mesh, divs=1, i=1/10., k=1/4.)
 
 n      = len(l)                               # new number of nodes
 rhoin  = rhoin*ones(n)                        # initial density
@@ -103,7 +100,7 @@ V      = FunctionSpace(mesh, 'Lagrange', 1)   # function space for rho, T
 MV     = MixedFunctionSpace([V, V, V])        # mixed function space
 
 # enthalpy surface condition with cyclical 2-meter air temperature :
-code   = 'c*( Tavg + 10.0*(cos(2*omega*t) + 0.3*cos(4*omega*t)))'
+code   = 'c*( Tavg + 10.0*(sin(2*omega*t) + 0.3*sin(4*omega*t)))'
 Hs     = Expression(code, c=cp, Tavg=Tavg, omega=pi/spy, t=t0, T0=T0)
 
 # experimental surface density :

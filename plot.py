@@ -86,7 +86,7 @@ class Plot():
     wh     = wMin + 0.1*(wMax - wMin) / 2
 
     aMin   = 0.0
-    aMax   = 10000.0
+    aMax   = 1000.0
     #kh     = kMin + 0.1*(kMax - kMin) / 2
 
     self.fig   = figure(figsize=(15,6))
