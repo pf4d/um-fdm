@@ -51,15 +51,15 @@ class Plot():
     """
     Initialize plots with firn object as input.
     """   
-    self.spy  = firn.const.spy
-    Tw        = firn.const.Tw
+    self.spy  = firn.spy
+    Tw        = firn.Tw
     self.firn = firn
      
     # x-values :
-    T      = firn.T
-    rho    = firn.rho
-    w      = firn.w  * self.spy * 1e2 # cm/a
-    a      = firn.a /self.spy
+    T      = firn.Tp
+    rho    = firn.rhop
+    w      = firn.wp * self.spy * 1e2 # cm/a
+    a      = firn.ap /self.spy
     Ts     = firn.Ts - 273.15
 
     # y-value :

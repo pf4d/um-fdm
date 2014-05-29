@@ -18,158 +18,307 @@ from pylab import *
 from scipy.interpolate import interp1d
 from dolfin import *
 
-class Constants():
-  
-  def __init__(self):
-    """
-    Data structure for constants.
-    """
-    self.pi    = 3.141592653589793 # pi ............................. rad
-    self.g     = 9.81              # gravitational acceleration ..... m/s^2
-    self.R     = 8.3144621         # gas constant ................... J/(mol K)
-    self.spy   = 31556926.0        # seconds per year ............... s/a
-    self.rhoi  = 917.              # density of ice ................. kg/m^3
-    self.rhoin = self.rhoi         # initial density of column ...... kg/m^3
-    self.rhow  = 1000.             # density of water ............... kg/m^3
-    self.rhom  = 550.              # density at 15 m ................ kg/m^3
-    self.rhoc  = 815.              # density at critical value ...... kg/m^3
-    self.ki    = 2.1               # thermal conductivity of ice .... W/(m K)
-    self.cpi   = 2009.             # const. heat capacitity of ice .. J/(kg K)
-    self.kcHh  = 3.7e-9            # creep coefficient high ......... (m^3 s)/kg
-    self.kcLw  = 9.2e-9            # creep coefficient low .......... (m^3 s)/kg
-    self.kg    = 1.3e-7            # grain growth coefficient ....... m^2/s  
-    self.Ec    = 60e3              # act. energy for water in ice ... J/mol
-    self.Eg    = 42.4e3            # act. energy for grain growth ... J/mol
-    self.Tw    = 273.15            # triple point water ............. degrees K
-    self.T0    = 0.0               # reference temperature .......... K
-    self.beta  = 7.9e-8            # Clausius-Clapeyron ............. K/Pa
-    self.Lf    = 3.34e5            # latent heat of fusion .......... J/kg
-    self.Hsp   = self.cpi*self.Tw  # Enthalpy of ice at Tw .......... J/kg
-
 
 class Firn():
   """
   Data structure to hold firn model state data.
   """
-  def __init__(self, const, FEMdata, data, bcs, srf_exp, Tavg, 
-               rhos, adot, A, z, l, index, dt):
+  def __init__(self, Tavg, rhoin, rhos, adot, dt):
+    """
+    """
+    self.Tavg  = Tavg
+    self.rhoin = rhoin
+    self.rhos  = rhos
+    self.adot  = adot
+    self.dt    = dt
 
-    self.const   = const                     # constants
 
-    self.mesh    = FEMdata[0]                # mesh
-    self.V       = FEMdata[1]                # function space
-    self.MV      = FEMdata[2]                # Mixed function space
-    self.H_i     = FEMdata[3]                # initial enthalpy
-    self.rho_i   = FEMdata[4]                # initial density
-    self.w_i     = FEMdata[5]                # initial velocity
-    self.a_i     = FEMdata[6]                # initial age
-    self.h       = FEMdata[7]                # enthalpy, density, velocity
-    self.HF      = FEMdata[8]                # enthalpy
-    self.TF      = FEMdata[9]                # temperature
-    self.rhoF    = FEMdata[10]               # density
-    self.drhodtF = FEMdata[11]               # densification rate
-    self.wF      = FEMdata[12]               # velocity
-    self.mF      = FEMdata[13]               # mesh velocity
-    self.m_1     = FEMdata[14]               # previous mesh velocity
-    self.aF      = FEMdata[15]               # age
-    self.h_1     = FEMdata[16]               # previous step's solution
-    self.a_1     = FEMdata[17]               # previous step's age
-    self.kF      = FEMdata[18]               # thermal conductivity
-    self.cF      = FEMdata[19]               # heat capacity
+  def set_geometry(self, sur, bed):
+    """
+    """
+    self.sur = sur
+    self.bed = bed
 
-    self.H       = data[0]                   # enthalpy
-    self.T       = data[1]                   # temperature
-    self.rho     = data[2]                   # density
-    self.drhodt  = data[3]                   # densification rate
-    self.a       = data[4]                   # age
-    self.w       = data[5]                   # vertical velocity
-    self.k       = data[6]                   # thermal conductivity
-    self.c       = data[7]                   # heat capacity
-    self.omega   = data[8]                   # percentage of water content
+  def generate_uniform_mesh(self, n):
+    """
+    """
+    mesh  = IntervalMesh(n, self.bed, self.sur)  # interval from sur to bed
+    z     = mesh.coordinates()[:,0]              # z-coordinates
+    index = argsort(z)                           # ordered z-coord index
     
-    self.Hbc     = bcs[0]
-    self.rhoBc   = bcs[1]
-    self.wbc     = bcs[2]
+    self.mesh  = mesh
+    self.z     = z
+    self.index = index
 
-    self.Hs      = srf_exp[0]
-    self.rhoS    = srf_exp[1]
-    self.wS      = srf_exp[2]
+    self.refine_mesh(divs=3, i=1/3.,  k=1/4.)
+    self.refine_mesh(divs=1, i=1/10., k=1/4.)
 
-    self.Tavg    = Tavg                      # average surface temperature
-    self.rhos    = rhos                      # initial density at surface
-    self.adot    = adot                      # accumulation rate
-    self.A       = A                         # surface accumulation
-    self.z       = z[index]                  # z-coordinates of mesh
-    self.l       = l                         # height vector
-    self.lini    = l                         # initial height vector
-    self.index   = index                     # index of ordered, refined mesh
-    self.dt      = dt                        # time step
+  def set_parameters(self, params):
+    """
+    """
+    self.params = params
+
+  def set_mesh(self, mesh):
+    """
+    """
+    self.mesh = mesh
+    z         = mesh.coordinates()[:,0]          # z-coordinates
+    index     = argsort(z)                       # ordered z-coord index
+    
+  def set_boundary_conditions(self, H_exp, rho_exp, w_exp):
+    """
+    """
+    # enthalpy surface condition :
+    self.H_S   = H_exp
+    
+    # density surface condition :
+    self.rho_S = rho_exp
+
+    # velocity surface condition :
+    self.w_S   = w_exp
+
+    # age surface condition (always zero at surface) :
+    self.age_S = Constant(0.0)
+
+  def refine_mesh(self, divs, i, k,  m=1):
+    """
+    splits the mesh a <divs> times.
+  
+    INPUTS:
+      divs - number of times to split mesh
+      i    - fraction of the mesh from the surface to split
+      k    - multiple to decrease i by each step to reduce the distance from the
+             surface to split
+      m    - counter used to keep track of calls
+  
+    """
+    mesh  = self.mesh
+    z     = mesh.coordinates()[:,0]
+    index = argsort(z)
+  
+    if m > divs :
+      z1         = z[index]           # z-coord with correct ordering
+      l          = np.diff(z1)        # distance between nodes
+      self.n     = len(z)             # new number of nodes
+      self.l     = l                  # height vector 
+      self.index = index              # index of ordered refined mesh
+      self.mesh  = mesh               # save the mesh
+      self.z     = z
+  
+    else :
+      zs = z[index][-1]
+      zb = z[index][0]
+  
+      cell_markers = CellFunction("bool", mesh)
+      cell_markers.set_all(False)
+      origin = Point(zs)
+      for cell in cells(mesh):
+        p  = cell.midpoint()
+        if p.distance(origin) < (zs - zb) * i:
+          cell_markers[cell] = True
+      mesh = refine(mesh, cell_markers)
+      self.mesh = mesh
+  
+      return self.refine_mesh(divs, k/i, k, m=m+1)
+
+  def initialize_variables(self):
+    """
+    Initializes the class's variables to default values that are then set
+    by the individually created model.
+    """
+    self.params.globalize_parameters(self) # make all the variables available 
+    
+    rhoin = self.rhoin
+    n     = self.n
+    cp    = self.cpi
+    T0    = self.T0
+    rhoi  = self.rhoi
+    rhow  = self.rhow
+    adot  = self.adot
+    spy   = self.spy
+    kcHh  = self.kcHh
+    Tavg  = self.Tavg
+
+    # create function spaces :
+    V      = FunctionSpace(self.mesh, 'Lagrange', 1) # function space
+    MV     = MixedFunctionSpace([V, V, V])           # mixed function space
+    
+    # surface Dirichlet boundary :
+    def surface(x, on_boundary):
+      return on_boundary and x[0] == self.sur
+    
+    # base Dirichlet boundary :
+    def base(x, on_boundary):
+      return on_boundary and x[0] == self.bed
+    
+    HBc   = DirichletBC(MV.sub(0), self.H_S,   surface)   # enthalpy of surface
+    rhoBc = DirichletBC(MV.sub(1), self.rho_S, surface)   # density of surface
+    wBc   = DirichletBC(MV.sub(2), self.w_S,   surface)   # velocity of surface
+    ageBc = DirichletBC(V,         self.age_S, surface)   # age of surface
+    
+    #===========================================================================
+    # Define variational problem spaces :
+    H_i    = interpolate(Constant(cp*(Tavg - T0)), V) # initial enthalpy vector
+    rho_i  = interpolate(Constant(rhoin), V)          # initial density vector
+    a_i    = interpolate(Constant(1.0), V)            # initial age vector
+    w_i    = interpolate(Constant(0.0), V)            # initial velocity vector
+    m      = interpolate(Constant(0.0), V)            # mesh velocity
+    m_1    = interpolate(Constant(0.0), V)            # prev. mesh velocity
+    
+    epi             = Function(MV)
+    h               = Function(MV)          # solution
+    H, rho, w       = split(h)              # solutions for H, rho
+    h_1             = Function(MV)          # previous solution
+    H_1, rho_1, w_1 = split(h_1)            # initial value functions
+    
+    dh              = TrialFunction(MV)     # trial function for solution
+    dH, drho, dw    = split(dh)             # trial functions for H, rho
+    j               = TestFunction(MV)      # test function in mixed space
+    psi, phi, eta   = split(j)              # test functions for H, rho
+    
+    a    = Function(V)                      # age solution / trial function
+    da   = TrialFunction(V)                 # trial function for age
+    xi   = TestFunction(V)                  # age test function
+    a_1  = Function(V)                      # previous age solution
+    
+    epi.vector().set_local(ones(3*n))
+    h_0 = project(as_vector([H_i,rho_i,w_i]), MV) # project inital values
+    h.vector().set_local(h_0.vector().array())    # initalize H, rho in solution
+    h_1.vector().set_local(h_0.vector().array())  # initalize in prev. sol
+    
+    a.vector().set_local(a_i.vector().array())    # initialize age in solution
+    a_1.vector().set_local(a_i.vector().array())  # initialize age in prev. sol
+    
+    bdot    = interpolate(Constant(rhoi * adot / spy), V)  # average annual acc
+    #c       = (152.5 + sqrt(152.5**2 + 4*7.122*H)) / 2    # Patterson 1994
+    Ta      = interpolate(Constant(Tavg), V)
+    c       = cp
+    k       = 2.1*(rho / rhoi)**2                          # Arthern 2008
+    Tcoef   = interpolate(Constant(1.0), V)                # T above Tw = 0.0
+    Kcoef   = interpolate(Constant(1.0), V)                # enthalpy coef.
+    rhoCoef = interpolate(Constant(kcHh), V)               # density coef.
+    T       = Tcoef * H / c                                # temperature
+    drhodt  = Function(V)
+    
+    #===========================================================================
+    self.V       = V                         # function space
+    self.MV      = MV                        # Mixed function space
+    
+    self.epi     = epi
+    
+    self.dh      = dh                        # trial function for solution
+    self.dH      = dH                        # trial function for H
+    self.drho    = drho                      # trial function for rho
+    self.dw      = dw                        # trial function for w
+    self.j       = j                         # test function in mixed space
+    self.psi     = psi                       # test function for H
+    self.phi     = phi                       # test function for rho
+    self.eta     = eta                       # test function for w
+     
+    self.da      = da                        # trial function for age
+    self.xi      = xi                        # age test function
+    
+    self.H_i     = H_i                       # initial enthalpy
+    self.rho_i   = rho_i                     # initial density
+    self.w_i     = w_i                       # initial velocity
+    self.a_i     = a_i                       # initial age
+    self.h       = h                         # enthalpy, density, velocity
+    self.H       = H                         # enthalpy
+    self.H_1     = H_1                       # previous enthalpy
+    self.T       = T                         # temperature
+    self.rho     = rho                       # density
+    self.rho_1   = rho_1                     # previous density
+    self.drhodt  = drhodt                    # densification rate
+    self.w       = w                         # velocity
+    self.w_1     = w_1                       # previous velocity
+    self.m       = m                         # mesh velocity
+    self.m_1     = m_1                       # previous mesh velocity
+    self.a       = a                         # age
+    self.h_1     = h_1                       # previous step's solution
+    self.a_1     = a_1                       # previous step's age
+    self.k       = k                         # thermal conductivity
+    self.c       = c                         # heat capacity
+    self.bdot    = bdot                      # average annual accumulation
+    self.Ta      = Ta                        # average surface temperature
+    self.Tcoef   = Tcoef                     # T above Tw = 0.0 coefficient
+    self.Kcoef   = Kcoef                     # enthalpy ceofficient
+    self.rhoCoef = rhoCoef                   # density ceofficient
+
+    self.Hp      = project(H, V).vector().array()[::-1]
+    self.Tp      = project(T, V).vector().array()[::-1]
+    self.rhop    = project(rho, V).vector().array()[::-1]
+    self.drhodtp = project(drhodt, V).vector().array()[::-1]
+    self.ap      = a.vector().array()[::-1]
+    self.wp      = project(w, V).vector().array()[::-1]
+    self.kp      = project(k, V).vector().array()[::-1]
+    self.cp      = project(c, V).vector().array()[::-1]
+    self.rhoinp  = self.rhop                 # initial density
+    self.omega   = zeros(n)                  # water content percent
+    self.agep    = zeros(n)                  # initial age
+    
+    self.HBc     = HBc                       # enthalpy b.c.
+    self.rhoBc   = rhoBc                     # density b.c.
+    self.wBc     = wBc                       # velocity b.c.
+    self.ageBc   = ageBc                     # age b.c.
+
+    self.A       = rhoi/rhow * 1e3 * adot    # surface accumulation .... mm/a
+    self.lini    = self.l                    # initial height vector
     self.t       = 0.0                       # initialize time
     
-    self.n       = len(self.H)               # system DOF
-    self.rhoin   = self.rho                  # initial density vector
-    self.zb      = z[index][0]               # base of firn
-    self.zs      = z[index][-1]              # surface of firn
-    self.zs_1    = self.zs                   # previous time-step surface  
-    self.zo      = self.zs                   # z-coordinate of initial surface
+    self.zb      = self.bed                  # base of firn
+    self.zs      = self.sur                  # surface of firn
+    self.zs_1    = self.sur                  # previous time-step surface  
+    self.zo      = self.sur                  # z-coordinate of initial surface
     self.ht      = [self.zs]                 # list of surface heights
     self.origHt  = [self.zo]                 # list of initial surface heights
-    self.Ts      = self.H[-1] / self.c[-1]   # temperature of surface
+    self.Ts      = self.Hp[-1] / self.cp[-1] # temperature of surface
 
-    self.porAll  = 0.0                       # porosity of column
-    self.por815  = 0.0                       # porosity to rhoc
-    self.z815    = 0.0                       # depth of rhoc
-    self.age815  = 0.0                       # age of rhoc
-
- 
+  
   def update_Hbc(self): 
     """
     Adjust the enthalpy at the surface.
     """
-    self.Hs.t      = self.t
-    self.Hs.c      = self.c[-1]
+    self.H_S.t      = self.t
+    self.H_S.c      = self.cp[-1]
     
   
   def update_rhoBc(self):
     """
     Adjust the density at the surface.
     """
-    self.rhoS.rhoi = self.rho[-1]
-    if self.Ts > self.const.Tw:
-      if domega[-1] > 0:
-        if self.rhoS.rhon < self.const.rhoi:
-          self.rhoS.rhon = self.rhoS.rhon + domega[-1]*self.const.rhow
+    self.rho_S.rhoi = self.rhop[-1]
+    if self.Ts > Tw:
+      if self.domega[-1] > 0:
+        if self.rho_S.rhon < self.rhoi:
+          self.rho_S.rhon = self.rho_S.rhon + self.domega[-1]*self.rhow
       else:
-        self.rhoS.rhon = self.rhoS.rhon + domega[-1]*83.0
+        self.rho_S.rhon = self.rho_S.rhon + self.domega[-1]*83.0
     else:
-      self.rhoS.rhon = self.rhos
+      self.rho_S.rhon = self.rhos
     ltop      = lnew[-1]
     dnew      = -self.w[-1]*dt
-    self.rhoS.dp = dnew/ltop
-    self.rhoS.Ts = self.T[-1]
+    self.rho_S.dp = dnew/ltop
+    self.rho_S.Ts = self.Tp[-1]
 
 
   def update_vars(self, t):
     """
     Project the variables onto the space V and update firn object.
     """
-    self.t      = t
-    rhoi        = self.const.rhoi
-    rhow        = self.const.rhow
-    spy         = self.const.spy
-    adot        = self.adot
+    self.t       = t
+    adot         = self.adot
 
-    self.H      = project(self.HF, self.V).vector().array()[::-1]
-    self.T      = project(self.TF, self.V).vector().array()[::-1]
-    self.rho    = project(self.rhoF, self.V).vector().array()[::-1]
-    self.drhodt = project(self.drhodtF, self.V).vector().array()[::-1]
-    self.a      = self.aF.vector().array()[::-1]
-    self.w      = project(self.wF, self.V).vector().array()[::-1]
-    #self.k      = project(self.kF, self.V).vector().array()[::-1]
-    #self.c      = project(self.cF, self.V).vector().array()[::-1]
+    self.Hp      = project(self.H, self.V).vector().array()[::-1]
+    self.Tp      = project(self.T, self.V).vector().array()[::-1]
+    self.rhop    = project(self.rho, self.V).vector().array()[::-1]
+    self.drhodtp = project(self.drhodt, self.V).vector().array()[::-1]
+    self.ap      = self.a.vector().array()[::-1]
+    self.wp      = project(self.w, self.V).vector().array()[::-1]
+    #self.kp      = project(self.k, self.V).vector().array()[::-1]
+    #self.cp      = project(self.c, self.V).vector().array()[::-1]
     
-    self.Ts     = self.H[-1] / self.c[-1]
-    self.A      = rhoi/rhow * 1e3 * adot
+    self.Ts     = self.Hp[-1] / self.cp[-1]
+    self.A      = self.rhoi/self.rhow * 1e3 * adot
 
 
   def update_height_history(self):
@@ -180,9 +329,9 @@ class Firn():
 
     # calculate the new height of original surface by interpolating the 
     # vertical speed from w and keeping the ratio intact :
-    interp  = interp1d(self.z, self.w,
+    interp  = interp1d(self.z, self.wp,
                        bounds_error=False,
-                       fill_value=self.w[0])
+                       fill_value=self.wp[0])
     zint    = array([self.zo])
     wzo     = interp(zint)[0]
     dt      = self.dt
@@ -206,7 +355,7 @@ class Firn():
     interval :
     """
     zOld   = self.mesh.coordinates()[:,0][self.index]
-    lnew   = append(0, self.lini) * self.rhoin / self.rho
+    lnew   = append(0, self.lini) * self.rhoin / self.rhop
     zSum   = self.zb
     zNew   = zeros(self.n)
     for i in range(self.n):
@@ -214,66 +363,70 @@ class Firn():
       zSum    += lnew[i]
     self.z = zNew
     self.l = lnew[1:]
-    self.m = (zNew - zOld) / self.dt
-    self.mF.vector().set_local(self.m)                 # update the mesh vel.
+    self.mp = (zNew - zOld) / self.dt
+    self.m.vector().set_local(self.mp)                 # update the mesh vel.
     self.mesh.coordinates()[:,0][self.index] = self.z  # update the mesh coord.
     self.mesh.bounding_box_tree().build(self.mesh)     # rebuild the mesh tree
 
 
-  def adjust_vectors(self, Kcoef, Tcoef, rhoCoef):
+  def adjust_vectors(self):
     """
     Adjust the vectors for enthalpy and density.
     """
     n    = self.n
-    kcHh = self.const.kcHh 
-    kcLw = self.const.kcLw 
-    Hsp  = self.const.Hsp  
-    Tw   = self.const.Tw   
-    T0   = self.const.T0   
-    Lf   = self.const.Lf   
-    rhow = self.const.rhow
+    Tw   = self.Tw
+    T0   = self.T0
+    Lf   = self.Lf
+    rhow = self.rhow
+    kcHh = self.kcHh
+    kcLw = self.kcLw
+    Hsp  = self.Hsp
 
     # find vector of T, rho :
-    self.H      = project(self.HF, self.V).vector().array()
-    self.rho    = project(self.rhoF, self.V).vector().array()
+    self.Hp     = project(self.H, self.V).vector().array()
+    self.rhop   = project(self.rho, self.V).vector().array()
 
     # update kc term in drhodt :
     # if rho >  550, kc = kcHigh
     # if rho <= 550, kc = kcLow
     # with parameterizations given by ligtenberg et all 2011
     rhoCoefNew          = ones(n)
-    rhoHigh             = where(self.rho >  550)[0]
-    rhoLow              = where(self.rho <= 550)[0]
+    rhoHigh             = where(self.rhop >  550)[0]
+    rhoLow              = where(self.rhop <= 550)[0]
     rhoCoefNew[rhoHigh] = kcHh * (2.366 - 0.293*ln(self.A))
     rhoCoefNew[rhoLow]  = kcLw * (1.435 - 0.151*ln(self.A))
-    rhoCoef.vector().set_local(rhoCoefNew)
+    self.rhoCoef.vector().set_local(rhoCoefNew)
   
     # update coefficients used by enthalpy :
-    Hhigh               = where(self.H >= Hsp)[0]
-    Hlow                = where(self.H <  Hsp)[0]
+    Hhigh               = where(self.Hp >= Hsp)[0]
+    Hlow                = where(self.Hp <  Hsp)[0]
     omegaNew            = zeros(n)
     TcoefNew            = ones(n)
     KcoefNew            = ones(n)
   
     KcoefNew[Hhigh]     = 1/10.0
-    TcoefNew[Hhigh]     = self.c[Hhigh] / self.H[Hhigh] * Tw
+    TcoefNew[Hhigh]     = self.cp[Hhigh] / self.Hp[Hhigh] * Tw
   
     # update water content and density :
-    omegaNew[Hhigh]     = (self.H[Hhigh] - self.c[Hhigh]*(Tw - T0)) / Lf
+    omegaNew[Hhigh]     = (self.Hp[Hhigh] - self.cp[Hhigh]*(Tw - T0)) / Lf
     domega              = omegaNew - self.omega          # water content chg.
     domPos              = where(domega >  0)[0]          # water content inc.
     domNeg              = where(domega <= 0)[0]          # water content dec.
     rhoNotLiq           = where(self.rho < rhow)[0]      # density < water
     rhoInc              = intersect1d(domPos, rhoNotLiq) # where rho can inc.
-    self.rho[rhoInc]    = self.rho[rhoInc] + domega[rhoInc]*rhow 
-    self.rho[domNeg]    = self.rho[domNeg] + domega[domNeg]*83.0
+    self.rhop[rhoInc]   = self.rhop[rhoInc] + domega[rhoInc]*rhow 
+    self.rhop[domNeg]   = self.rhop[domNeg] + domega[domNeg]*83.0
+
+    print self.H, self.rho_i, self.w
   
     # update the dolfin vectors :
-    self.rho_i.vector().set_local(self.rho)
-    h_0 = project(as_vector([self.HF, self.rho_i, self.wF]), self.MV)
+    self.rho_i.vector().set_local(self.rhop)
+    h_0 = project(as_vector([self.H, self.rho_i, self.w]), self.MV)
     self.h.vector().set_local(h_0.vector().array())
-    Kcoef.vector().set_local(KcoefNew)
-    Tcoef.vector().set_local(TcoefNew)
+    self.Kcoef.vector().set_local(KcoefNew)
+    self.Tcoef.vector().set_local(TcoefNew)
+    
+    self.domega = domega
 
 
   def set_ini_conv(self, ex):
@@ -304,113 +457,6 @@ class Firn():
     self.h_1.vector().set_local(h_0.vector().array())
     self.aF.vector().set_local(self.a)
     self.a_1.vector().set_local(self.a)
-
-
-def refine_mesh(mesh, divs, i, k,  m=1):
-  """
-  splits the mesh a given number of times.
-
-  INPUTS:
-    mesh - mesh to refine
-    divs - number of times to split mesh
-    i    - fraction of the mesh from the surface to split
-    k    - multiple to decrease i by each step to reduce the distance from the
-           surface to split
-    m    - counter used to keep track of calls
-  OUTPUTS:
-   tuple (z, l, mesh, index) - refined z-coordinates, cell height vector, 
-                               mesh, and index of sorted mesh respectively
-
-  """
-  z     = mesh.coordinates()[:,0]
-  index = argsort(z)
-
-  if m > divs :
-    z1    = z[index]                  # z-coord with correct ordering
-    #z2    = z1[1:]                    # one up from z1
-    #z2    = append(z2, z2[-1])
-    #l     = z2 - z1
-    l     = np.diff(z1)
-    return z, l, mesh, index
-
-  else :
-    zs = z[index][-1]
-    zb = z[index][0]
-
-    cell_markers = CellFunction("bool", mesh)
-    cell_markers.set_all(False)
-    origin = Point(zs)
-    for cell in cells(mesh):
-      p  = cell.midpoint()
-      if p.distance(origin) < (zs - zb) * i:
-        cell_markers[cell] = True
-    mesh = refine(mesh, cell_markers)
-
-    return refine_mesh(mesh, divs, k/i, k, m=m+1)
-
-
-def project_vars(V, H, T, rho, drhodt, a, w, k, c, omega):
-  """
-  Project the variables onto the space V and update firn object.
-  """
-  Hplot      = project(H, V).vector().array()[::-1]
-  Tplot      = project(T, V).vector().array()[::-1]
-  rhoplot    = project(rho, V).vector().array()[::-1]
-  drhodtplot = project(drhodt, V).vector().array()[::-1]
-  aplot      = a.vector().array()[::-1]
-  wplot      = project(w, V).vector().array()[::-1]
-  kplot      = project(k, V).vector().array()[::-1]
-  cplot      = project(c, V).vector().array()[::-1]
-
-  return (Hplot, Tplot, rhoplot, drhodtplot, aplot, wplot, kplot, cplot, omega)
-
-
-def give_density():
-  """
-  get the density, use like :
-
-    s, d = give_density()
-    
-    x = d[0][:,0] + d[0][:,0]/(d[0][:,1] - d[0][:,0])
-    x = x/100.0
-    y = d[0][:,3]
-    
-    plot(x, y)
-    
-    f     = interp1d(x, y, bounds_error=False, fill_value=max(y))
-    xnew  = arange(min(x), max(x)+1, 0.01)
-    ynew  = f(xnew)
-    
-    plot(xnew, ynew, 'rx')
-    
-    show()  
-
-  """
-  f = open ('../../ice/data/OP60_CoreData/AllCores_Mass_Copy.txt', 'r')
-  header = f.readline()
-
-  data     = []
-  stations = []
-  temp     = []
-  
-  first = f.readline().split()
-  temp.append(double(first[1:]))
-  stations.append(first[0])
-
-  for line in f.readlines():
-    line    = line.split()
-    station = line[0]
-    dv      = double(line[1:])      # convert data values to doubles
-    if station == stations[-1]:
-      temp.append(dv)
-    else:
-      stations.append(station)
-      data.append(array(temp))
-      temp = []
-    
-  data.append(array(temp))
-
-  return stations, array(data)
 
 
 
