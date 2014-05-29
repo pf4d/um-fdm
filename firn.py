@@ -14,7 +14,7 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 import os.path
-from numpy import *
+from pylab import *
 from scipy.interpolate import interp1d
 from dolfin import *
 
@@ -69,11 +69,13 @@ class Firn():
     self.rhoF    = FEMdata[10]               # density
     self.drhodtF = FEMdata[11]               # densification rate
     self.wF      = FEMdata[12]               # velocity
-    self.aF      = FEMdata[13]               # age
-    self.h_1     = FEMdata[14]               # previous step's solution
-    self.a_1     = FEMdata[15]               # previous step's age
-    self.kF      = FEMdata[16]               # thermal conductivity
-    self.cF      = FEMdata[17]               # heat capacity
+    self.mF      = FEMdata[13]               # mesh velocity
+    self.m_1     = FEMdata[14]               # previous mesh velocity
+    self.aF      = FEMdata[15]               # age
+    self.h_1     = FEMdata[16]               # previous step's solution
+    self.a_1     = FEMdata[17]               # previous step's age
+    self.kF      = FEMdata[18]               # thermal conductivity
+    self.cF      = FEMdata[19]               # heat capacity
 
     self.H       = data[0]                   # enthalpy
     self.T       = data[1]                   # temperature
@@ -157,16 +159,16 @@ class Firn():
     spy         = self.const.spy
     adot        = self.adot
 
-    self.H      = project(self.HF, self.V).vector().array()
-    self.T      = project(self.TF, self.V).vector().array()
-    self.rho    = project(self.rhoF, self.V).vector().array()
-    self.drhodt = project(self.drhodtF, self.V).vector().array()
-    self.a      = self.aF.vector().array()
-    self.w      = project(self.wF, self.V).vector().array()
-    #self.k      = project(self.kF, self.V).vector().array()
-    #self.c      = project(self.cF, self.V).vector().array()
+    self.H      = project(self.HF, self.V).vector().array()[::-1]
+    self.T      = project(self.TF, self.V).vector().array()[::-1]
+    self.rho    = project(self.rhoF, self.V).vector().array()[::-1]
+    self.drhodt = project(self.drhodtF, self.V).vector().array()[::-1]
+    self.a      = self.aF.vector().array()[::-1]
+    self.w      = project(self.wF, self.V).vector().array()[::-1]
+    #self.k      = project(self.kF, self.V).vector().array()[::-1]
+    #self.c      = project(self.cF, self.V).vector().array()[::-1]
     
-    self.Ts     = self.H[0] / self.c[0]
+    self.Ts     = self.H[-1] / self.c[-1]
     self.A      = rhoi/rhow * 1e3 * adot
 
 
@@ -178,17 +180,17 @@ class Firn():
 
     # calculate the new height of original surface by interpolating the 
     # vertical speed from w and keeping the ratio intact :
-    interp     = interp1d(self.z, self.w,
-                          bounds_error=False,
-                          fill_value=self.w[0])
-    zint       = array([self.zo])
-    wzo        = interp(zint)[0]
-    dt         = self.dt
-    zs         = self.z[-1]
-    zb         = self.z[0]
-    zs_1       = self.zs_1
-    zo         = self.zo
-    self.zo    = zo * (zs - zb) / (zs_1 - zb) + wzo * dt
+    interp  = interp1d(self.z, self.w,
+                       bounds_error=False,
+                       fill_value=self.w[0])
+    zint    = array([self.zo])
+    wzo     = interp(zint)[0]
+    dt      = self.dt
+    zs      = self.z[-1]
+    zb      = self.z[0]
+    zs_1    = self.zs_1
+    zo      = self.zo
+    self.zo = zo * (zs - zb) / (zs_1 - zb) + wzo * dt
     
     # track original height :
     if self.zo > zb:
@@ -203,15 +205,19 @@ class Firn():
     If conserving the mass of the firn column, calculate height of each 
     interval :
     """
-    lnew     = self.lini*self.rhoin / self.rho
-    zSum     = self.zb
-    zTemp    = zeros(self.n)
-    for i in range(self.n)[1:]:
-      zTemp[i] = zSum - lnew[i]
+    zOld   = self.mesh.coordinates()[:,0][self.index]
+    lnew   = append(0, self.lini) * self.rhoin / self.rho
+    zSum   = self.zb
+    zNew   = zeros(self.n)
+    for i in range(self.n):
+      zNew[i]  = zSum + lnew[i]
       zSum    += lnew[i]
-    self.z   = zTemp
-    self.l   = lnew
+    self.z = zNew
+    self.l = lnew[1:]
+    self.m = (zNew - zOld) / self.dt
+    self.mF.vector().set_local(self.m)                 # update the mesh vel.
     self.mesh.coordinates()[:,0][self.index] = self.z  # update the mesh coord.
+    self.mesh.bounding_box_tree().build(self.mesh)     # rebuild the mesh tree
 
 
   def adjust_vectors(self, Kcoef, Tcoef, rhoCoef):
@@ -266,7 +272,7 @@ class Firn():
     self.rho_i.vector().set_local(self.rho)
     h_0 = project(as_vector([self.HF, self.rho_i, self.wF]), self.MV)
     self.h.vector().set_local(h_0.vector().array())
-    Kcoef.vector().set_local(KcoefNew)  #FIXME: erratic 
+    Kcoef.vector().set_local(KcoefNew)
     Tcoef.vector().set_local(TcoefNew)
 
 
@@ -320,10 +326,11 @@ def refine_mesh(mesh, divs, i, k,  m=1):
   index = argsort(z)
 
   if m > divs :
-    z1    = z[index]
-    z2    = z1[1:]
-    z2    = append(z2, z2[-1])
-    l     = z2 - z1
+    z1    = z[index]                  # z-coord with correct ordering
+    #z2    = z1[1:]                    # one up from z1
+    #z2    = append(z2, z2[-1])
+    #l     = z2 - z1
+    l     = np.diff(z1)
     return z, l, mesh, index
 
   else :
@@ -346,14 +353,14 @@ def project_vars(V, H, T, rho, drhodt, a, w, k, c, omega):
   """
   Project the variables onto the space V and update firn object.
   """
-  Hplot      = project(H, V).vector().array()
-  Tplot      = project(T, V).vector().array()
-  rhoplot    = project(rho, V).vector().array()
-  drhodtplot = project(drhodt, V).vector().array()
-  aplot      = a.vector().array()
-  wplot      = project(w, V).vector().array()
-  kplot      = project(k, V).vector().array()
-  cplot      = project(c, V).vector().array() 
+  Hplot      = project(H, V).vector().array()[::-1]
+  Tplot      = project(T, V).vector().array()[::-1]
+  rhoplot    = project(rho, V).vector().array()[::-1]
+  drhodtplot = project(drhodt, V).vector().array()[::-1]
+  aplot      = a.vector().array()[::-1]
+  wplot      = project(w, V).vector().array()[::-1]
+  kplot      = project(k, V).vector().array()[::-1]
+  cplot      = project(c, V).vector().array()[::-1]
 
   return (Hplot, Tplot, rhoplot, drhodtplot, aplot, wplot, kplot, cplot, omega)
 

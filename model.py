@@ -74,7 +74,7 @@ zb    = -100.                  # depth .......................... m
 dz    = (zs - zb)/n            # initial z-spacing .............. m
 l     = dz*ones(n+1)           # height vector .................. m
 dt    = 10.0*spy               # time-step ...................... s
-dt    = 0.05*spy               # time-step ...................... s
+dt    = 0.025*spy               # time-step ...................... s
 t0    = 0.0                    # begin time ..................... s
 tf    = sys.argv[1]            # end-time ....................... string
 tf    = float(tf)*spy          # end-time ....................... s
@@ -91,7 +91,7 @@ z     = mesh.coordinates()[:,0]
 z, l, mesh, index = refine_mesh(mesh, divs=3, i=1/3.,  k=1/4.)
 z, l, mesh, index = refine_mesh(mesh, divs=1, i=1/10., k=1/4.)
 
-n      = len(l)                               # new number of nodes
+n      = len(z)                               # new number of nodes
 rhoin  = rhoin*ones(n)                        # initial density
 omega  = zeros(n)                             # water content percent
 age    = zeros(n)                             # initial age
@@ -138,6 +138,8 @@ H_i        = interpolate(Constant(cp*(Tavg - T0)), V) # initial enthalpy vector
 rho_i      = interpolate(Constant(rhoin[0]), V)       # initial density vector
 a_i        = interpolate(Constant(1.0), V)            # initial age vector
 w_i        = interpolate(Constant(0.0), V)            # initial velocity vector
+m          = interpolate(Constant(0.0), V)            # mesh velocity
+m_1        = interpolate(Constant(0.0), V)            # prev. mesh velocity
 
 epi             = Function(MV)
 h               = Function(MV)                # solution
@@ -179,7 +181,7 @@ T         = Tcoef * H / c                                 # temperature
 theta     = 0.5
 H_mid     = theta*H + (1 - theta)*H_1
 f_H       = - k/(rho*c) * Kcoef * inner(H_mid.dx(0), psi.dx(0)) * dx \
-            + w * H_mid.dx(0) * psi * dx \
+            + (w-m) * H_mid.dx(0) * psi * dx \
             - (H - H_1)/dt * psi * dx
 
 
@@ -189,9 +191,9 @@ f_H       = - k/(rho*c) * Kcoef * inner(H_mid.dx(0), psi.dx(0)) * dx \
 #  -- = -- + w --
 #  dt   pt     pz
 # SUPG method phihat :        
-vnorm     = sqrt(dot(w, w) + 1e-10)
+vnorm     = sqrt(dot(w-m, w-m) + 1e-10)
 cellh     = CellSize(mesh)
-phihat    = phi + cellh/(2*vnorm)*dot(w, phi.dx(0))
+phihat    = phi + cellh/(2*vnorm)*dot(w-m, phi.dx(0))
 
 theta     = 0.878
 rho_mid   = theta*rho + (1 - theta)*rho_1
@@ -199,7 +201,7 @@ rhoCoef   = interpolate(Constant(kcHh), V)
 drhodt    = bdot*g*rhoCoef/kg * exp( -Ec/(R*T) + Eg/(R*Ta) ) * (rhoi - rho_mid)
 f_rho     = + (rho - rho_1)/dt * phi * dx \
             - drhodt * phihat * dx \
-            + w * rho_mid.dx(0) * phihat * dx 
+            + (w-m) * rho_mid.dx(0) * phihat * dx 
 
 # velocity residual :
 theta     = 0.878
@@ -219,10 +221,10 @@ theta     = 0.5
 a_mid     = theta*a + (1-theta)*a_1
 f_a       = + (a - a_1)/dt * xi * dx \
             - 1 * xi * dx \
-            + w * a_mid.dx(0) * xi * dx \
-            - 0.5 * (w - w_1) * a_mid.dx(0) * xi * dx \
-            + w**2 * dt/2 * inner(a_mid.dx(0), xi.dx(0)) * dx \
-            - w * w.dx(0) * dt/2 * a_mid.dx(0) * xi * dx
+            + (w-m) * a_mid.dx(0) * xi * dx \
+            - 0.5 * ((w-m) - (w_1-m_1)) * a_mid.dx(0) * xi * dx \
+            + (w-m)**2 * dt/2 * inner(a_mid.dx(0), xi.dx(0)) * dx \
+            - (w-m) * (w-m).dx(0) * dt/2 * a_mid.dx(0) * xi * dx
 
 # equation to be minimzed :
 f         = f_H + f_rho + f_w
@@ -235,7 +237,7 @@ df_a      = derivative(f_a, a, da) # age jacobian
 # project the initial functions onto the space and initialize firn object : 
 data    = project_vars(V, H, T, rho, drhodt, a, w, k, c, omega)
 FEMdata = (mesh, V, MV, H_i, rho_i, w_i, a_i, h, H, T, 
-           rho, drhodt, w, a, h_1, a_1, k, c)
+           rho, drhodt, w, m, m_1, a, h_1, a_1, k, c)
 firn    = Firn(const, FEMdata, data, bcs, srf_exp, Tavg, rhos, 
                adot, A, z, l, index, dt)
 
@@ -275,11 +277,13 @@ for t in times:
   # update firn object :
   firn.update_vars(t)
   firn.update_height_history()
-  #firn.update_height()
+  firn.update_height()
   
   # update model parameters :
-  if t != times[-1]: h_1.assign(h)
-  if t != times[-1]: a_1.assign(a)
+  if t != times[-1]:
+     h_1.assign(h)
+     a_1.assign(a)
+     m_1.assign(m)
 
   # update the plotting parameters :
   if bp:

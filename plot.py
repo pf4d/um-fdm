@@ -56,10 +56,10 @@ class Plot():
     self.firn = firn
      
     # x-values :
-    T      = firn.T[::-1]
-    rho    = firn.rho[::-1]
-    w      = firn.w[::-1]  * self.spy * 1e2 # cm/a
-    a      = firn.a[::-1] /self.spy
+    T      = firn.T
+    rho    = firn.rho
+    w      = firn.w  * self.spy * 1e2 # cm/a
+    a      = firn.a /self.spy
     Ts     = firn.Ts - 273.15
 
     # y-value :
@@ -151,10 +151,10 @@ class Plot():
     """
     Update the plot for each time step at time t.
     """    
-    T     = self.firn.T[::-1]
-    rho   = self.firn.rho[::-1]
-    w     = self.firn.w[::-1]  * self.spy * 1e2
-    a     = self.firn.a[::-1] /self.spy
+    T     = self.firn.T
+    rho   = self.firn.rho
+    w     = self.firn.w * self.spy * 1e2
+    a     = self.firn.a / self.spy
     z     = self.firn.z
     zo    = self.firn.zo
     Ts    = self.firn.Ts - 273.15
