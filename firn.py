@@ -19,7 +19,7 @@ from scipy.interpolate import interp1d
 from dolfin import *
 
 
-class Firn():
+class Firn(object):
   """
   Data structure to hold firn model state data.
   """
@@ -49,9 +49,6 @@ class Firn():
     self.mesh  = mesh
     self.z     = z
     self.index = index
-
-    self.refine_mesh(divs=3, i=1/3.,  k=1/4.)
-    self.refine_mesh(divs=1, i=1/10., k=1/4.)
 
   def set_parameters(self, params):
     """
@@ -189,11 +186,10 @@ class Firn():
     a.vector().set_local(a_i.vector().array())    # initialize age in solution
     a_1.vector().set_local(a_i.vector().array())  # initialize age in prev. sol
     
-    bdot    = interpolate(Constant(rhoi * adot / spy), V)  # average annual acc
-    #c       = (152.5 + sqrt(152.5**2 + 4*7.122*H)) / 2    # Patterson 1994
-    Ta      = interpolate(Constant(Tavg), V)
+    bdot    = Function(V)
+    Ta      = Function(V)
     c       = cp
-    k       = 2.1*(rho / rhoi)**2                          # Arthern 2008
+    k       = Function(V)
     Tcoef   = interpolate(Constant(1.0), V)                # T above Tw = 0.0
     Kcoef   = interpolate(Constant(1.0), V)                # enthalpy coef.
     rhoCoef = interpolate(Constant(kcHh), V)               # density coef.
@@ -328,14 +324,14 @@ class Firn():
     interp  = interp1d(self.z, self.wp,
                        bounds_error=False,
                        fill_value=self.wp[0])
-    zint    = array([self.zo])
-    wzo     = interp(zint)[0]
+    wzo     = interp(self.zo)
     dt      = self.dt
     zs      = self.z[-1]
     zb      = self.z[0]
     zs_1    = self.zs_1
     zo      = self.zo
-    self.zo = zo * (zs - zb) / (zs_1 - zb) + wzo * dt
+    #self.zo = zo * (zs - zb) / (zs_1 - zb) + wzo * dt
+    self.zo = zo + (zs - zs_1) + wzo * dt
     
     # track original height :
     if self.zo > zb:

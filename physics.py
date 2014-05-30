@@ -31,11 +31,21 @@ class Enthalpy(object):
     self.firn = firn
 
     mesh    = firn.mesh
+    V       = firn.V
+    spy     = firn.spy
+    cpi     = firn.cpi
+    adot    = firn.adot
 
     dh      = firn.dh                        # trial function for solution
     psi     = firn.psi                       # test function for H
     phi     = firn.phi                       # test function for rho
     eta     = firn.eta                       # test function for w
+  
+    A       = firn.A
+    kcHh    = firn.kcHh
+    kcLw    = firn.kcLw
+    Hsp     = firn.Hsp
+    Tw      = firn.Tw
     
     h       = firn.h                         # enthalpy, density, velocity
     H       = firn.H                         # enthalpy
@@ -50,7 +60,7 @@ class Enthalpy(object):
     k       = firn.k                         # thermal conductivity
     c       = firn.c                         # heat capacity
     bdot    = firn.bdot                      # average annual accumulation
-    Ta      = firn.Ta                        # average surface temperature
+    Tavg    = firn.Tavg                      # average surface temperature
     Tcoef   = firn.Tcoef                     # T above Tw = 0.0 coefficient
     Kcoef   = firn.Kcoef                     # enthalpy ceofficient
     rhoCoef = firn.rhoCoef                   # density ceofficient
@@ -62,10 +72,19 @@ class Enthalpy(object):
     Eg      = firn.Eg                        # act. energy for grain growth
     R       = firn.R                         # universal gas constant
     rhoi    = firn.rhoi                      # density of ice
+    
+    bdot    = interpolate(Constant(rhoi * adot / spy), V)  # average annual acc
+    #c       = (152.5 + sqrt(152.5**2 + 4*7.122*H)) / 2    # Patterson 1994
+    Ta      = interpolate(Constant(Tavg), V)
+    c       = interpolate(Constant(cpi), V)
+    k       = 2.1*(rho / rhoi)**2                          # Arthern 2008
+    #Tcoef   = conditional( lt(H, Hsp), 1.0, c / H * Tw )
+    T       = Tcoef * H / c                                # temperature
 
     # enthalpy residual :
     theta     = 0.5
     H_mid     = theta*H + (1 - theta)*H_1
+    #Kcoef     = conditional( lt(H, Hsp), 1.0, 1.0/10.0 )
     f_H       = - k/(rho*c) * Kcoef * inner(H_mid.dx(0), psi.dx(0)) * dx \
                 + (w-m) * H_mid.dx(0) * psi * dx \
                 - (H - H_1)/dt * psi * dx
@@ -75,7 +94,11 @@ class Enthalpy(object):
     #  dr   pr     pr
     #  -- = -- + w --
     #  dt   pt     pz
-    # SUPG method phihat :        
+    # SUPG method phihat :
+    #rhoCoef = conditional( gt(rho, 550), 
+    #                       kcHh * (2.366 - 0.293*ln(A)),
+    #                       kcLw * (1.435 - 0.151*ln(A)) )
+    
     vnorm     = sqrt(dot(w-m, w-m) + 1e-10)
     cellh     = CellSize(mesh)
     phihat    = phi + cellh/(2*vnorm)*dot(w-m, phi.dx(0))

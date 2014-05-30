@@ -55,8 +55,8 @@ dt    = 0.05*spy               # time-step ...................... s
 t0    = 0.0                    # begin time ..................... s
 tf    = sys.argv[1]            # end-time ....................... string
 tf    = float(tf)*spy          # end-time ....................... s
-numt  = (tf-t0)/dt             # number of time steps ........... none
-times = linspace(dt,tf,numt)   # array of times to evaluate ..... s
+numt  = (tf-t0)/dt + 1         # number of time steps ........... none
+times = linspace(t0,tf,numt)   # array of times to evaluate ..... s
 bp    = int(sys.argv[2])       # plot or not .................... bool
 
 # enthalpy surface condition with cyclical 2-meter air temperature :
@@ -80,6 +80,8 @@ w_exp   = Expression(code, rhoi=rhoi, adot=adot, spy=spy, rhos=rhos)
 firn = Firn(Tavg, rhoin, rhos, adot, dt)
 firn.set_geometry(zs, zb)
 firn.generate_uniform_mesh(n)
+firn.refine_mesh(divs=3, i=1/3.,  k=1/4.)
+firn.refine_mesh(divs=1, i=1/10., k=1/4.)
 firn.set_parameters(FirnParameters())
 firn.set_boundary_conditions(H_exp, rho_exp, w_exp)
 firn.initialize_variables()
@@ -108,7 +110,7 @@ params = {'newton_solver' : {'relaxation_parameter'    : 1.00,
                              'error_on_nonconvergence' : False,
                              'relative_tolerance'      : 1e-10,
                              'absolute_tolerance'      : 1e-10}}
-for t in times:
+for t in times[1:]:
   # update boundary conditions :
   firn.update_Hbc()
   #firn.update_rhoBc()
@@ -150,6 +152,6 @@ thours = ttot/60
 print "total time to process %i years: %.2e mins" % ((tf - t0)/spy, thours)
 
 # plot the surface height trend :
-#plot.plot_height(times, firn.ht, firn.origHt)
+plot.plot_height(times, firn.ht, firn.origHt)
 
 

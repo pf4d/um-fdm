@@ -131,7 +131,7 @@ class Plot():
     #self.phksp,   = self.kax.plot(kh*ones(len(z)), z, 'r+')
 
     # formatting :
-    self.fig_text = figtext(.85,.95,'Time = 0.0 yr')
+    self.fig.canvas.set_window_title('Time = 0.0 yr')
 
     self.Tax.set_title('Temperature')
     self.Tax.set_xlabel(r'$T\ [\degree \mathrm{C}]$')
@@ -145,6 +145,7 @@ class Plot():
 
     self.aax.set_title('Age')
     self.aax.set_xlabel(r'$a\ [\mathrm{a}]$')
+    tight_layout()
     
 
   def update_plot(self):
@@ -161,7 +162,7 @@ class Plot():
     Ts    = self.firn.Ts - Tw
     t     = self.firn.t / self.spy
 
-    self.fig_text.set_text('Time = %.2f yr' % t) 
+    self.fig.canvas.set_window_title('Time = %.2f yr' % t)
     
     self.Tsurf.set_text(r'Surface Temp: %.1f $\degree$C' % Ts)
     self.phT.set_xdata(T - Tw)
@@ -274,6 +275,8 @@ class Plot():
     Plot the height history of a column of firn for times x, current height ht, 
     and original surface height origHt.
     """
+    x /= self.spy
+
     # plot the surface height information :
     plot(x,               ht,     'k-',  lw=1.5, label=r'Surface Height')
     plot(x[:len(origHt)], origHt, 'k--', lw=1.5, label=r'Original Surface')

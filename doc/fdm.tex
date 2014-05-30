@@ -685,31 +685,28 @@ self.mesh.coordinates()[:,0][index] = self.z
 \end{python}
 The variable \pythoninline{index} is an array of positions corresponding to the correct ordering of the nodes, necessary after mesh refinement.  
 
-The height $z_o$ at time index $n$ of the original surface may be calculated as follows:
+The original surface height $z_o$ at time index $n$ may be calculated as follows:
 \begin{align*}
-  z_o^{n} = (z_s^0 - z_b) \frac{z_o^{n-1} - z_b}{z_s^{n-1} - z_b}
-           + w_{z_o} \Delta t.
+  z_o^{n} = z_o^{n-1} + (z_s^n - z_s^{n-1})  + w(z_o) \Delta t.
 \end{align*}
 This maintains the relative location of the original surface to the current surface and moves downward proportional to $w$.  This is accomplished in the class named \pythoninline{firn} with\par
 \begin{python}
 interp  = interp1d(self.z, self.w,
                    bounds_error=False,
                    fill_value=self.w[0])
-zint    = np.array([self.zo])
-wzo     = interp(zint)[0]
+wzo     = interp(self.zo)
 dt      = self.dt
 zs      = self.z[-1]
 zb      = self.z[0]
 zs_1    = self.zs_1
 zo      = self.zo
-self.zo = (zs - zb) * (zo - zb) / (zs_1 - zb) 
-          + wzo * dt
+self.zo = zo + (zs - zs_1) + wzo * dt
 \end{python}
-The indexes to \pythoninline{self.z} refers to the surface, \pythoninline{[-1]}, or the base, \pythoninline{[0]}.  For all operations it is convenient to store all the state data from the simulation in an object for ease of access.  It was for this purpose the \pythoninline{firn} class was created and contains the signature\par 
+The indexes to \pythoninline{self.z} refers to the surface, \pythoninline{[-1]}, or the base, \pythoninline{[0]}.  For all operations it is convenient to store all the state data from the simulation in an object for ease of access.  It was for this purpose the \pythoninline{Firn} class was created and contains the signature\par 
 \begin{python}
-firn(data, z, l, index, dt)
+Firn(Tavg, rhoin, rhos, adot, dt)
 \end{python}
-with \pythoninline{data} a tuple containing the main variables, \pythoninline{z} the node z-positions as defined above, \pythoninline{l} the height vector of the elements, \pythoninline{index} the index of re-ordered mesh locations, and \pythoninline{dt} the time step of the program, $\Delta t$.
+with \pythoninline{Tavg} the average surface temperature, \pythoninline{rhoin} the initial denisty, \pythoninline{rhos} the surface density, \pythoninline{adot} the ice equivalent surface accumulation rate, and \pythoninline{dt} the time step of the program, $\Delta t$.
 
 The variables for accumulation and surface temperature are the main driving forces in the simulation, and data from a specific site may be used in the model by interpolating the data in increments of $\Delta t$ and inserting the values into the equations.  This may be accomplished with the \pythoninline{set\_local(n)} method of the \pythoninline{vector} class, which takes as input a NumPy array \pythoninline{n} with indexes corresponding to node positions within the \pythoninline{mesh} object.  If the variable is used in the surface boundary condition, this may be updated within the FEniCS \pythoninline{Expression} object with the dot operator.
 
