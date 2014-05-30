@@ -54,14 +54,14 @@ class Enthalpy(object):
     Tcoef   = firn.Tcoef                     # T above Tw = 0.0 coefficient
     Kcoef   = firn.Kcoef                     # enthalpy ceofficient
     rhoCoef = firn.rhoCoef                   # density ceofficient
-    Ta      = firn.Ta  
-    dt      = firn.dt
-    g       = firn.g
-    kg      = firn.kg
-    Ec      = firn.Ec
-    Eg      = firn.Eg
-    R       = firn.R
-    rhoi    = firn.rhoi
+    Ta      = firn.Ta                        # average temperature 
+    dt      = firn.dt                        # timestep
+    g       = firn.g                         # gravitational acceleration
+    kg      = firn.kg                        # grain growth coefficient
+    Ec      = firn.Ec                        # act. energy for water in ice
+    Eg      = firn.Eg                        # act. energy for grain growth
+    R       = firn.R                         # universal gas constant
+    rhoi    = firn.rhoi                      # density of ice
 
     # enthalpy residual :
     theta     = 0.5
@@ -115,7 +115,8 @@ class Enthalpy(object):
     bcs   = [HBc, rhoBc, wBc]
 
     # newton's iterative method :
-    #h.vector().set_local(h.vector().array() + rand())
+    #epi = np.random.rand(self.firn.n)
+    #h.vector().set_local(h.vector().array() + epi)
     solve(self.f == 0, h, bcs, J=self.J, solver_parameters=params)
 
 
@@ -134,7 +135,7 @@ class Age(object):
     m_1     = firn.m_1                       # previous mesh velocity
     a       = firn.a                         # age
     a_1     = firn.a_1                       # previous step's age
-    dt      = firn.dt
+    dt      = firn.dt                        # timestep
     
     # age residual :
     # theta scheme (1=Backwards-Euler, 0.667=Galerkin, 0.878=Liniger, 

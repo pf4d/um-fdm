@@ -51,7 +51,7 @@ cp    = cpi                    # heat capacity of ice ........... J/(kg K)
 zs    = 0.                     # surface start .................. m
 zb    = -100.                  # depth .......................... m
 dt    = 10.0*spy               # time-step ...................... s
-dt    = 0.025*spy               # time-step ...................... s
+dt    = 0.05*spy               # time-step ...................... s
 t0    = 0.0                    # begin time ..................... s
 tf    = sys.argv[1]            # end-time ....................... string
 tf    = float(tf)*spy          # end-time ....................... s
@@ -74,6 +74,9 @@ rho_exp = Expression('rhon', rhon=rhos)
 code    = '- rhoi/rhos * adot / spy'
 w_exp   = Expression(code, rhoi=rhoi, adot=adot, spy=spy, rhos=rhos)
 
+
+#===============================================================================
+# initialize the firn object :
 firn = Firn(Tavg, rhoin, rhos, adot, dt)
 firn.set_geometry(zs, zb)
 firn.generate_uniform_mesh(n)

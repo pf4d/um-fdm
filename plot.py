@@ -151,19 +151,20 @@ class Plot():
     """
     Update the plot for each time step at time t.
     """    
-    T     = self.firn.T
-    rho   = self.firn.rho
-    w     = self.firn.w * self.spy * 1e2
-    a     = self.firn.a / self.spy
+    T     = self.firn.Tp
+    Tw    = self.firn.Tw
+    rho   = self.firn.rhop
+    w     = self.firn.wp * self.spy * 1e2
+    a     = self.firn.ap / self.spy
     z     = self.firn.z
     zo    = self.firn.zo
-    Ts    = self.firn.Ts - 273.15
+    Ts    = self.firn.Ts - Tw
     t     = self.firn.t / self.spy
 
     self.fig_text.set_text('Time = %.2f yr' % t) 
     
     self.Tsurf.set_text(r'Surface Temp: %.1f $\degree$C' % Ts)
-    self.phT.set_xdata(T - 273.15)
+    self.phT.set_xdata(T - Tw)
     self.phT.set_ydata(z)
     self.phTs.set_ydata(z[-1])
     self.phTs_0.set_ydata(zo)

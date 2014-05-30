@@ -272,7 +272,6 @@ class Firn():
     self.ht      = [self.zs]                 # list of surface heights
     self.origHt  = [self.zo]                 # list of initial surface heights
     self.Ts      = self.Hp[-1] / self.cp[-1] # temperature of surface
-
   
   def update_Hbc(self): 
     """
@@ -280,7 +279,6 @@ class Firn():
     """
     self.H_S.t      = self.t
     self.H_S.c      = self.cp[-1]
-    
   
   def update_rhoBc(self):
     """
@@ -300,7 +298,6 @@ class Firn():
     self.rho_S.dp = dnew/ltop
     self.rho_S.Ts = self.Tp[-1]
 
-
   def update_vars(self, t):
     """
     Project the variables onto the space V and update firn object.
@@ -319,7 +316,6 @@ class Firn():
     
     self.Ts     = self.Hp[-1] / self.cp[-1]
     self.A      = self.rhoi/self.rhow * 1e3 * adot
-
 
   def update_height_history(self):
     """
@@ -348,7 +344,6 @@ class Firn():
     # update the previous time steps' surface height :
     self.zs_1  = self.z[-1]
 
-
   def update_height(self):
     """
     If conserving the mass of the firn column, calculate height of each 
@@ -368,7 +363,6 @@ class Firn():
     self.mesh.coordinates()[:,0][self.index] = self.z  # update the mesh coord.
     self.mesh.bounding_box_tree().build(self.mesh)     # rebuild the mesh tree
 
-
   def adjust_vectors(self):
     """
     Adjust the vectors for enthalpy and density.
@@ -378,6 +372,7 @@ class Firn():
     T0   = self.T0
     Lf   = self.Lf
     rhow = self.rhow
+    rhoi = self.rhoi
     kcHh = self.kcHh
     kcLw = self.kcLw
     Hsp  = self.Hsp
@@ -412,13 +407,11 @@ class Firn():
     domega              = omegaNew - self.omega          # water content chg.
     domPos              = where(domega >  0)[0]          # water content inc.
     domNeg              = where(domega <= 0)[0]          # water content dec.
-    rhoNotLiq           = where(self.rho < rhow)[0]      # density < water
+    rhoNotLiq           = where(self.rhop < rhow)[0]     # density < water
     rhoInc              = intersect1d(domPos, rhoNotLiq) # where rho can inc.
     self.rhop[rhoInc]   = self.rhop[rhoInc] + domega[rhoInc]*rhow 
-    self.rhop[domNeg]   = self.rhop[domNeg] + domega[domNeg]*83.0
+    self.rhop[domNeg]   = self.rhop[domNeg] + domega[domNeg]*(rhow - rhoi)
 
-    print self.H, self.rho_i, self.w
-  
     # update the dolfin vectors :
     self.rho_i.vector().set_local(self.rhop)
     h_0 = project(as_vector([self.H, self.rho_i, self.w]), self.MV)
@@ -427,7 +420,6 @@ class Firn():
     self.Tcoef.vector().set_local(TcoefNew)
     
     self.domega = domega
-
 
   def set_ini_conv(self, ex):
     """
