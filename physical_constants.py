@@ -3,6 +3,7 @@ This module contains the classes that hold known
 physical constants relavent to the simulations and a class to create new 
 constants
 """
+from dolfin import Function
 
 class PhysicalConstant(float):
   """
@@ -10,21 +11,22 @@ class PhysicalConstant(float):
       
   :param float value: Value of the physical constant
   :param description: Description of the physical constant
-  :param units: Units of the physical constant
+  :param units:       Units of the physical constant
   """
-  def __new__(cls, value = 0.0, description = None, units = None):
+  def __new__(self, value = 0.0, description = None, units = None):
     """
     Creates a new PhysicalConstant object
     """
-    ii = float.__new__(cls,value)
+    ii = float.__new__(self,value)
     ii.description = description
     ii.units = units
     return ii
 
+
 class FirnParameters(object):
   """
   This class contains the default physical parameters used in modeling
-  the ice sheet.
+  the firn column.
   
   :param params: Optional dictionary object of physical parameters
   """
@@ -34,12 +36,12 @@ class FirnParameters(object):
     else:
       self.params = self.get_default_parameters()
 
-  def globalize_parameters(self, namespace=None):
+  def globalize_parameters(self, namespace):
     """
     This function converts the parameter dictinary into global PhysicalContstant
     objects
     
-    :param namespace: Optional namespace in which to place the global variables
+    :param namespace: Namespace in which to place the global variables
     """
     for param in self.params.iteritems():
       vars(namespace)[param[0]] = PhysicalConstant(param[1][0],
