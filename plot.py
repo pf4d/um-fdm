@@ -73,8 +73,8 @@ class Plot():
     zmax   = zs + (zs - zb) / 5                   # max z-coord
     zmin   = zb                                   # min z-coord
 
-    Tmin   = firn.Tavg - Tw - 15                  # T x-coord min
-    Tmax   = firn.Tavg - Tw + 15                  # T x-coord max
+    Tmin   = firn.Tavg - Tw - 10                  # T x-coord min
+    Tmax   = firn.Tavg - Tw + 10                  # T x-coord max
     Th     = Tmin + 0.1*(Tmax - Tmin) / 2         # T height x-coord
     Tz     = zmax - 0.15*(zmax - zmin) / 2        # z-coord of Ts
 
@@ -151,16 +151,18 @@ class Plot():
   def update_plot(self):
     """
     Update the plot for each time step at time t.
-    """    
-    T     = self.firn.Tp
-    Tw    = self.firn.Tw
-    rho   = self.firn.rhop
-    w     = self.firn.wp * self.spy * 1e2
-    a     = self.firn.ap / self.spy
-    z     = self.firn.z
-    zo    = self.firn.zo
-    Ts    = self.firn.Ts - Tw
-    t     = self.firn.t / self.spy
+    """
+    firn  = self.firn
+    index = firn.index 
+    T     = firn.Tp
+    Tw    = firn.Tw
+    rho   = firn.rhop
+    w     = firn.wp * self.spy * 1e2
+    a     = firn.ap / self.spy
+    z     = firn.z
+    zo    = firn.zo
+    Ts    = firn.Ts - Tw
+    t     = firn.t / self.spy
 
     self.fig.canvas.set_window_title('Time = %.2f yr' % t)
     

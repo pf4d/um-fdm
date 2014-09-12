@@ -13,10 +13,10 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-import os.path
-from pylab import *
+from pylab             import *
 from scipy.interpolate import interp1d
-from dolfin import *
+from fenics            import *
+from ufl.indexed       import Indexed
 
 
 class Firn(object):
@@ -36,18 +36,18 @@ class Firn(object):
   def set_geometry(self, sur, bed):
     """
     """
-    self.sur = sur
-    self.bed = bed
+    self.S = sur
+    self.B = bed
 
   def generate_uniform_mesh(self, n):
     """
     """
-    mesh  = IntervalMesh(n, self.bed, self.sur)  # interval from sur to bed
+    mesh  = IntervalMesh(n, self.B, self.S)      # interval from bed to surface
     z     = mesh.coordinates()[:,0]              # z-coordinates
     index = argsort(z)                           # ordered z-coord index
     
     self.mesh  = mesh
-    self.z     = z
+    self.z     = z[index]
     self.index = index
 
   def set_parameters(self, params):
@@ -90,32 +90,19 @@ class Firn(object):
   
     """
     mesh  = self.mesh
-    z     = mesh.coordinates()[:,0]
-    index = argsort(z)
+    S     = self.S
+    B     = self.B
   
-    if m > divs :
-      z1         = z[index]           # z-coord with correct ordering
-      l          = np.diff(z1)        # distance between nodes
-      self.n     = len(z)             # new number of nodes
-      self.l     = l                  # height vector 
-      self.index = index              # index of ordered refined mesh
-      self.mesh  = mesh               # save the mesh
-      self.z     = z
-  
-    else :
-      zs = z[index][-1]
-      zb = z[index][0]
-  
+    if m < divs :
       cell_markers = CellFunction("bool", mesh)
       cell_markers.set_all(False)
-      origin = Point(zs)
+      origin = Point(S)
       for cell in cells(mesh):
         p  = cell.midpoint()
-        if p.distance(origin) < (zs - zb) * i:
+        if p.distance(origin) < (S - B) * i:
           cell_markers[cell] = True
       mesh = refine(mesh, cell_markers)
       self.mesh = mesh
-  
       return self.refine_mesh(divs, k/i, k, m=m+1)
 
   def initialize_variables(self):
@@ -124,7 +111,14 @@ class Firn(object):
     by the individually created model.
     """
     self.params.globalize_parameters(self) # make all the variables available 
-    
+
+    self.z     = self.mesh.coordinates()[:,0]
+    self.index = argsort(self.z)
+    self.z     = self.z[self.index]
+    self.l     = np.diff(self.z)
+    self.n     = len(self.z)
+   
+    index = self.index 
     rhoin = self.rhoin
     n     = self.n
     cp    = self.cpi
@@ -142,11 +136,11 @@ class Firn(object):
     
     # surface Dirichlet boundary :
     def surface(x, on_boundary):
-      return on_boundary and x[0] == self.sur
+      return on_boundary and x[0] == self.S
     
     # base Dirichlet boundary :
     def base(x, on_boundary):
-      return on_boundary and x[0] == self.bed
+      return on_boundary and x[0] == self.B
     
     HBc   = DirichletBC(MV.sub(0), self.H_S,   surface)   # enthalpy of surface
     rhoBc = DirichletBC(MV.sub(1), self.rho_S, surface)   # density of surface
@@ -177,14 +171,14 @@ class Firn(object):
     da   = TrialFunction(V)                 # trial function for age
     xi   = TestFunction(V)                  # age test function
     a_1  = Function(V)                      # previous age solution
-    
-    epi.vector().set_local(ones(3*n))
+   
+    self.assign_variable(epi, 1.0)
     h_0 = project(as_vector([H_i,rho_i,w_i]), MV) # project inital values
-    h.vector().set_local(h_0.vector().array())    # initalize H, rho in solution
-    h_1.vector().set_local(h_0.vector().array())  # initalize in prev. sol
+    self.assign_variable(h, h_0)
+    self.assign_variable(h_1, h_0)
     
-    a.vector().set_local(a_i.vector().array())    # initialize age in solution
-    a_1.vector().set_local(a_i.vector().array())  # initialize age in prev. sol
+    self.assign_variable(a, 1.0)
+    self.assign_variable(a_1, 1.0)
     
     bdot    = Function(V)
     Ta      = Function(V)
@@ -240,14 +234,14 @@ class Firn(object):
     self.Kcoef   = Kcoef                     # enthalpy ceofficient
     self.rhoCoef = rhoCoef                   # density ceofficient
 
-    self.Hp      = project(H, V).vector().array()[::-1]
-    self.Tp      = project(T, V).vector().array()[::-1]
-    self.rhop    = project(rho, V).vector().array()[::-1]
-    self.drhodtp = project(drhodt, V).vector().array()[::-1]
-    self.ap      = a.vector().array()[::-1]
-    self.wp      = project(w, V).vector().array()[::-1]
-    self.kp      = project(k, V).vector().array()[::-1]
-    self.cp      = project(c, V).vector().array()[::-1]
+    self.Hp      = project(H, V).vector().array()[index]
+    self.Tp      = project(T, V).vector().array()[index]
+    self.rhop    = project(rho, V).vector().array()[index]
+    self.drhodtp = project(drhodt, V).vector().array()[index]
+    self.ap      = a.vector().array()[index]
+    self.wp      = project(w, V).vector().array()[index]
+    self.kp      = project(k, V).vector().array()[index]
+    self.cp      = project(c, V).vector().array()[index]
     self.rhoinp  = self.rhop                 # initial density
     self.omega   = zeros(n)                  # water content percent
     self.agep    = zeros(n)                  # initial age
@@ -261,13 +255,52 @@ class Firn(object):
     self.lini    = self.l                    # initial height vector
     self.t       = 0.0                       # initialize time
     
-    self.zb      = self.bed                  # base of firn
-    self.zs      = self.sur                  # surface of firn
-    self.zs_1    = self.sur                  # previous time-step surface  
-    self.zo      = self.sur                  # z-coordinate of initial surface
-    self.ht      = [self.zs]                 # list of surface heights
+    self.S_1     = self.S                    # previous time-step surface  
+    self.zo      = self.S                    # z-coordinate of initial surface
+    self.ht      = [self.S]                  # list of surface heights
     self.origHt  = [self.zo]                 # list of initial surface heights
     self.Ts      = self.Hp[-1] / self.cp[-1] # temperature of surface
+  
+  def assign_variable(self, u, var):
+    """
+    Manually assign the values from <var> to Function <u>.  <var> may be an
+    array, float, Expression, or Function.
+    """
+    if isinstance(u, Indexed):
+      u = project(u, self.Q)
+
+    if   isinstance(var, float) or isinstance(var, int):
+      u.vector()[:] = var
+    
+    elif isinstance(var, np.ndarray):
+      u.vector().set_local(var)
+      u.vector().apply('insert')
+    
+    elif isinstance(var, Expression):
+      u.interpolate(var)
+
+    elif isinstance(var, GenericVector):
+      u.vector().set_local(var.array())
+      u.vector().apply('insert')
+
+    elif isinstance(var, Function):
+      u.vector().set_local(var.vector().array())
+      u.vector().apply('insert')
+    
+    elif isinstance(var, Indexed):
+      u.vector().set_local(project(var, self.Q).vector().array())
+      u.vector().apply('insert')
+
+    elif isinstance(var, str):
+      File(var) >> u
+
+    else:
+      print "********************************************************"
+      print "assign_variable() function requires a Function, array, float," + \
+            " int, \nVector, Expression, Indexed, or string path to .xml, " + \
+            "not \n%s" % type(var)
+      print "********************************************************"
+      exit(1)
   
   def update_Hbc(self): 
     """
@@ -299,16 +332,18 @@ class Firn(object):
     Project the variables onto the space V and update firn object.
     """
     self.t       = t
+    V            = self.V
     adot         = self.adot
+    index        = self.index
 
-    self.Hp      = project(self.H, self.V).vector().array()[::-1]
-    self.Tp      = project(self.T, self.V).vector().array()[::-1]
-    self.rhop    = project(self.rho, self.V).vector().array()[::-1]
-    self.drhodtp = project(self.drhodt, self.V).vector().array()[::-1]
-    self.ap      = self.a.vector().array()[::-1]
-    self.wp      = project(self.w, self.V).vector().array()[::-1]
-    #self.kp      = project(self.k, self.V).vector().array()[::-1]
-    #self.cp      = project(self.c, self.V).vector().array()[::-1]
+    self.Hp      = self.H.vector().array()[index]
+    self.rhop    = self.rho.vector().array()[index]
+    self.wp      = self.w.vector().array()[index]
+    self.ap      = self.a.vector().array()[index]
+    self.Tp      = project(self.T, V).vector().array()[index]
+    #self.drhodtp = project(self.drhodt, self.V).vector().array()[index]
+    #self.kp      = project(self.k, self.V).vector().array()[index]
+    #self.cp      = project(self.c, self.V).vector().array()[index]
     
     self.Ts     = self.Hp[-1] / self.cp[-1]
     self.A      = self.rhoi/self.rhow * 1e3 * adot
@@ -328,7 +363,7 @@ class Firn(object):
     dt      = self.dt
     zs      = self.z[-1]
     zb      = self.z[0]
-    zs_1    = self.zs_1
+    zs_1    = self.S_1
     zo      = self.zo
     #self.zo = zo * (zs - zb) / (zs_1 - zb) + wzo * dt
     self.zo = zo + (zs - zs_1) + wzo * dt
@@ -338,16 +373,16 @@ class Firn(object):
       self.origHt.append(self.zo)
     
     # update the previous time steps' surface height :
-    self.zs_1  = self.z[-1]
+    self.S_1  = self.z[-1]
 
   def update_height(self):
     """
     If conserving the mass of the firn column, calculate height of each 
     interval :
     """
-    zOld   = self.mesh.coordinates()[:,0][self.index]
+    zOld   = self.z
     lnew   = append(0, self.lini) * self.rhoin / self.rhop
-    zSum   = self.zb
+    zSum   = self.B
     zNew   = zeros(self.n)
     for i in range(self.n):
       zNew[i]  = zSum + lnew[i]
@@ -355,7 +390,8 @@ class Firn(object):
     self.z = zNew
     self.l = lnew[1:]
     self.mp = (zNew - zOld) / self.dt
-    self.m.vector().set_local(self.mp)                 # update the mesh vel.
+    
+    self.assign_variable(self.m, self.mp)
     self.mesh.coordinates()[:,0][self.index] = self.z  # update the mesh coord.
     self.mesh.bounding_box_tree().build(self.mesh)     # rebuild the mesh tree
 
@@ -363,57 +399,59 @@ class Firn(object):
     """
     Adjust the vectors for enthalpy and density.
     """
-    n    = self.n
-    Tw   = self.Tw
-    T0   = self.T0
-    Lf   = self.Lf
-    rhow = self.rhow
-    rhoi = self.rhoi
-    kcHh = self.kcHh
-    kcLw = self.kcLw
-    Hsp  = self.Hsp
+    n     = self.n
+    Tw    = self.Tw
+    T0    = self.T0
+    Lf    = self.Lf
+    rhow  = self.rhow
+    rhoi  = self.rhoi
+    kcHh  = self.kcHh
+    kcLw  = self.kcLw
+    Hsp   = self.Hsp
+    index = self.index
 
     # find vector of T, rho :
-    self.Hp     = project(self.H, self.V).vector().array()
-    self.rhop   = project(self.rho, self.V).vector().array()
+    Hp     = self.H.vector().array()
+    rhop   = self.rho.vector().array()
 
     # update kc term in drhodt :
     # if rho >  550, kc = kcHigh
     # if rho <= 550, kc = kcLow
     # with parameterizations given by ligtenberg et all 2011
     rhoCoefNew          = ones(n)
-    rhoHigh             = where(self.rhop >  550)[0]
-    rhoLow              = where(self.rhop <= 550)[0]
+    rhoHigh             = where(rhop >  550)[0]
+    rhoLow              = where(rhop <= 550)[0]
     rhoCoefNew[rhoHigh] = kcHh * (2.366 - 0.293*ln(self.A))
     rhoCoefNew[rhoLow]  = kcLw * (1.435 - 0.151*ln(self.A))
-    self.rhoCoef.vector().set_local(rhoCoefNew)
+    self.assign_variable(self.rhoCoef, rhoCoefNew)
   
     # update coefficients used by enthalpy :
-    Hhigh               = where(self.Hp >= Hsp)[0]
-    Hlow                = where(self.Hp <  Hsp)[0]
+    Hhigh               = where(Hp > Hsp)[0]
+    Hlow                = where(Hp < Hsp)[0]
     omegaNew            = zeros(n)
     TcoefNew            = ones(n)
     KcoefNew            = ones(n)
   
-    KcoefNew[Hhigh]     = 1/10.0
-    TcoefNew[Hhigh]     = self.cp[Hhigh] / self.Hp[Hhigh] * Tw
+    KcoefNew[Hhigh]     = 1.0/10.0
+    KcoefNew[Hlow]      = 1.0
+    TcoefNew[Hhigh]     = self.cp[Hhigh] / Hp[Hhigh] * Tw
   
     # update water content and density :
-    omegaNew[Hhigh]     = (self.Hp[Hhigh] - self.cp[Hhigh]*(Tw - T0)) / Lf
+    omegaNew[Hhigh]     = (Hp[Hhigh] - self.cp[Hhigh]*(Tw - T0)) / Lf
     domega              = omegaNew - self.omega          # water content chg.
     domPos              = where(domega >  0)[0]          # water content inc.
     domNeg              = where(domega <= 0)[0]          # water content dec.
-    rhoNotLiq           = where(self.rhop < rhow)[0]     # density < water
+    rhoNotLiq           = where(rhop < rhow)[0]     # density < water
     rhoInc              = intersect1d(domPos, rhoNotLiq) # where rho can inc.
-    self.rhop[rhoInc]   = self.rhop[rhoInc] + domega[rhoInc]*rhow 
-    self.rhop[domNeg]   = self.rhop[domNeg] + domega[domNeg]*(rhow - rhoi)
+    rhop[rhoInc]        = rhop[rhoInc] + domega[rhoInc]*rhow 
+    rhop[domNeg]        = rhop[domNeg] + domega[domNeg]*(rhow - rhoi)
 
     # update the dolfin vectors :
-    self.rho_i.vector().set_local(self.rhop)
+    self.assign_variable(self.rho_i, rhop)
     h_0 = project(as_vector([self.H, self.rho_i, self.w]), self.MV)
-    self.h.vector().set_local(h_0.vector().array())
-    self.Kcoef.vector().set_local(KcoefNew)
-    self.Tcoef.vector().set_local(TcoefNew)
+    self.assign_variable(self.h, h_0)
+    #self.assign_variable(self.Kcoef, KcoefNew)
+    self.assign_variable(self.Tcoef, TcoefNew)
     
     self.domega = domega
 
@@ -431,20 +469,21 @@ class Firn(object):
     self.H     = genfromtxt("data/fmic/initial/initial" + ex + "/H.txt")
     self.lin   = genfromtxt("data/fmic/initial/initial" + ex + "/l.txt")
     
-    self.zs_1    = self.z[-1]                # previous time-step surface  
-    self.zo      = self.z[-1]                # z-coordinate of initial surface
-    self.ht      = [self.z[-1]]              # list of surface heights
-    self.origHt  = [self.z[-1]]              # list of initial surface heights
-    self.Ts      = self.H[-1] / self.c[-1]   # temperature of surface
+    self.S_1    = self.z[-1]                # previous time-step surface  
+    self.zo     = self.z[-1]                # z-coordinate of initial surface
+    self.ht     = [self.z[-1]]              # list of surface heights
+    self.origHt = [self.z[-1]]              # list of initial surface heights
+    self.Ts     = self.H[-1] / self.c[-1]   # temperature of surface
   
-    self.rho_i.vector().set_local(self.rho)
-    self.H_i.vector().set_local(self.H)
-    self.w_i.vector().set_local(self.w)
     h_0 = project(as_vector([self.H_i,self.rho_i,self.w_i]), self.MV)
-    self.h.vector().set_local(h_0.vector().array())
-    self.h_1.vector().set_local(h_0.vector().array())
-    self.aF.vector().set_local(self.a)
-    self.a_1.vector().set_local(self.a)
+    self.assign_variable(self.rho_i, self.rho)
+    self.assign_variable(self.H_i,   self.H)
+    self.assign_variable(self.w_i,   self.w)
+    self.assign_variable(self.h,     h_0)
+    self.assign_variable(self.h_1,   h_0)
+    self.assign_variable(self.h_1,   h_0)
+    self.assign_variable(self.aF,    self.a)
+    self.assign_variable(self.a_1,   self.a)
 
 
 

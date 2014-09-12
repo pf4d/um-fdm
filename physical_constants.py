@@ -63,7 +63,6 @@ class FirnParameters(object):
      'R'     : (8.3144621,   'gas constant',                  'J/(mol K)'),
      'spy'   : (31556926.0,  'seconds per year',              's/a'),
      'rhoi'  : (917.,        'density of ice',                'kg/m^3'),
-     'rhoin' : (917.,        'initial density of column',     'kg/m^3'),
      'rhow'  : (1000.,       'density of water',              'kg/m^3'),
      'rhom'  : (550.,        'density at 15 m',               'kg/m^3'),
      'rhoc'  : (815.,        'density at critical value',     'kg/m^3'),
