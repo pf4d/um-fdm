@@ -26,8 +26,8 @@ end time in years, second is boolean val to plot the solution or not.
 from numpy              import *
 from fenics             import *
 from plot               import *
-from firn               import *
-from solvers            import TransientSolver
+from firn_n             import *
+from solvers_n          import TransientSolver
 from physical_constants import *
 import sys
 import time
@@ -43,14 +43,14 @@ Tw    = 273.15                 # triple point water ............. degrees K
 n     = 100                    # num of z-positions
 rhos  = 360.                   # initial density at surface ..... kg/m^3
 rhoi  = 917.                   # density of ice ................. kg/m^3
-rhoin = rhoi                   # initial density at surface ..... kg/m^3
+rhoin = 700.                   # initial density at surface ..... kg/m^3
 adot  = 0.25                   # accumulation rate .............. m/a
 Tavg  = Tw - 5.0               # average temperature ............ degrees K
 
 cp    = 152.5 + 7.122*Tavg     # heat capacity of ice ........... J/(kg K)
 cp    = cpi                    # heat capacity of ice ........... J/(kg K)
 zs    = 0.                     # surface start .................. m
-zb    = -100.                  # depth .......................... m
+zb    = -40.0                  # depth .......................... m
 dt    = 1.0*spy                # time-step ...................... s
 dt    = 0.05*spy               # time-step ...................... s
 t0    = 0.0                    # begin time ..................... s
@@ -76,11 +76,13 @@ w_exp   = Expression(code, rhoi=rhoi, adot=adot, spy=spy, rhos=rhos)
 
 #===============================================================================
 # initialize the firn object :
-firn = Firn(Tavg, rhoi, rhos, adot, dt)
+firn = Firn(Tavg, rhoin, rhos, adot, dt)
 firn.set_geometry(zs, zb)
 firn.generate_uniform_mesh(n)
-firn.refine_mesh(divs=3, i=1/3.,  k=1/4.)
-firn.refine_mesh(divs=1, i=1/10., k=1/4.)
+firn.refine_mesh(divs=3, i=1/3.,  k=1/20.)
+#firn.refine_mesh(divs=1, i=1/10., k=1/4.)
+#firn.refine_mesh(divs=1, i=1/10., k=1/4.)
+#firn.refine_mesh(divs=1, i=1/10., k=1/4.)
 firn.set_parameters(FirnParameters())
 firn.set_boundary_conditions(H_exp, rho_exp, w_exp)
 firn.initialize_variables()

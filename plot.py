@@ -57,6 +57,7 @@ class Plot():
      
     # x-values :
     T      = firn.Tp
+    omega  = firn.omegap
     rho    = firn.rhop
     w      = firn.wp * self.spy * 1e2 # cm/a
     a      = firn.ap /self.spy
@@ -78,6 +79,9 @@ class Plot():
     Th     = Tmin + 0.1*(Tmax - Tmin) / 2         # T height x-coord
     Tz     = zmax - 0.15*(zmax - zmin) / 2        # z-coord of Ts
 
+    Omin   = 0.0
+    Omax   = 0.05
+
     rhoMin = 300                                  # rho x-coord min
     rhoMax = 1000                                 # rho x-coord max
     #rhoh   = rhoMin + 0.1*(rhoMax - rhoMin) / 2  # rho height x-coord
@@ -90,15 +94,18 @@ class Plot():
     aMax   = 400.0
     #kh     = kMin + 0.1*(kMax - kMin) / 2
 
-    self.fig   = figure(figsize=(15,6))
-    self.Tax   = self.fig.add_subplot(141)
-    self.rhoax = self.fig.add_subplot(142)
-    self.wax   = self.fig.add_subplot(143)
-    self.aax   = self.fig.add_subplot(144)
+    self.fig   = figure(figsize=(19,6))
+    self.Tax   = self.fig.add_subplot(151)
+    self.Oax   = self.fig.add_subplot(152)
+    self.rhoax = self.fig.add_subplot(153)
+    self.wax   = self.fig.add_subplot(154)
+    self.aax   = self.fig.add_subplot(155)
 
     # format : [xmin, xmax, ymin, ymax]
     self.Tax.axis([Tmin, Tmax, zmin, zmax])
     self.Tax.grid()
+    self.Oax.axis([Omin, Omax, zmin, zmax])
+    self.Oax.grid()
     self.rhoax.axis([rhoMin, rhoMax, zmin, zmax])
     self.rhoax.grid()
     self.rhoax.xaxis.set_major_formatter(FixedOrderFormatter(2))
@@ -114,6 +121,9 @@ class Plot():
     self.phTs,    = self.Tax.plot([Tmin, Tmax], [zs, zs], 'k-', lw=3)
     self.phTs_0,  = self.Tax.plot(Th, zo, 'ko')
     self.phTsp,   = self.Tax.plot(Th*ones(len(z)), z, 'r+')
+    
+    self.phO,     = self.Oax.plot(omega, z, '0.3', lw=1.5)
+    self.phOS,    = self.Oax.plot([Omin, Omax], [zs, zs], 'k-', lw=3)
     
     self.phrho,   = self.rhoax.plot(rho, z, '0.3', lw=1.5)
     self.phrhoS,  = self.rhoax.plot([rhoMin, rhoMax], [zs, zs], 'k-', lw=3)
@@ -137,6 +147,9 @@ class Plot():
     self.Tax.set_xlabel(r'$T\ [\degree \mathrm{C}]$')
     self.Tax.set_ylabel('Depth [m]')
 
+    self.Oax.set_title('Water Content')
+    self.Oax.set_xlabel(r'$\omega\ [\%]$')
+
     self.rhoax.set_title('Density')
     self.rhoax.set_xlabel(r'$\rho\ \left[\frac{\mathrm{kg}}{\mathrm{m}^3}\right]$')
     
@@ -155,6 +168,7 @@ class Plot():
     firn  = self.firn
     index = firn.index 
     T     = firn.Tp
+    omega = firn.omegap
     Tw    = firn.Tw
     rho   = firn.rhop
     w     = firn.wp * self.spy * 1e2
@@ -172,6 +186,10 @@ class Plot():
     self.phTs.set_ydata(z[-1])
     self.phTs_0.set_ydata(zo)
     self.phTsp.set_ydata(z)
+    
+    self.phO.set_xdata(omega)
+    self.phO.set_ydata(z)
+    self.phOS.set_ydata(z[-1])
     
     self.phrho.set_xdata(rho)
     self.phrho.set_ydata(z)

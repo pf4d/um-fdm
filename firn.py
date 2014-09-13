@@ -452,6 +452,7 @@ class Firn(object):
     self.assign_variable(self.h, h_0)
     #self.assign_variable(self.Kcoef, KcoefNew)
     self.assign_variable(self.Tcoef, TcoefNew)
+    self.assign_variable(self.omega, omegaNew)
     
     self.domega = domega
 

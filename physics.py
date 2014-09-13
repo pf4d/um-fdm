@@ -22,6 +22,7 @@ FEniCS solution to firn enthalpy / density profile.
 
 """
 from fenics import *
+from pylab  import intersect1d, where, zeros, ones
 
 class Enthalpy(object):
 
@@ -33,185 +34,32 @@ class Enthalpy(object):
 
     mesh    = firn.mesh
     V       = firn.V
-    spy     = firn.spy
-    cpi     = firn.cpi
-    adot    = firn.adot
 
-    dh      = firn.dh                        # trial function for solution
     psi     = firn.psi                       # test function for H
-    phi     = firn.phi                       # test function for rho
-    eta     = firn.eta                       # test function for w
   
-    A       = firn.A
-    kcHh    = firn.kcHh
-    kcLw    = firn.kcLw
-    Hsp     = firn.Hsp
-    Tw      = firn.Tw
-    
-    h       = firn.h                         # enthalpy, density, velocity
+    dH      = firn.dH
     H       = firn.H                         # enthalpy
     H_1     = firn.H_1                       # previous enthalpy
     T       = firn.T                         # temperature
     rho     = firn.rho                       # density
-    rho_1   = firn.rho_1                     # previous density
     w       = firn.w                         # velocity
-    w_1     = firn.w_1                       # previous step's velocity
     m       = firn.m                         # mesh velocity
-    h_1     = firn.h_1                       # previous step's solution
     k       = firn.k                         # thermal conductivity
     c       = firn.c                         # heat capacity
-    bdot    = firn.bdot                      # average annual accumulation
     Tavg    = firn.Tavg                      # average surface temperature
-    Tcoef   = firn.Tcoef                     # T above Tw = 0.0 coefficient
     Kcoef   = firn.Kcoef                     # enthalpy ceofficient
-    rhoCoef = firn.rhoCoef                   # density ceofficient
     Ta      = firn.Ta                        # average temperature 
     dt      = firn.dt                        # timestep
-    g       = firn.g                         # gravitational acceleration
-    kg      = firn.kg                        # grain growth coefficient
-    Ec      = firn.Ec                        # act. energy for water in ice
-    Eg      = firn.Eg                        # act. energy for grain growth
-    R       = firn.R                         # universal gas constant
     rhoi    = firn.rhoi                      # density of ice
-    rhom    = firn.rhom                      # critical density
-    
-    bdot    = interpolate(Constant(rhoi * adot / spy), V)  # average annual acc
-    #c       = (152.5 + sqrt(152.5**2 + 4*7.122*H)) / 2    # Patterson 1994
-    Ta      = interpolate(Constant(Tavg), V)
-    c       = interpolate(Constant(cpi), V)
-    k       = 2.1*(rho / rhoi)**2                          # Arthern 2008
-    #Tcoef   = conditional( lt(T, Tw), 1.0, c / H * Tw )
-    T       = Tcoef * H / c                                # temperature
-
-    # enthalpy residual :
-    theta     = 0.5
-    H_mid     = theta*H + (1 - theta)*H_1
-    Kcoef     = conditional( lt(H, Hsp), 1.0, 1.0/10.0 )
-    f_H       = - k/(rho*c) * Kcoef * inner(H_mid.dx(0), psi.dx(0)) * dx \
-                + (w-m) * H_mid.dx(0) * psi * dx \
-                - (H - H_1)/dt * psi * dx
-    
-    # density residual :
-    # material derivative :
-    #  dr   pr     pr
-    #  -- = -- + w --
-    #  dt   pt     pz
-    # SUPG method phihat :
-    #rhoCoef = conditional( gt(rho, rhom), 
-    #                       kcHh * (2.366 - 0.293*ln(A)),
-    #                       kcLw * (1.435 - 0.151*ln(A)) )
-    
-    vnorm     = sqrt(dot(w-m, w-m) + 1e-10)
-    cellh     = CellSize(mesh)
-    phihat    = phi + cellh/(2*vnorm)*dot(w-m, phi.dx(0))
-    
-    theta     = 0.878
-    rho_mid   = theta*rho + (1 - theta)*rho_1
-    
-    drhodt    = bdot*g*rhoCoef/kg * exp( -Ec/(R*T) + Eg/(R*Ta) ) * \
-                (rhoi - rho_mid)
-    f_rho     = + (rho - rho_1)/dt * phi * dx \
-                - drhodt * phihat * dx \
-                + (w-m) * rho_mid.dx(0) * phihat * dx 
-    
-    # velocity residual :
-    theta     = 0.878
-    w_mid     = theta*w + (1 - theta)*w_1
-    # Zwally equation for surface velocity :
-    f_w       = + rho * w_mid.dx(0) * eta * dx \
-                + drhodt * eta * dx
-    # Arthern equation of strain rate from 'Sorge's Law' :
-    #f_w       = + rho**2 * w_mid.dx(0) * eta * dx \
-    #            - bdot * rho.dx(0) * eta * dx
-    
-    # equation to be minimzed :
-    f         = f_H + f_rho + f_w
-    J         = derivative(f, h, dh)   # temp/density jacobian
-
-    self.f = f
-    self.J = J
-
-  def solve(self):
-    """
-    """
-    firn   = self.firn
-    config = self.config
-
-    h     = firn.h
-    bcs   = [firn.HBc, firn.rhoBc, firn.wBc]
-
-    # newton's iterative method :
-    #epi = np.random.rand(self.firn.n)
-    #h.vector().set_local(h.vector().array() + epi)
-    solve(self.f == 0, h, bcs, J=self.J, 
-          solver_parameters=config['enthalpy']['solver_params'])
-    
-    firn.H, firn.rho, firn.w = h.split(True)
-
-
-class Enthalpy_n(object):
-
-  def __init__(self, firn, config):
-    """
-    """
-    self.firn   = firn
-    self.config = config
-
-    mesh    = firn.mesh
-    V       = firn.V
     spy     = firn.spy
     cpi     = firn.cpi
     adot    = firn.adot
-
-    dh      = firn.dh                        # trial function for solution
-    psi     = firn.psi                       # test function for H
-    phi     = firn.phi                       # test function for rho
-    eta     = firn.eta                       # test function for w
-  
-    A       = firn.A
-    kcHh    = firn.kcHh
-    kcLw    = firn.kcLw
-    Hsp     = firn.Hsp
-    Tw      = firn.Tw
-    
-    h       = firn.h                         # enthalpy, density, velocity
-    H       = firn.H                         # enthalpy
-    H_1     = firn.H_1                       # previous enthalpy
-    T       = firn.T                         # temperature
-    rho     = firn.rho                       # density
-    rho_1   = firn.rho_1                     # previous density
-    w       = firn.w                         # velocity
-    w_1     = firn.w_1                       # previous step's velocity
-    m       = firn.m                         # mesh velocity
-    h_1     = firn.h_1                       # previous step's solution
-    k       = firn.k                         # thermal conductivity
-    c       = firn.c                         # heat capacity
-    bdot    = firn.bdot                      # average annual accumulation
-    Tavg    = firn.Tavg                      # average surface temperature
-    Tcoef   = firn.Tcoef                     # T above Tw = 0.0 coefficient
-    Kcoef   = firn.Kcoef                     # enthalpy ceofficient
-    Ta      = firn.Ta                        # average temperature 
-    dt      = firn.dt                        # timestep
-    g       = firn.g                         # gravitational acceleration
-    kg      = firn.kg                        # grain growth coefficient
-    Ec      = firn.Ec                        # act. energy for water in ice
-    Eg      = firn.Eg                        # act. energy for grain growth
-    R       = firn.R                         # universal gas constant
-    rhoi    = firn.rhoi                      # density of ice
-    rhom    = firn.rhom                      # critical density
-    
-    bdot    = interpolate(Constant(rhoi * adot / spy), V)  # average annual acc
-    #c       = (152.5 + sqrt(152.5**2 + 4*7.122*H)) / 2    # Patterson 1994
-    Ta      = interpolate(Constant(Tavg), V)
-    c       = interpolate(Constant(cpi), V)
-    k       = 2.1*(rho / rhoi)**2                          # Arthern 2008
-    #Tcoef   = conditional( lt(T, Tw), 1.0, c / H * Tw )
-    T       = Tcoef * H / c                                # temperature
+    bdot    = firn.bdot
+    Ta      = firn.Ta
 
     # enthalpy residual :
     theta     = 0.5
     H_mid     = theta*H + (1 - theta)*H_1
-    Kcoef     = conditional( lt(H, Hsp), 1.0, 1.0/10.0 )
     delta     = - k/(rho*c) * Kcoef * inner(H_mid.dx(0), psi.dx(0)) * dx \
                 + (w-m) * H_mid.dx(0) * psi * dx \
                 - (H - H_1)/dt * psi * dx
@@ -231,8 +79,54 @@ class Enthalpy_n(object):
     # newton's iterative method :
     #epi = np.random.rand(self.firn.n)
     #h.vector().set_local(h.vector().array() + epi)
-    solve(self.delta == 0, firn.H, firn.Hbc, J=self.J, 
+    solve(self.delta == 0, firn.H, firn.HBc, J=self.J, 
           solver_parameters=config['enthalpy']['solver_params'])
+    
+    n     = firn.n
+    Tw    = firn.Tw
+    T0    = firn.T0
+    Lf    = firn.Lf
+    rhow  = firn.rhow
+    rhoi  = firn.rhoi
+    kcHh  = firn.kcHh
+    kcLw  = firn.kcLw
+    Hsp   = firn.Hsp
+    index = firn.index
+
+    # find vector of T, rho :
+    Hp       = firn.H.vector().array()
+    Tp       = Hp / firn.cp
+    rhop     = firn.rho.vector().array()
+    omegap   = firn.omega.vector().array()
+    omegap_1 = firn.omega_1.vector().array()
+
+    # update coefficients used by enthalpy :
+    Hhigh               = where(Hp > Hsp)[0]
+    Hlow                = where(Hp < Hsp)[0]
+    KcoefNew            = ones(n)
+  
+    KcoefNew[Hhigh]     = 1.0/10.0
+    KcoefNew[Hlow]      = 1.0
+    Tp[Hhigh]           = Tw
+  
+    # update water content and density :
+    omegap[Hhigh]       = (Hp[Hhigh] - firn.cp[Hhigh]*(Tw - T0)) / Lf
+    omegap[Hlow]        = 0.0
+    domega              = omegap - omegap_1             # water content chg.
+    domPos              = where(domega >  0)[0]          # water content inc.
+    domNeg              = where(domega <= 0)[0]          # water content dec.
+    rhoNotLiq           = where(rhop < rhow)[0]          # density < water
+    rhoInc              = intersect1d(domPos, rhoNotLiq) # where rho can inc.
+    rhop[rhoInc]        = rhop[rhoInc] + domega[rhoInc]*rhow 
+    rhop[domNeg]        = rhop[domNeg] + domega[domNeg]*(rhow - rhoi)
+
+    # update the dolfin vectors :
+    firn.assign_variable(firn.rho,   rhop)
+    firn.assign_variable(firn.T,     Tp)
+    firn.assign_variable(firn.omega, omegap)
+    #firn.assign_variable(firn.Kcoef, KcoefNew)
+    
+    firn.domega = domega
 
 
 class Density(object):
@@ -245,37 +139,22 @@ class Density(object):
 
     mesh    = firn.mesh
     V       = firn.V
-    spy     = firn.spy
-    cpi     = firn.cpi
-    adot    = firn.adot
 
-    dh      = firn.dh                        # trial function for solution
-    psi     = firn.psi                       # test function for H
     phi     = firn.phi                       # test function for rho
-    eta     = firn.eta                       # test function for w
+    drho    = firn.drho 
   
     A       = firn.A
     kcHh    = firn.kcHh
     kcLw    = firn.kcLw
-    Hsp     = firn.Hsp
-    Tw      = firn.Tw
-    
-    h       = firn.h                         # enthalpy, density, velocity
+   
     H       = firn.H                         # enthalpy
-    H_1     = firn.H_1                       # previous enthalpy
     T       = firn.T                         # temperature
     rho     = firn.rho                       # density
     rho_1   = firn.rho_1                     # previous density
     w       = firn.w                         # velocity
-    w_1     = firn.w_1                       # previous step's velocity
     m       = firn.m                         # mesh velocity
-    h_1     = firn.h_1                       # previous step's solution
-    k       = firn.k                         # thermal conductivity
-    c       = firn.c                         # heat capacity
     bdot    = firn.bdot                      # average annual accumulation
     Tavg    = firn.Tavg                      # average surface temperature
-    Tcoef   = firn.Tcoef                     # T above Tw = 0.0 coefficient
-    Kcoef   = firn.Kcoef                     # enthalpy ceofficient
     rhoCoef = firn.rhoCoef                   # density ceofficient
     Ta      = firn.Ta                        # average temperature 
     dt      = firn.dt                        # timestep
@@ -286,12 +165,9 @@ class Density(object):
     R       = firn.R                         # universal gas constant
     rhoi    = firn.rhoi                      # density of ice
     rhom    = firn.rhom                      # critical density
-    
-    bdot    = interpolate(Constant(rhoi * adot / spy), V)  # average annual acc
-    #c       = (152.5 + sqrt(152.5**2 + 4*7.122*H)) / 2    # Patterson 1994
-    Ta      = interpolate(Constant(Tavg), V)
-    c       = interpolate(Constant(cpi), V)
-    k       = 2.1*(rho / rhoi)**2            # Arthern 2008
+    c       = firn.c
+    k       = firn.k
+    Ta      = firn.Ta
     T       = firn.T                         # temperature
     
     # material derivative :
@@ -328,8 +204,21 @@ class Density(object):
     config = self.config
 
     # newton's iterative method :
-    solve(self.delta == 0, firn.rho, firn.rhoBcs, J=self.J, 
-          solver_parameters=config['density']['solver_params'])
+    solve(self.delta == 0, firn.rho, firn.rhoBc, J=self.J, 
+          solver_parameters=config['enthalpy']['solver_params'])
+    
+    rhop = firn.rho.vector().array()
+
+    # update kc term in drhodt :
+    # if rho >  550, kc = kcHigh
+    # if rho <= 550, kc = kcLow
+    # with parameterizations given by ligtenberg et all 2011
+    rhoCoefNew          = ones(firn.n)
+    rhoHigh             = where(rhop >  550)[0]
+    rhoLow              = where(rhop <= 550)[0]
+    rhoCoefNew[rhoHigh] = firn.kcHh * (2.366 - 0.293*ln(firn.A))
+    rhoCoefNew[rhoLow]  = firn.kcLw * (1.435 - 0.151*ln(firn.A))
+    firn.assign_variable(firn.rhoCoef, rhoCoefNew)
 
 
 class Velocity(object):
@@ -342,37 +231,19 @@ class Velocity(object):
 
     mesh    = firn.mesh
     V       = firn.V
-    spy     = firn.spy
-    cpi     = firn.cpi
-    adot    = firn.adot
 
-    dh      = firn.dh                        # trial function for solution
-    psi     = firn.psi                       # test function for H
-    phi     = firn.phi                       # test function for rho
     eta     = firn.eta                       # test function for w
+    dw      = firn.dw
   
-    A       = firn.A
-    kcHh    = firn.kcHh
-    kcLw    = firn.kcLw
-    Hsp     = firn.Hsp
-    Tw      = firn.Tw
-    
-    h       = firn.h                         # enthalpy, density, velocity
     H       = firn.H                         # enthalpy
-    H_1     = firn.H_1                       # previous enthalpy
     T       = firn.T                         # temperature
     rho     = firn.rho                       # density
-    rho_1   = firn.rho_1                     # previous density
+    rhoi    = firn.rhoi
     w       = firn.w                         # velocity
     w_1     = firn.w_1                       # previous step's velocity
     m       = firn.m                         # mesh velocity
-    h_1     = firn.h_1                       # previous step's solution
-    k       = firn.k                         # thermal conductivity
-    c       = firn.c                         # heat capacity
     bdot    = firn.bdot                      # average annual accumulation
     Tavg    = firn.Tavg                      # average surface temperature
-    Tcoef   = firn.Tcoef                     # T above Tw = 0.0 coefficient
-    Kcoef   = firn.Kcoef                     # enthalpy ceofficient
     rhoCoef = firn.rhoCoef                   # density ceofficient
     Ta      = firn.Ta                        # average temperature 
     dt      = firn.dt                        # timestep
@@ -381,23 +252,14 @@ class Velocity(object):
     Ec      = firn.Ec                        # act. energy for water in ice
     Eg      = firn.Eg                        # act. energy for grain growth
     R       = firn.R                         # universal gas constant
-    rhoi    = firn.rhoi                      # density of ice
-    rhom    = firn.rhom                      # critical density
-    
-    bdot    = interpolate(Constant(rhoi * adot / spy), V)  # average annual acc
-    #c       = (152.5 + sqrt(152.5**2 + 4*7.122*H)) / 2    # Patterson 1994
-    Ta      = interpolate(Constant(Tavg), V)
-    c       = interpolate(Constant(cpi), V)
-    k       = 2.1*(rho / rhoi)**2                          # Arthern 2008
-    #Tcoef   = conditional( lt(T, Tw), 1.0, c / H * Tw )
-    T       = Tcoef * H / c                                # temperature
+    Ta      = firn.Ta
 
     # velocity residual :
     theta     = 0.878
     w_mid     = theta*w + (1 - theta)*w_1
     # Zwally equation for surface velocity :
     drhodt    = bdot*g*rhoCoef/kg * exp( -Ec/(R*T) + Eg/(R*Ta) ) * \
-                (rhoi - rho_mid)
+                (rhoi - rho)
     delta     = + rho * w_mid.dx(0) * eta * dx \
                 + drhodt * eta * dx
     # Arthern equation of strain rate from 'Sorge's Law' :
@@ -419,7 +281,7 @@ class Velocity(object):
     # newton's iterative method :
     #epi = np.random.rand(self.firn.n)
     #h.vector().set_local(h.vector().array() + epi)
-    solve(self.delta == 0, h, firn.wBc, J=self.J, 
+    solve(self.delta == 0, firn.w, firn.wBc, J=self.J, 
           solver_parameters=config['enthalpy']['solver_params'])
     
 
