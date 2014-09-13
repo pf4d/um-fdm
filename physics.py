@@ -56,12 +56,17 @@ class Enthalpy(object):
     adot    = firn.adot
     bdot    = firn.bdot
     Ta      = firn.Ta
+    
+    # SUPG method psihat :
+    vnorm     = sqrt(dot(w-m, w-m) + 1e-10)
+    cellh     = CellSize(mesh)
+    psihat    = psi + cellh/(2*vnorm)*dot(w, psi.dx(0))
 
     # enthalpy residual :
     theta     = 0.5
     H_mid     = theta*H + (1 - theta)*H_1
     delta     = - k/(rho*c) * Kcoef * inner(H_mid.dx(0), psi.dx(0)) * dx \
-                + (w-m) * H_mid.dx(0) * psi * dx \
+                + (w-m) * H_mid.dx(0) * psihat * dx \
                 - (H - H_1)/dt * psi * dx
     
     # equation to be minimzed :
@@ -105,7 +110,7 @@ class Enthalpy(object):
     Hlow                = where(Hp < Hsp)[0]
     KcoefNew            = ones(n)
   
-    KcoefNew[Hhigh]     = 1.0/10.0
+    KcoefNew[Hhigh]     = 1.0/2.0
     KcoefNew[Hlow]      = 1.0
     Tp[Hhigh]           = Tw
   
@@ -124,7 +129,7 @@ class Enthalpy(object):
     firn.assign_variable(firn.rho,   rhop)
     firn.assign_variable(firn.T,     Tp)
     firn.assign_variable(firn.omega, omegap)
-    #firn.assign_variable(firn.Kcoef, KcoefNew)
+    firn.assign_variable(firn.Kcoef, KcoefNew)
     
     firn.domega = domega
 
@@ -174,11 +179,11 @@ class Density(object):
     #  dr   pr     pr
     #  -- = -- + w --
     #  dt   pt     pz
-    # SUPG method phihat :
     #rhoCoef = conditional( gt(rho, rhom), 
     #                       kcHh * (2.366 - 0.293*ln(A)),
     #                       kcLw * (1.435 - 0.151*ln(A)) )
     
+    # SUPG method phihat :
     vnorm     = sqrt(dot(w-m, w-m) + 1e-10)
     cellh     = CellSize(mesh)
     phihat    = phi + cellh/(2*vnorm)*dot(w-m, phi.dx(0))

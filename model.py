@@ -26,8 +26,8 @@ end time in years, second is boolean val to plot the solution or not.
 from numpy              import *
 from fenics             import *
 from plot               import *
-from firn_n             import *
-from solvers_n          import TransientSolver
+from firn               import *
+from solvers            import TransientSolver
 from physical_constants import *
 import sys
 import time

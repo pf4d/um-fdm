@@ -129,6 +129,7 @@ class Firn(object):
     spy   = self.spy
     kcHh  = self.kcHh
     Tavg  = self.Tavg
+    Hsp   = self.Hsp
 
     # create function spaces :
     V      = FunctionSpace(self.mesh, 'Lagrange', 1) # function space
@@ -195,6 +196,7 @@ class Firn(object):
     #c       = (152.5 + sqrt(152.5**2 + 4*7.122*H)) / 2    # Patterson 1994
     k       = 2.1*(rho / rhoi)**2                          # Arthern 2008
     Kcoef   = interpolate(Constant(1.0), V)                # enthalpy coef.
+    #Kcoef   = conditional( lt(H, Hsp), 1.0, 1.0/10.0 )     # enthalpy coef.
     rhoCoef = interpolate(Constant(kcHh), V)               # density coef.
 
     #===========================================================================
