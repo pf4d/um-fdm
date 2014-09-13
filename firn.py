@@ -121,7 +121,7 @@ class Firn(object):
     index = self.index 
     rhoin = self.rhoin
     n     = self.n
-    cp    = self.cpi
+    cpi   = self.cpi
     T0    = self.T0
     rhoi  = self.rhoi
     rhow  = self.rhow
@@ -132,7 +132,6 @@ class Firn(object):
 
     # create function spaces :
     V      = FunctionSpace(self.mesh, 'Lagrange', 1) # function space
-    MV     = MixedFunctionSpace([V, V, V])           # mixed function space
     
     # surface Dirichlet boundary :
     def surface(x, on_boundary):
@@ -142,65 +141,68 @@ class Firn(object):
     def base(x, on_boundary):
       return on_boundary and x[0] == self.B
     
-    HBc   = DirichletBC(MV.sub(0), self.H_S,   surface)   # enthalpy of surface
-    rhoBc = DirichletBC(MV.sub(1), self.rho_S, surface)   # density of surface
-    wBc   = DirichletBC(MV.sub(2), self.w_S,   surface)   # velocity of surface
-    ageBc = DirichletBC(V,         self.age_S, surface)   # age of surface
+    HBc   = DirichletBC(V, self.H_S,   surface)   # enthalpy of surface
+    rhoBc = DirichletBC(V, self.rho_S, surface)   # density of surface
+    wBc   = DirichletBC(V, self.w_S,   surface)   # velocity of surface
+    ageBc = DirichletBC(V, self.age_S, surface)   # age of surface
     
     #===========================================================================
     # Define variational problem spaces :
-    H_i    = interpolate(Constant(cp*(Tavg - T0)), V) # initial enthalpy vector
-    rho_i  = interpolate(Constant(rhoin), V)          # initial density vector
-    a_i    = interpolate(Constant(1.0), V)            # initial age vector
-    w_i    = interpolate(Constant(0.0), V)            # initial velocity vector
-    m      = interpolate(Constant(0.0), V)            # mesh velocity
-    m_1    = interpolate(Constant(0.0), V)            # prev. mesh velocity
+    H_i    = interpolate(Constant(cpi*(Tavg - T0)), V) # initial enthalpy vector
+    rho_i  = interpolate(Constant(rhoin), V)           # initial density vector
+    a_i    = interpolate(Constant(1.0), V)             # initial age vector
+    w_i    = interpolate(Constant(0.0), V)             # initial velocity vector
+    m      = interpolate(Constant(0.0), V)             # mesh velocity
+    m_1    = interpolate(Constant(0.0), V)             # prev. mesh velocity
     
-    epi             = Function(MV)
-    h               = Function(MV)          # solution
-    H, rho, w       = split(h)              # solutions for H, rho
-    h_1             = Function(MV)          # previous solution
-    H_1, rho_1, w_1 = split(h_1)            # initial value functions
-    
-    dh              = TrialFunction(MV)     # trial function for solution
-    dH, drho, dw    = split(dh)             # trial functions for H, rho
-    j               = TestFunction(MV)      # test function in mixed space
-    psi, phi, eta   = split(j)              # test functions for H, rho
-    
-    a    = Function(V)                      # age solution / trial function
-    da   = TrialFunction(V)                 # trial function for age
-    xi   = TestFunction(V)                  # age test function
-    a_1  = Function(V)                      # previous age solution
+    H      = Function(V)
+    rho    = Function(V)
+    w      = Function(V)                              # solutions for H, rho
    
-    self.assign_variable(epi, 1.0)
-    h_0 = project(as_vector([H_i,rho_i,w_i]), MV) # project inital values
-    self.assign_variable(h, h_0)
-    self.assign_variable(h_1, h_0)
+    H_1    = Function(V)
+    rho_1  = Function(V)
+    w_1    = Function(V)
     
-    self.assign_variable(a, 1.0)
-    self.assign_variable(a_1, 1.0)
+    dH     = TrialFunction(V)
+    drho   = TrialFunction(V)
+    dw     = TrialFunction(V)
     
-    bdot    = Function(V)
-    Ta      = Function(V)
-    c       = cp
-    k       = Function(V)
-    Tcoef   = interpolate(Constant(1.0), V)                # T above Tw = 0.0
+    psi    = TestFunction(V) 
+    phi    = TestFunction(V) 
+    eta    = TestFunction(V) 
+    
+    a      = Function(V)                      # age solution / trial function
+    da     = TrialFunction(V)                 # trial function for age
+    xi     = TestFunction(V)                  # age test function
+    a_1    = Function(V)                      # previous age solution
+   
+    self.assign_variable(H,     H_i)
+    self.assign_variable(H_1,   H_i)
+    self.assign_variable(rho,   rho_i)
+    self.assign_variable(rho_1, rho_i)
+    self.assign_variable(w,     w_i)
+    self.assign_variable(w_1,   w_i)
+    self.assign_variable(a,     a_i)
+    self.assign_variable(a_1,   a_i)
+    
+    T       = interpolate(Constant(Tavg), V)
+    omega   = interpolate(Constant(0.0), V)
+    omega_1 = interpolate(Constant(0.0), V)
+    drhodt  = Function(V)
+    bdot    = interpolate(Constant(rhoi * adot / spy), V)  # average annual acc
+    Ta      = interpolate(Constant(Tavg), V)
+    c       = interpolate(Constant(cpi), V)
+    #c       = (152.5 + sqrt(152.5**2 + 4*7.122*H)) / 2    # Patterson 1994
+    k       = 2.1*(rho / rhoi)**2                          # Arthern 2008
     Kcoef   = interpolate(Constant(1.0), V)                # enthalpy coef.
     rhoCoef = interpolate(Constant(kcHh), V)               # density coef.
-    T       = Tcoef * H / c                                # temperature
-    drhodt  = Function(V)
-    
+
     #===========================================================================
     self.V       = V                         # function space
-    self.MV      = MV                        # Mixed function space
     
-    self.epi     = epi
-    
-    self.dh      = dh                        # trial function for solution
     self.dH      = dH                        # trial function for H
     self.drho    = drho                      # trial function for rho
     self.dw      = dw                        # trial function for w
-    self.j       = j                         # test function in mixed space
     self.psi     = psi                       # test function for H
     self.phi     = phi                       # test function for rho
     self.eta     = eta                       # test function for w
@@ -212,10 +214,11 @@ class Firn(object):
     self.rho_i   = rho_i                     # initial density
     self.w_i     = w_i                       # initial velocity
     self.a_i     = a_i                       # initial age
-    self.h       = h                         # enthalpy, density, velocity
     self.H       = H                         # enthalpy
     self.H_1     = H_1                       # previous enthalpy
     self.T       = T                         # temperature
+    self.omega   = omega                     # water content
+    self.omega_1 = omega                     # water content
     self.rho     = rho                       # density
     self.rho_1   = rho_1                     # previous density
     self.drhodt  = drhodt                    # densification rate
@@ -224,26 +227,24 @@ class Firn(object):
     self.m       = m                         # mesh velocity
     self.m_1     = m_1                       # previous mesh velocity
     self.a       = a                         # age
-    self.h_1     = h_1                       # previous step's solution
     self.a_1     = a_1                       # previous step's age
     self.k       = k                         # thermal conductivity
     self.c       = c                         # heat capacity
     self.bdot    = bdot                      # average annual accumulation
     self.Ta      = Ta                        # average surface temperature
-    self.Tcoef   = Tcoef                     # T above Tw = 0.0 coefficient
     self.Kcoef   = Kcoef                     # enthalpy ceofficient
     self.rhoCoef = rhoCoef                   # density ceofficient
 
-    self.Hp      = project(H, V).vector().array()[index]
-    self.Tp      = project(T, V).vector().array()[index]
-    self.rhop    = project(rho, V).vector().array()[index]
+    self.Hp      = H.vector().array()[index]
+    self.Tp      = T.vector().array()[index]
+    self.omegap  = omega.vector().array()    # water content percent
+    self.rhop    = rho.vector().array()[index]
     self.drhodtp = project(drhodt, V).vector().array()[index]
     self.ap      = a.vector().array()[index]
-    self.wp      = project(w, V).vector().array()[index]
-    self.kp      = project(k, V).vector().array()[index]
-    self.cp      = project(c, V).vector().array()[index]
+    self.wp      = w.vector().array()[index]
+    self.kp      = project(k,V).vector().array()[index]
+    self.cp      = project(c,V).vector().array()[index]
     self.rhoinp  = self.rhop                 # initial density
-    self.omega   = zeros(n)                  # water content percent
     self.agep    = zeros(n)                  # initial age
     
     self.HBc     = HBc                       # enthalpy b.c.
@@ -340,7 +341,8 @@ class Firn(object):
     self.rhop    = self.rho.vector().array()[index]
     self.wp      = self.w.vector().array()[index]
     self.ap      = self.a.vector().array()[index]
-    self.Tp      = project(self.T, V).vector().array()[index]
+    self.Tp      = self.T.vector().array()[index]
+    self.omegap  = self.omega.vector().array()[index]
     #self.drhodtp = project(self.drhodt, self.V).vector().array()[index]
     #self.kp      = project(self.k, self.V).vector().array()[index]
     #self.cp      = project(self.c, self.V).vector().array()[index]
@@ -395,67 +397,6 @@ class Firn(object):
     self.mesh.coordinates()[:,0][self.index] = self.z  # update the mesh coord.
     self.mesh.bounding_box_tree().build(self.mesh)     # rebuild the mesh tree
 
-  def adjust_vectors(self):
-    """
-    Adjust the vectors for enthalpy and density.
-    """
-    n     = self.n
-    Tw    = self.Tw
-    T0    = self.T0
-    Lf    = self.Lf
-    rhow  = self.rhow
-    rhoi  = self.rhoi
-    kcHh  = self.kcHh
-    kcLw  = self.kcLw
-    Hsp   = self.Hsp
-    index = self.index
-
-    # find vector of T, rho :
-    Hp     = self.H.vector().array()
-    rhop   = self.rho.vector().array()
-
-    # update kc term in drhodt :
-    # if rho >  550, kc = kcHigh
-    # if rho <= 550, kc = kcLow
-    # with parameterizations given by ligtenberg et all 2011
-    rhoCoefNew          = ones(n)
-    rhoHigh             = where(rhop >  550)[0]
-    rhoLow              = where(rhop <= 550)[0]
-    rhoCoefNew[rhoHigh] = kcHh * (2.366 - 0.293*ln(self.A))
-    rhoCoefNew[rhoLow]  = kcLw * (1.435 - 0.151*ln(self.A))
-    self.assign_variable(self.rhoCoef, rhoCoefNew)
-  
-    # update coefficients used by enthalpy :
-    Hhigh               = where(Hp > Hsp)[0]
-    Hlow                = where(Hp < Hsp)[0]
-    omegaNew            = zeros(n)
-    TcoefNew            = ones(n)
-    KcoefNew            = ones(n)
-  
-    KcoefNew[Hhigh]     = 1.0/10.0
-    KcoefNew[Hlow]      = 1.0
-    TcoefNew[Hhigh]     = self.cp[Hhigh] / Hp[Hhigh] * Tw
-  
-    # update water content and density :
-    omegaNew[Hhigh]     = (Hp[Hhigh] - self.cp[Hhigh]*(Tw - T0)) / Lf
-    domega              = omegaNew - self.omega          # water content chg.
-    domPos              = where(domega >  0)[0]          # water content inc.
-    domNeg              = where(domega <= 0)[0]          # water content dec.
-    rhoNotLiq           = where(rhop < rhow)[0]     # density < water
-    rhoInc              = intersect1d(domPos, rhoNotLiq) # where rho can inc.
-    rhop[rhoInc]        = rhop[rhoInc] + domega[rhoInc]*rhow 
-    rhop[domNeg]        = rhop[domNeg] + domega[domNeg]*(rhow - rhoi)
-
-    # update the dolfin vectors :
-    self.assign_variable(self.rho_i, rhop)
-    h_0 = project(as_vector([self.H, self.rho_i, self.w]), self.MV)
-    self.assign_variable(self.h, h_0)
-    #self.assign_variable(self.Kcoef, KcoefNew)
-    self.assign_variable(self.Tcoef, TcoefNew)
-    self.assign_variable(self.omega, omegaNew)
-    
-    self.domega = domega
-
   def set_ini_conv(self, ex):
     """
     sets the firn model's initial state based on files in data/enthalpy folder.
@@ -476,13 +417,9 @@ class Firn(object):
     self.origHt = [self.z[-1]]              # list of initial surface heights
     self.Ts     = self.H[-1] / self.c[-1]   # temperature of surface
   
-    h_0 = project(as_vector([self.H_i,self.rho_i,self.w_i]), self.MV)
     self.assign_variable(self.rho_i, self.rho)
     self.assign_variable(self.H_i,   self.H)
     self.assign_variable(self.w_i,   self.w)
-    self.assign_variable(self.h,     h_0)
-    self.assign_variable(self.h_1,   h_0)
-    self.assign_variable(self.h_1,   h_0)
     self.assign_variable(self.aF,    self.a)
     self.assign_variable(self.a_1,   self.a)
 

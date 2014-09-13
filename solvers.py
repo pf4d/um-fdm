@@ -1,5 +1,5 @@
 from pylab          import plt, linspace
-from physics        import Enthalpy, Age
+from physics        import Enthalpy, Density, Velocity, Age
 from plot           import Plot
 from termcolor      import colored, cprint
 
@@ -15,6 +15,8 @@ class TransientSolver(object):
 
     # form the physics :
     self.fe = Enthalpy(firn, config)
+    self.fv = Velocity(firn, config)
+    self.fd = Density(firn, config)
     self.fa = Age(firn, config)
 
     if config['plot']:
@@ -29,6 +31,8 @@ class TransientSolver(object):
     config = self.config
 
     fe     = self.fe
+    fv     = self.fv
+    fd     = self.fd
     fa     = self.fa
     
     t0    = config['t_start']
@@ -44,14 +48,10 @@ class TransientSolver(object):
       #firn.update_rhoBc()
     
       # newton's iterative method :
-      #h.vector().set_local(h.vector().array() + rand())
       fe.solve()
-    
-      # solve for age :
+      fv.solve()
+      fd.solve()
       fa.solve()
-      
-      # adjust the coefficient vectors :
-      firn.adjust_vectors()
       
       # update firn object :
       firn.update_vars(t)
@@ -60,7 +60,10 @@ class TransientSolver(object):
       
       # update model parameters :
       if t != times[-1]:
-         firn.h_1.assign(firn.h)
+         firn.H_1.assign(firn.H)
+         firn.rho_1.assign(firn.rho)
+         firn.omega_1.assign(firn.omega)
+         firn.w_1.assign(firn.w)
          firn.a_1.assign(firn.a)
          firn.m_1.assign(firn.m)
     
