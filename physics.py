@@ -117,19 +117,19 @@ class Enthalpy(object):
     # update water content and density :
     omegap[Hhigh]       = (Hp[Hhigh] - firn.cp[Hhigh]*(Tw - T0)) / Lf
     omegap[Hlow]        = 0.0
-    domega              = omegap - omegap_1             # water content chg.
+    domega              = omegap - omegap_1              # water content chg.
     domPos              = where(domega >  0)[0]          # water content inc.
     domNeg              = where(domega <= 0)[0]          # water content dec.
     rhoNotLiq           = where(rhop < rhow)[0]          # density < water
     rhoInc              = intersect1d(domPos, rhoNotLiq) # where rho can inc.
-    rhop[rhoInc]        = rhop[rhoInc] + domega[rhoInc]*rhow 
+    rhop[rhoInc]        = rhop[rhoInc] + 100*domega[rhoInc]*rhow 
     rhop[domNeg]        = rhop[domNeg] + domega[domNeg]*(rhow - rhoi)
 
     # update the dolfin vectors :
     firn.assign_variable(firn.rho,   rhop)
     firn.assign_variable(firn.T,     Tp)
     firn.assign_variable(firn.omega, omegap)
-    firn.assign_variable(firn.Kcoef, KcoefNew)
+    #firn.assign_variable(firn.Kcoef, KcoefNew)
     
     firn.domega = domega
 
@@ -194,7 +194,7 @@ class Density(object):
     drhodt    = bdot*g*rhoCoef/kg * exp( -Ec/(R*T) + Eg/(R*Ta) ) * \
                 (rhoi - rho_mid)
     delta     = + (rho - rho_1)/dt * phi * dx \
-                - drhodt * phihat * dx \
+                - drhodt * phi * dx \
                 + (w-m) * rho_mid.dx(0) * phihat * dx 
     
     J         = derivative(delta, rho, drho)
@@ -224,6 +224,20 @@ class Density(object):
     rhoCoefNew[rhoHigh] = firn.kcHh * (2.366 - 0.293*ln(firn.A))
     rhoCoefNew[rhoLow]  = firn.kcLw * (1.435 - 0.151*ln(firn.A))
     firn.assign_variable(firn.rhoCoef, rhoCoefNew)
+    
+    rhow  = firn.rhow
+    rhoi  = firn.rhoi
+    domega = firn.domega
+
+    # update density for water content :
+    domPos              = where(domega >  0)[0]          # water content inc.
+    domNeg              = where(domega <= 0)[0]          # water content dec.
+    rhoNotLiq           = where(rhop < rhow)[0]          # density < water
+    rhoInc              = intersect1d(domPos, rhoNotLiq) # where rho can inc.
+    rhop[rhoInc]        = rhop[rhoInc] + domega[rhoInc]*rhow 
+    rhop[domNeg]        = rhop[domNeg] + domega[domNeg]*(rhow - rhoi)
+
+    firn.assign_variable(firn.rho,   rhop)
 
 
 class Velocity(object):

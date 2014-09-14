@@ -45,7 +45,7 @@ rhos  = 360.                   # initial density at surface ..... kg/m^3
 rhoi  = 917.                   # density of ice ................. kg/m^3
 rhoin = 700.                   # initial density at surface ..... kg/m^3
 adot  = 0.25                   # accumulation rate .............. m/a
-Tavg  = Tw - 5.0               # average temperature ............ degrees K
+Tavg  = Tw - 30.0              # average temperature ............ degrees K
 
 cp    = 152.5 + 7.122*Tavg     # heat capacity of ice ........... J/(kg K)
 cp    = cpi                    # heat capacity of ice ........... J/(kg K)
@@ -59,7 +59,7 @@ tf    = float(tf)*spy          # end-time ....................... s
 bp    = int(sys.argv[2])       # plot or not .................... bool
 
 # enthalpy surface condition with cyclical 2-meter air temperature :
-code    = 'c*( Tavg + 15.0*(sin(2*omega*t)))'# + 5*sin(4*omega*t)))'
+code    = 'c*( Tavg + 10.0*(sin(2*omega*t) + 5*sin(4*omega*t)))'
 H_exp   = Expression(code, c=cp, Tavg=Tavg, omega=pi/spy, t=t0)
 
 # experimental surface density :

@@ -80,10 +80,10 @@ class Plot():
     Tz     = zmax - 0.15*(zmax - zmin) / 2        # z-coord of Ts
 
     Omin   = 0.0
-    Omax   = 0.05
+    Omax   = 0.3
 
     rhoMin = 300                                  # rho x-coord min
-    rhoMax = 1000                                 # rho x-coord max
+    rhoMax = 1100                                 # rho x-coord max
     #rhoh   = rhoMin + 0.1*(rhoMax - rhoMin) / 2  # rho height x-coord
     
     wMin   = -80
