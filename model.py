@@ -45,7 +45,7 @@ rhos  = 360.                   # initial density at surface ..... kg/m^3
 rhoi  = 917.                   # density of ice ................. kg/m^3
 rhoin = 700.                   # initial density at surface ..... kg/m^3
 adot  = 0.25                   # accumulation rate .............. m/a
-Tavg  = Tw - 30.0              # average temperature ............ degrees K
+Tavg  = Tw - 50.0              # average temperature ............ degrees K
 
 cp    = 152.5 + 7.122*Tavg     # heat capacity of ice ........... J/(kg K)
 cp    = cpi                    # heat capacity of ice ........... J/(kg K)
