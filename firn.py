@@ -201,6 +201,8 @@ class Firn(object):
 
     #===========================================================================
     self.V       = V                         # function space
+
+    self.dt_v    = Constant(self.dt)         # timestep Constant
     
     self.dH      = dH                        # trial function for H
     self.drho    = drho                      # trial function for rho
@@ -298,37 +300,54 @@ class Firn(object):
       File(var) >> u
 
     else:
-      print "********************************************************"
+      print "*************************************************************"
       print "assign_variable() function requires a Function, array, float," + \
             " int, \nVector, Expression, Indexed, or string path to .xml, " + \
             "not \n%s" % type(var)
-      print "********************************************************"
+      print "*************************************************************"
       exit(1)
   
   def update_Hbc(self): 
     """
     Adjust the enthalpy at the surface.
     """
-    self.H_S.t      = self.t
-    self.H_S.c      = self.cp[-1]
-  
+    self.H_S.t = self.t
+    self.H_S.c = self.cp[-1]
+
   def update_rhoBc(self):
     """
     Adjust the density at the surface.
     """
-    self.rho_S.rhoi = self.rhop[-1]
-    if self.Ts > Tw:
-      if self.domega[-1] > 0:
-        if self.rho_S.rhon < self.rhoi:
-          self.rho_S.rhon = self.rho_S.rhon + self.domega[-1]*self.rhow
-      else:
-        self.rho_S.rhon = self.rho_S.rhon + self.domega[-1]*83.0
-    else:
-      self.rho_S.rhon = self.rhos
-    ltop      = lnew[-1]
-    dnew      = -self.w[-1]*dt
-    self.rho_S.dp = dnew/ltop
-    self.rho_S.Ts = self.Tp[-1]
+    self.rho_S.t = self.t
+  
+  def update_wBc(self):
+    """
+    Adjust the velocity at the surface.
+    """
+    self.w_S.t    = self.t
+    self.w_S.rhos = self.rhop[-1]
+    bdotNew       = (self.w_S.adot_s * self.rhoi) / self.spy
+    self.assign_variable(self.bdot, bdotNew)
+
+  
+  #def update_rhoBc(self):
+  #  """
+  #  Adjust the density at the surface.
+  #  """
+  #  self.rho_S.rhoi = self.rhop[-1]
+  #  if self.Ts > Tw:
+  #    if self.domega[-1] > 0:
+  #      if self.rho_S.rhon < self.rhoi:
+  #        self.rho_S.rhon = self.rho_S.rhon + self.domega[-1]*self.rhow
+  #    else:
+  #      self.rho_S.rhon = self.rho_S.rhon + self.domega[-1]*83.0
+  #  else:
+  #    self.rho_S.rhon = self.rhos
+  #  ltop      = lnew[-1]
+  #  dnew      = -self.w[-1]*dt
+  #  self.rho_S.dp = dnew/ltop
+  #  self.rho_S.Ts = self.Tp[-1]
+  
 
   def update_vars(self, t):
     """
@@ -391,11 +410,12 @@ class Firn(object):
     for i in range(self.n):
       zNew[i]  = zSum + lnew[i]
       zSum    += lnew[i]
-    self.z = zNew
-    self.l = lnew[1:]
-    self.mp = (zNew - zOld) / self.dt
+    self.z  = zNew
+    self.l  = lnew[1:]
+    self.mp = -(zNew - zOld) / self.dt
     
-    self.assign_variable(self.m, self.mp)
+    self.assign_variable(self.m_1, self.m)
+    self.assign_variable(self.m,   self.mp)
     self.mesh.coordinates()[:,0][self.index] = self.z  # update the mesh coord.
     self.mesh.bounding_box_tree().build(self.mesh)     # rebuild the mesh tree
 

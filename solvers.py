@@ -1,4 +1,4 @@
-from pylab          import plt, linspace
+from pylab          import plt, linspace, ones, hstack
 from physics        import Enthalpy, Density, Velocity, Age
 from plot           import Plot
 from termcolor      import colored, cprint
@@ -35,28 +35,56 @@ class TransientSolver(object):
     fd     = self.fd
     fa     = self.fa
     
-    t0    = config['t_start']
-    tf    = config['t_end']
-    dt    = config['time_step']
-    numt  = (tf-t0)/dt + 1         # number of time steps
-    times = linspace(t0,tf,numt)   # array of times to evaluate in seconds
+    t0      = config['t_start']
+    tm      = config['t_mid']
+    tf      = config['t_end']
+    dt      = config['time_step']
+    dt_list = config['dt_list']
+    if dt_list != None:
+      numt1   = (tm-t0)/dt_list[0] + 1       # number of time steps
+      numt2   = (tf-tm)/dt_list[1] + 1       # number of time steps
+      times1  = linspace(t0,tm,numt1)   # array of times to evaluate in seconds
+      times2  = linspace(tm,tf,numt2)   # array of times to evaluate in seconds
+      dt1     = dt_list[0] * ones(len(times1))
+      dt2     = dt_list[1] * ones(len(times2))
+      times   = hstack((times1,times2))
+      dts     = hstack((dt1, dt2))
+    
+    else: 
+      numt   = (tf-t0)/dt + 1         # number of time steps
+      times  = linspace(t0,tf,numt)   # array of times to evaluate in seconds
+      dts    = dt * ones(len(times))
+      firn.t = t0
+   
     self.times = times
+    self.dts   = dts
 
-    for t in times[1:]:
+    for t,dt in zip(times[1:], dts[1:]):
+      
+      # update timestep :
+      firn.dt = dt
+      firn.dt_v.assign(dt)
+
       # update boundary conditions :
       firn.update_Hbc()
-      #firn.update_rhoBc()
+      firn.update_rhoBc()
+      firn.update_wBc()
     
       # newton's iterative method :
       fe.solve()
-      fv.solve()
       fd.solve()
+      fv.solve()
       fa.solve()
       
       # update firn object :
       firn.update_vars(t)
       firn.update_height_history()
-      firn.update_height()
+      if config['free_surface']['on']:
+        if dt_list != None:
+          if t > tm+dt:
+            firn.update_height()
+        else:
+          firn.update_height()
       
       # update model parameters :
       if t != times[-1]:

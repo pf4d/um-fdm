@@ -62,6 +62,8 @@ class Plot():
     w      = firn.wp * self.spy * 1e2 # cm/a
     a      = firn.ap /self.spy
     Ts     = firn.Ts - 273.15
+    rhos   = rho[-1]
+    ws     = firn.w_S.adot_s
 
     # y-value :
     z      = firn.z
@@ -74,24 +76,24 @@ class Plot():
     zmax   = zs + (zs - zb) / 5                   # max z-coord
     zmin   = zb                                   # min z-coord
 
-    Tmin   = firn.Tavg - Tw - 10                  # T x-coord min
-    Tmax   = firn.Tavg - Tw + 10                  # T x-coord max
+    Tmin   = firn.Tavg - Tw - 20                  # T x-coord min
+    Tmax   = firn.Tavg - Tw + 20                  # T x-coord max
     Th     = Tmin + 0.1*(Tmax - Tmin) / 2         # T height x-coord
     Tz     = zmax - 0.15*(zmax - zmin) / 2        # z-coord of Ts
 
     Omin   = 0.0
     Omax   = 0.3
 
-    rhoMin = 300                                  # rho x-coord min
-    rhoMax = 1100                                 # rho x-coord max
-    #rhoh   = rhoMin + 0.1*(rhoMax - rhoMin) / 2  # rho height x-coord
+    rhoMin = 0.0                                  # rho x-coord min
+    rhoMax = 400                                  # rho x-coord max
+    rhoh   = rhoMin + 0.1*(rhoMax - rhoMin) / 2  # rho height x-coord
     
-    wMin   = -80
-    wMax   = 0
+    wMin   = -40
+    wMax   = 20
     wh     = wMin + 0.1*(wMax - wMin) / 2
 
     aMin   = 0.0
-    aMax   = 400.0
+    aMax   = 50.0
     #kh     = kMin + 0.1*(kMax - kMin) / 2
 
     self.fig   = figure(figsize=(19,6))
@@ -116,26 +118,37 @@ class Plot():
     self.aax.grid()
 
     # plots :
-    self.Tsurf    = self.Tax.text(Th, Tz, r'Surface Temp: %.1f $\degree$C' % Ts)
-    self.phT,     = self.Tax.plot(T - 273.15, z, '0.3', lw=1.5)
+    self.Tsurf    = self.Tax.text(Th, Tz, r'$T_S$: %.1E $\degree$C' % Ts)
+    self.phT,     = self.Tax.plot(T - 273.15, z, '0.3', lw=1.5,
+                                  drawstyle='steps-post')
     self.phTs,    = self.Tax.plot([Tmin, Tmax], [zs, zs], 'k-', lw=3)
     self.phTs_0,  = self.Tax.plot(Th, zo, 'ko')
+    self.phTs_dot,= self.Tax.plot(Ts, zs, 'ro')
     self.phTsp,   = self.Tax.plot(Th*ones(len(z)), z, 'r+')
     
-    self.phO,     = self.Oax.plot(omega, z, '0.3', lw=1.5)
+    self.phO,     = self.Oax.plot(omega, z, '0.3', lw=1.5,
+                                  drawstyle='steps-post')
     self.phOS,    = self.Oax.plot([Omin, Omax], [zs, zs], 'k-', lw=3)
+    self.phOS_dot,= self.Oax.plot(omega[-1], zs, 'ro')
     
-    self.phrho,   = self.rhoax.plot(rho, z, '0.3', lw=1.5)
+    self.rhoSurf  = self.rhoax.text(rhoh, Tz, r'$\dot{a}$: %.1E i.e.$\frac{\mathrm{m}}{\mathrm{a}}$' % ws)
+    self.phrho,   = self.rhoax.plot(rho, z, '0.3', lw=1.5,
+                                    drawstyle='steps-post')
     self.phrhoS,  = self.rhoax.plot([rhoMin, rhoMax], [zs, zs], 'k-', lw=3)
+    self.phrhoS_dot, = self.rhoax.plot(rho[-1], zs, 'ro')
     #self.phrhoS_0,= self.rhoax.plot(rhoh, zo, 'ko')
     #self.phrhoSp, = self.rhoax.plot(rhoh*ones(len(z)), z, 'r+')
 
-    self.phw,     = self.wax.plot(w, z, '0.3', lw=1.5)
+    self.wSurf    = self.wax.text(wh, Tz, r'$\rho_S$: %.1E $\frac{\mathrm{kg}}{\mathrm{m}^3}$' % rhos)
+    self.phw,     = self.wax.plot(w, z, '0.3', lw=1.5,
+                                  drawstyle='steps-post')
     self.phwS,    = self.wax.plot([wMin, wMax], [zs, zs], 'k-', lw=3)
+    self.wS_dot,  = self.wax.plot(w[-1], zs, 'ro')
     #self.phws_0,  = self.wax.plot(wh, zo, 'ko')
     #self.phwsp,   = self.wax.plot(wh*ones(len(z)), z, 'r+')
     
-    self.pha,     = self.aax.plot(a, z, '0.3', lw=1.5)
+    self.pha,     = self.aax.plot(a, z, '0.3', lw=1.5,
+                                  drawstyle='steps-post')
     self.phaS,    = self.aax.plot([aMin, aMax], [zs, zs], 'k-', lw=3)
     #self.phks_0,  = self.kax.plot(kh, zo, 'ko')
     #self.phksp,   = self.kax.plot(kh*ones(len(z)), z, 'r+')
@@ -180,24 +193,34 @@ class Plot():
 
     self.fig.canvas.set_window_title('Time = %.2f yr' % t)
     
-    self.Tsurf.set_text(r'Surface Temp: %.1f $\degree$C' % Ts)
+    self.Tsurf.set_text(r'$T_S$: %.1E $\degree$C' % Ts)
     self.phT.set_xdata(T - Tw)
     self.phT.set_ydata(z)
     self.phTs.set_ydata(z[-1])
     self.phTs_0.set_ydata(zo)
     self.phTsp.set_ydata(z)
+    self.phTs_dot.set_xdata(Ts)
+    self.phTs_dot.set_ydata(z[-1])
     
     self.phO.set_xdata(omega)
     self.phO.set_ydata(z)
     self.phOS.set_ydata(z[-1])
+    self.phOS_dot.set_xdata(omega[-1])
+    self.phOS_dot.set_ydata(z[-1])
     
+    self.rhoSurf.set_text(r'$\rho_S$: %.1E $\frac{\mathrm{kg}}{\mathrm{m}^3}$' % rho[-1])
     self.phrho.set_xdata(rho)
     self.phrho.set_ydata(z)
     self.phrhoS.set_ydata(z[-1])
+    self.phrhoS_dot.set_xdata(rho[-1])
+    self.phrhoS_dot.set_ydata(z[-1])
     
+    self.wSurf.set_text(r'$\dot{a}$: %.1E i.e.$\frac{\mathrm{m}}{\mathrm{a}}$' % firn.w_S.adot_s)
     self.phw.set_xdata(w)
     self.phw.set_ydata(z)
     self.phwS.set_ydata(z[-1])
+    self.wS_dot.set_xdata(w[-1])
+    self.wS_dot.set_ydata(z[-1])
    
     self.pha.set_xdata(a)
     self.pha.set_ydata(z)

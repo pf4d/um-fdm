@@ -29,6 +29,8 @@ from plot               import *
 from firn               import *
 from solvers            import TransientSolver
 from physical_constants import *
+from scipy.interpolate  import interp1d
+from scipy.io           import loadmat
 import sys
 import time
 
@@ -43,46 +45,95 @@ Tw    = 273.15                 # triple point water ............. degrees K
 n     = 100                    # num of z-positions
 rhos  = 360.                   # initial density at surface ..... kg/m^3
 rhoi  = 917.                   # density of ice ................. kg/m^3
-rhoin = 700.                   # initial density at surface ..... kg/m^3
+rhoin = 500.                   # initial density at surface ..... kg/m^3
 adot  = 0.25                   # accumulation rate .............. m/a
-Tavg  = Tw - 50.0              # average temperature ............ degrees K
+Tavg  = Tw - 20.0              # average temperature ............ degrees K
 
 cp    = 152.5 + 7.122*Tavg     # heat capacity of ice ........... J/(kg K)
 cp    = cpi                    # heat capacity of ice ........... J/(kg K)
 zs    = 0.                     # surface start .................. m
-zb    = -40.0                  # depth .......................... m
-dt    = 1.0*spy                # time-step ...................... s
-dt    = 0.05*spy               # time-step ...................... s
+zb    = -5.0                   # depth .......................... m
+dt1   = 10.0*spy               # time-step ...................... s
+dt2   = 1/365.0*spy            # time-step ...................... s
 t0    = 0.0                    # begin time ..................... s
 tf    = sys.argv[1]            # end-time ....................... string
 tf    = float(tf)*spy          # end-time ....................... s
 bp    = int(sys.argv[2])       # plot or not .................... bool
-
+  
 # enthalpy surface condition with cyclical 2-meter air temperature :
-code    = 'c*( Tavg + 10.0*(sin(2*omega*t) + 5*sin(4*omega*t)))'
-H_exp   = Expression(code, c=cp, Tavg=Tavg, omega=pi/spy, t=t0)
+data   = loadmat('data/CrawfordPt_MAR.mat')
+times  = data['years'].T[0] * spy
+temp   = data['TT_9_Monthly'].T[0] + Tw
+dens   = data['RO1_Monthly'].T[0]
+dens[dens == 0.0] = 100.0
+adot   = data['SF_Monthly'].T[0] * 1000 * 12 / spy
+rain   = data['RF_Monthly'].T[0] * 1000 * 12 / spy
 
-# experimental surface density :
+t0     = 1000.0
+tm     = times[0]
+tf     = times[-1]
+adoti  = average(adot)
+rhoin  = average(dens)
+Tin    = average(temp)
+raini  = average(rain)
+
+temp_i = interp1d(times, temp, 'slinear', bounds_error=False, fill_value=Tin)
+dens_i = interp1d(times, dens, 'slinear', bounds_error=False, fill_value=rhoin)
+adot_i = interp1d(times, adot, 'slinear', bounds_error=False, fill_value=adoti)
+rain_i = interp1d(times, rain, 'slinear', bounds_error=False, fill_value=raini)
+
+# enthalpy BC :
+class BCH(Expression):
+  def __init__(self, t, c):
+    self.t    = t
+    self.c    = c
+  def eval(self, values, x):
+    values[0] = self.c * temp_i(self.t)
+H_exp = BCH(times[0], cp)
+
+# density BC :
+class BCrho(Expression):
+  def __init__(self, t):
+    self.t    = t
+  def eval(self, values, x):
+    values[0] = dens_i(self.t)
+rho_exp = BCrho(times[0])
+
+# velocity BC :
+class BCw(Expression):
+  def __init__(self, t, rhos, adot_s):
+    self.t      = t
+    self.rhos   = rhos
+    self.adot_s = adot_s
+  def eval(self, values, x):
+    adot = adot_i(self.t)
+    self.adot_s = adot
+    values[0]   = - rhoi / self.rhos * adot / spy
+w_exp = BCw(times[0], dens[0], adot[0])
+
+#code    = 'c*( Tavg + 10.0*(sin(2*omega*t) + 5*sin(4*omega*t)))'
+#H_exp   = Expression(code, c=cp, Tavg=Tavg, omega=pi/spy, t=t0)
+#
+## experimental surface density :
 #code    = 'dp*rhon + (1 - dp)*rhoi'
 #rho_exp = Expression(code, rhon=rhos, rhoi=rhoi, dp=1e-3)
-
-# constant surface density :
-rho_exp = Expression('rhon', rhon=rhos)
-
-# velocity of surface (-acc / rhos) [m/s] :
-code    = '- rhoi/rhos * adot / spy'
-w_exp   = Expression(code, rhoi=rhoi, adot=adot, spy=spy, rhos=rhos)
+#
+## constant surface density :
+#rho_exp = Expression('rhon', rhon=rhos)
+#
+## velocity of surface (-acc / rhos) [m/s] :
+#code    = '- rhoi/rhos * adot / spy'
+#w_exp   = Expression(code, rhoi=rhoi, adot=adot, spy=spy, rhos=rhos)
 
 
 #===============================================================================
 # initialize the firn object :
-firn = Firn(Tavg, rhoin, rhos, adot, dt)
+firn = Firn(Tin, rhoin, rhos, adoti, dt1)
 firn.set_geometry(zs, zb)
 firn.generate_uniform_mesh(n)
-firn.refine_mesh(divs=3, i=1/3.,  k=1/20.)
-#firn.refine_mesh(divs=1, i=1/10., k=1/4.)
-#firn.refine_mesh(divs=1, i=1/10., k=1/4.)
-#firn.refine_mesh(divs=1, i=1/10., k=1/4.)
+firn.refine_mesh(divs=3, i=1/3., k=1/20.)
+firn.refine_mesh(divs=2, i=1/5., k=1/4.)
+firn.refine_mesh(divs=2, i=1/5., k=1/4.)
 firn.set_parameters(FirnParameters())
 firn.set_boundary_conditions(H_exp, rho_exp, w_exp)
 firn.initialize_variables()
@@ -99,8 +150,10 @@ params = {'newton_solver' : {'relaxation_parameter'    : 1.00,
 
 config = { 'mode'                  : 'transient',
            't_start'               : t0,
+           't_mid'                 : tm,
            't_end'                 : tf,
-           'time_step'             : dt,
+           'time_step'             : dt2,
+           'dt_list'               : [dt1, dt2],
            'output_path'           : '.',
            'log'                   : True,
            'plot'                  : bp,
@@ -122,7 +175,7 @@ config = { 'mode'                  : 'transient',
            },
            'free_surface' :
            { 
-             'on'                  : False,
+             'on'                  : False
            },  
            'age' : 
            { 
@@ -140,7 +193,6 @@ config = { 'mode'                  : 'transient',
              'sigma'               : None,
              'precip'              : None
            }}
-
 
 
 F = TransientSolver(firn, config)

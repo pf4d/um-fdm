@@ -49,28 +49,30 @@ class Enthalpy(object):
     Tavg    = firn.Tavg                      # average surface temperature
     Kcoef   = firn.Kcoef                     # enthalpy ceofficient
     Ta      = firn.Ta                        # average temperature 
-    dt      = firn.dt                        # timestep
+    dt      = firn.dt_v                      # timestep
     rhoi    = firn.rhoi                      # density of ice
     spy     = firn.spy
     cpi     = firn.cpi
     adot    = firn.adot
     bdot    = firn.bdot
     Ta      = firn.Ta
-    
+
+    w       = w - m
+
     # SUPG method psihat :
-    vnorm     = sqrt(dot(w-m, w-m) + 1e-10)
-    cellh     = CellSize(mesh)
-    psihat    = psi + cellh/(2*vnorm)*dot(w, psi.dx(0))
+    vnorm   = sqrt(dot(w, w) + 1e-10)
+    cellh   = CellSize(mesh)
+    psihat  = psi + cellh/(2*vnorm)*dot(w, psi.dx(0))
 
     # enthalpy residual :
-    theta     = 0.5
-    H_mid     = theta*H + (1 - theta)*H_1
-    delta     = - k/(rho*c) * Kcoef * inner(H_mid.dx(0), psi.dx(0)) * dx \
-                + (w-m) * H_mid.dx(0) * psihat * dx \
-                - (H - H_1)/dt * psi * dx
+    theta   = 0.5
+    H_mid   = theta*H + (1 - theta)*H_1
+    delta   = - k/(rho*c) * Kcoef * inner(H_mid.dx(0), psi.dx(0)) * dx \
+              + w * H_mid.dx(0) * psihat * dx \
+              - (H - H_1)/dt * psi * dx
     
     # equation to be minimzed :
-    J         = derivative(delta, H, dH)   # temp/density jacobian
+    J       = derivative(delta, H, dH)   # temp/density jacobian
 
     self.delta = delta
     self.J     = J
@@ -101,32 +103,24 @@ class Enthalpy(object):
     # find vector of T, rho :
     Hp       = firn.H.vector().array()
     Tp       = Hp / firn.cp
-    rhop     = firn.rho.vector().array()
     omegap   = firn.omega.vector().array()
     omegap_1 = firn.omega_1.vector().array()
 
     # update coefficients used by enthalpy :
-    Hhigh               = where(Hp > Hsp)[0]
-    Hlow                = where(Hp < Hsp)[0]
-    KcoefNew            = ones(n)
+    Hhigh            = where(Hp > Hsp)[0]
+    Hlow             = where(Hp < Hsp)[0]
+    KcoefNew         = ones(n)
   
-    KcoefNew[Hhigh]     = 1.0/2.0
-    KcoefNew[Hlow]      = 1.0
-    Tp[Hhigh]           = Tw
+    KcoefNew[Hhigh]  = 1.0/2.0
+    KcoefNew[Hlow]   = 1.0
+    Tp[Hhigh]        = Tw
   
     # update water content and density :
-    omegap[Hhigh]       = (Hp[Hhigh] - firn.cp[Hhigh]*(Tw - T0)) / Lf
-    omegap[Hlow]        = 0.0
-    domega              = omegap - omegap_1              # water content chg.
-    domPos              = where(domega >  0)[0]          # water content inc.
-    domNeg              = where(domega <= 0)[0]          # water content dec.
-    rhoNotLiq           = where(rhop < rhow)[0]          # density < water
-    rhoInc              = intersect1d(domPos, rhoNotLiq) # where rho can inc.
-    rhop[rhoInc]        = rhop[rhoInc] + 100*domega[rhoInc]*rhow 
-    rhop[domNeg]        = rhop[domNeg] + domega[domNeg]*(rhow - rhoi)
+    omegap[Hhigh]    = (Hp[Hhigh] - firn.cp[Hhigh]*(Tw - T0)) / Lf
+    omegap[Hlow]     = 0.0
+    domega           = omegap - omegap_1              # water content chg.
 
     # update the dolfin vectors :
-    firn.assign_variable(firn.rho,   rhop)
     firn.assign_variable(firn.T,     Tp)
     firn.assign_variable(firn.omega, omegap)
     #firn.assign_variable(firn.Kcoef, KcoefNew)
@@ -162,7 +156,7 @@ class Density(object):
     Tavg    = firn.Tavg                      # average surface temperature
     rhoCoef = firn.rhoCoef                   # density ceofficient
     Ta      = firn.Ta                        # average temperature 
-    dt      = firn.dt                        # timestep
+    dt      = firn.dt_v                      # timestep
     g       = firn.g                         # gravitational acceleration
     kg      = firn.kg                        # grain growth coefficient
     Ec      = firn.Ec                        # act. energy for water in ice
@@ -174,7 +168,9 @@ class Density(object):
     k       = firn.k
     Ta      = firn.Ta
     T       = firn.T                         # temperature
-    
+
+    w       = w - m
+
     # material derivative :
     #  dr   pr     pr
     #  -- = -- + w --
@@ -184,9 +180,9 @@ class Density(object):
     #                       kcLw * (1.435 - 0.151*ln(A)) )
     
     # SUPG method phihat :
-    vnorm     = sqrt(dot(w-m, w-m) + 1e-10)
+    vnorm     = sqrt(dot(w, w) + 1e-10)
     cellh     = CellSize(mesh)
-    phihat    = phi + cellh/(2*vnorm)*dot(w-m, phi.dx(0))
+    phihat    = phi + cellh/(2*vnorm)*dot(w, phi.dx(0))
     
     theta     = 0.878
     rho_mid   = theta*rho + (1 - theta)*rho_1
@@ -195,7 +191,7 @@ class Density(object):
                 (rhoi - rho_mid)
     delta     = + (rho - rho_1)/dt * phi * dx \
                 - drhodt * phi * dx \
-                + (w-m) * rho_mid.dx(0) * phihat * dx 
+                + w * rho_mid.dx(0) * phihat * dx 
     
     J         = derivative(delta, rho, drho)
 
@@ -225,19 +221,19 @@ class Density(object):
     rhoCoefNew[rhoLow]  = firn.kcLw * (1.435 - 0.151*ln(firn.A))
     firn.assign_variable(firn.rhoCoef, rhoCoefNew)
     
-    rhow  = firn.rhow
-    rhoi  = firn.rhoi
+    rhow   = firn.rhow
+    rhoi   = firn.rhoi
     domega = firn.domega
 
     # update density for water content :
-    domPos              = where(domega >  0)[0]          # water content inc.
-    domNeg              = where(domega <= 0)[0]          # water content dec.
-    rhoNotLiq           = where(rhop < rhow)[0]          # density < water
-    rhoInc              = intersect1d(domPos, rhoNotLiq) # where rho can inc.
-    rhop[rhoInc]        = rhop[rhoInc] + domega[rhoInc]*rhow 
-    rhop[domNeg]        = rhop[domNeg] + domega[domNeg]*(rhow - rhoi)
+    domPos       = where(domega > 0)[0]                # water content inc.
+    domNeg       = where(domega < 0)[0]                # water content dec.
+    rhoNotLiq    = where(rhop < rhow)[0]               # density < water
+    rhoInc       = intersect1d(domPos, rhoNotLiq)      # where rho can inc.
+    rhop[rhoInc] = rhop[rhoInc] + domega[rhoInc]*rhow 
+    rhop[domNeg] = rhop[domNeg] + domega[domNeg]*(rhow - rhoi)
 
-    firn.assign_variable(firn.rho,   rhop)
+    firn.assign_variable(firn.rho, rhop)
 
 
 class Velocity(object):
@@ -265,7 +261,7 @@ class Velocity(object):
     Tavg    = firn.Tavg                      # average surface temperature
     rhoCoef = firn.rhoCoef                   # density ceofficient
     Ta      = firn.Ta                        # average temperature 
-    dt      = firn.dt                        # timestep
+    dt      = firn.dt_v                      # timestep
     g       = firn.g                         # gravitational acceleration
     kg      = firn.kg                        # grain growth coefficient
     Ec      = firn.Ec                        # act. energy for water in ice
@@ -274,13 +270,13 @@ class Velocity(object):
     Ta      = firn.Ta
 
     # velocity residual :
-    theta     = 0.878
-    w_mid     = theta*w + (1 - theta)*w_1
+    theta   = 0.878
+    w_mid   = theta*w + (1 - theta)*w_1
     # Zwally equation for surface velocity :
-    drhodt    = bdot*g*rhoCoef/kg * exp( -Ec/(R*T) + Eg/(R*Ta) ) * \
-                (rhoi - rho)
-    delta     = + rho * w_mid.dx(0) * eta * dx \
-                + drhodt * eta * dx
+    drhodt  = bdot*g*rhoCoef/kg * exp( -Ec/(R*T) + Eg/(R*Ta) ) * \
+              (rhoi - rho)
+    delta   = + rho * w_mid.dx(0) * eta * dx \
+              + drhodt * eta * dx
     # Arthern equation of strain rate from 'Sorge's Law' :
     #f_w       = + rho**2 * w_mid.dx(0) * eta * dx \
     #            - bdot * rho.dx(0) * eta * dx
@@ -320,21 +316,24 @@ class Age(object):
     m_1     = firn.m_1                       # previous mesh velocity
     a       = firn.a                         # age
     a_1     = firn.a_1                       # previous step's age
-    dt      = firn.dt                        # timestep
+    dt      = firn.dt_v                      # timestep
+
+    w       = w - m
+    w_1     = w_1 - m_1
     
     # age residual :
     # theta scheme (1=Backwards-Euler, 0.667=Galerkin, 0.878=Liniger, 
     #               0.5=Crank-Nicolson, 0=Forward-Euler) :
     # uses Taylor-Galerkin upwinding :
-    theta     = 0.5 
-    a_mid     = theta*a + (1-theta)*a_1
-    f         = + (a - a_1)/dt * xi * dx \
-                - 1 * xi * dx \
-                + (w-m) * a_mid.dx(0) * xi * dx \
-                - 0.5 * ((w-m) - (w_1-m_1)) * a_mid.dx(0) * xi * dx \
-                + (w-m)**2 * dt/2 * inner(a_mid.dx(0), xi.dx(0)) * dx \
-                - (w-m) * (w-m).dx(0) * dt/2 * a_mid.dx(0) * xi * dx
-    J         = derivative(f, a, da) # age jacobian
+    theta   = 0.5 
+    a_mid   = theta*a + (1-theta)*a_1
+    f       = + (a - a_1)/dt * xi * dx \
+              - 1 * xi * dx \
+              + w * a_mid.dx(0) * xi * dx \
+              - 0.5 * (w - w_1) * a_mid.dx(0) * xi * dx \
+              + w**2 * dt/2 * inner(a_mid.dx(0), xi.dx(0)) * dx \
+              - w * w.dx(0) * dt/2 * a_mid.dx(0) * xi * dx
+    J       = derivative(f, a, da) # age jacobian
 
     self.f = f
     self.J = J
