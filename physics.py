@@ -121,9 +121,10 @@ class Enthalpy(object):
     domega           = omegap - omegap_1              # water content chg.
 
     # update the dolfin vectors :
-    firn.assign_variable(firn.T,     Tp)
-    firn.assign_variable(firn.omega, omegap)
-    #firn.assign_variable(firn.Kcoef, KcoefNew)
+    firn.assign_variable(firn.T,       Tp)
+    firn.assign_variable(firn.omega_1, firn.omega)
+    firn.assign_variable(firn.omega,   omegap)
+    #firn.assign_variable(firn.Kcoef,   KcoefNew)
     
     firn.domega = domega
 
@@ -273,12 +274,11 @@ class Velocity(object):
     theta   = 0.878
     w_mid   = theta*w + (1 - theta)*w_1
     # Zwally equation for surface velocity :
-    drhodt  = bdot*g*rhoCoef/kg * exp( -Ec/(R*T) + Eg/(R*Ta) ) * \
-              (rhoi - rho)
+    drhodt  = bdot*g*rhoCoef/kg * exp( -Ec/(R*T) + Eg/(R*Ta) ) * (rhoi - rho)
     delta   = + rho * w_mid.dx(0) * eta * dx \
               + drhodt * eta * dx
     # Arthern equation of strain rate from 'Sorge's Law' :
-    #f_w       = + rho**2 * w_mid.dx(0) * eta * dx \
+    #drhodt    = + rho**2 * w_mid.dx(0) * eta * dx \
     #            - bdot * rho.dx(0) * eta * dx
     
     # equation to be minimzed :

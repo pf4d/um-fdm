@@ -63,7 +63,7 @@ class Plot():
     a      = firn.ap /self.spy
     Ts     = firn.Ts - 273.15
     rhos   = rho[-1]
-    ws     = firn.w_S.adot_s
+    adot   = firn.w_S.adot
 
     # y-value :
     z      = firn.z
@@ -131,7 +131,7 @@ class Plot():
     self.phOS,    = self.Oax.plot([Omin, Omax], [zs, zs], 'k-', lw=3)
     self.phOS_dot,= self.Oax.plot(omega[-1], zs, 'ro')
     
-    self.rhoSurf  = self.rhoax.text(rhoh, Tz, r'$\dot{a}$: %.1E i.e.$\frac{\mathrm{m}}{\mathrm{a}}$' % ws)
+    self.rhoSurf  = self.rhoax.text(rhoh, Tz, r'$\dot{a}$: %.1E i.e.$\frac{\mathrm{m}}{\mathrm{a}}$' % adot)
     self.phrho,   = self.rhoax.plot(rho, z, '0.3', lw=1.5,
                                     drawstyle='steps-post')
     self.phrhoS,  = self.rhoax.plot([rhoMin, rhoMax], [zs, zs], 'k-', lw=3)
@@ -215,7 +215,7 @@ class Plot():
     self.phrhoS_dot.set_xdata(rho[-1])
     self.phrhoS_dot.set_ydata(z[-1])
     
-    self.wSurf.set_text(r'$\dot{a}$: %.1E i.e.$\frac{\mathrm{m}}{\mathrm{a}}$' % firn.w_S.adot_s)
+    self.wSurf.set_text(r'$\dot{a}$: %.1E i.e.$\frac{\mathrm{m}}{\mathrm{a}}$' % firn.w_S.adot)
     self.phw.set_xdata(w)
     self.phw.set_ydata(z)
     self.phwS.set_ydata(z[-1])

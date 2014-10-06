@@ -221,6 +221,7 @@ class Firn(object):
     self.H       = H                         # enthalpy
     self.H_1     = H_1                       # previous enthalpy
     self.T       = T                         # temperature
+    self.domega  = zeros(self.n)             # change in water content
     self.omega   = omega                     # water content
     self.omega_1 = omega                     # water content
     self.rho     = rho                       # density
@@ -258,6 +259,7 @@ class Firn(object):
 
     self.A       = rhoi/rhow * 1e3 * adot    # surface accumulation .... mm/a
     self.lini    = self.l                    # initial height vector
+    self.lnew    = self.l.copy()             # previous height vector
     self.t       = 0.0                       # initialize time
     
     self.S_1     = self.S                    # previous time-step surface  
@@ -314,11 +316,11 @@ class Firn(object):
     self.H_S.t = self.t
     self.H_S.c = self.cp[-1]
 
-  def update_rhoBc(self):
-    """
-    Adjust the density at the surface.
-    """
-    self.rho_S.t = self.t
+  #def update_rhoBc(self):
+  #  """
+  #  Adjust the density at the surface.
+  #  """
+  #  self.rho_S.t = self.t
   
   def update_wBc(self):
     """
@@ -326,28 +328,24 @@ class Firn(object):
     """
     self.w_S.t    = self.t
     self.w_S.rhos = self.rhop[-1]
-    bdotNew       = (self.w_S.adot_s * self.rhoi) / self.spy
+    bdotNew       = (self.w_S.adot * self.rhoi) / self.spy
     self.assign_variable(self.bdot, bdotNew)
 
   
-  #def update_rhoBc(self):
-  #  """
-  #  Adjust the density at the surface.
-  #  """
-  #  self.rho_S.rhoi = self.rhop[-1]
-  #  if self.Ts > Tw:
-  #    if self.domega[-1] > 0:
-  #      if self.rho_S.rhon < self.rhoi:
-  #        self.rho_S.rhon = self.rho_S.rhon + self.domega[-1]*self.rhow
-  #    else:
-  #      self.rho_S.rhon = self.rho_S.rhon + self.domega[-1]*83.0
-  #  else:
-  #    self.rho_S.rhon = self.rhos
-  #  ltop      = lnew[-1]
-  #  dnew      = -self.w[-1]*dt
-  #  self.rho_S.dp = dnew/ltop
-  #  self.rho_S.Ts = self.Tp[-1]
-  
+  def update_rhoBc(self):
+    """
+    Adjust the density at the surface.
+    """
+    domega_s = self.domega[self.index][-1]
+    if self.Ts > self.Tw:
+      if domega_s >= 0:
+        if self.rho_S.rhon < self.rhoi:
+          self.rho_S.rhon += domega_s*self.rhow
+      else:
+        self.rho_S.rhon += domega_s*self.rhow#83.0
+    else:
+      self.rho_S.rhon = self.rhos
+
 
   def update_vars(self, t):
     """
@@ -410,9 +408,10 @@ class Firn(object):
     for i in range(self.n):
       zNew[i]  = zSum + lnew[i]
       zSum    += lnew[i]
-    self.z  = zNew
-    self.l  = lnew[1:]
-    self.mp = -(zNew - zOld) / self.dt
+    self.z    = zNew
+    self.l    = lnew[1:]
+    self.mp   = -(zNew - zOld) / self.dt
+    self.lnew = lnew
     
     self.assign_variable(self.m_1, self.m)
     self.assign_variable(self.m,   self.mp)
