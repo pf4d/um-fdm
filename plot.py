@@ -68,7 +68,7 @@ class Plot():
     # y-value :
     z      = firn.z
     zs     = z[-1]
-    zb     = z[0]
+    zb     = -0.5#z[0]
     
     # original surface height :
     zo     = firn.zo
@@ -85,15 +85,15 @@ class Plot():
     Omax   = 0.3
 
     rhoMin = 0.0                                  # rho x-coord min
-    rhoMax = 400                                  # rho x-coord max
+    rhoMax = 300                                  # rho x-coord max
     rhoh   = rhoMin + 0.1*(rhoMax - rhoMin) / 2  # rho height x-coord
     
-    wMin   = -40
-    wMax   = 20
+    wMin   = -25
+    wMax   = 5
     wh     = wMin + 0.1*(wMax - wMin) / 2
 
     aMin   = 0.0
-    aMax   = 50.0
+    aMax   = 8.0
     #kh     = kMin + 0.1*(kMax - kMin) / 2
 
     self.fig   = figure(figsize=(19,6))

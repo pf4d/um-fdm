@@ -316,11 +316,11 @@ class Firn(object):
     self.H_S.t = self.t
     self.H_S.c = self.cp[-1]
 
-  #def update_rhoBc(self):
-  #  """
-  #  Adjust the density at the surface.
-  #  """
-  #  self.rho_S.t = self.t
+  def update_rhoBc(self):
+    """
+    Adjust the density at the surface.
+    """
+    self.rho_S.t = self.t
   
   def update_wBc(self):
     """
@@ -332,19 +332,19 @@ class Firn(object):
     self.assign_variable(self.bdot, bdotNew)
 
   
-  def update_rhoBc(self):
-    """
-    Adjust the density at the surface.
-    """
-    domega_s = self.domega[self.index][-1]
-    if self.Ts > self.Tw:
-      if domega_s >= 0:
-        if self.rho_S.rhon < self.rhoi:
-          self.rho_S.rhon += domega_s*self.rhow
-      else:
-        self.rho_S.rhon += domega_s*self.rhow#83.0
-    else:
-      self.rho_S.rhon = self.rhos
+  #def update_rhoBc(self):
+  #  """
+  #  Adjust the density at the surface.
+  #  """
+  #  domega_s = self.domega[self.index][-1]
+  #  if self.Ts > self.Tw:
+  #    if domega_s >= 0:
+  #      if self.rho_S.rhon < self.rhoi:
+  #        self.rho_S.rhon += domega_s*self.rhow
+  #    else:
+  #      self.rho_S.rhon += domega_s*self.rhow#83.0
+  #  else:
+  #    self.rho_S.rhon = self.rhos
 
 
   def update_vars(self, t):
