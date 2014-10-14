@@ -47,7 +47,7 @@ class Plot():
   """
   Plotting class handles all things related to plotting.
   """
-  def __init__(self, firn):
+  def __init__(self, firn, zMin, zMax, rhoMax, wMin, wMax, aMax):
     """
     Initialize plots with firn object as input.
     """   
@@ -68,13 +68,14 @@ class Plot():
     # y-value :
     z      = firn.z
     zs     = z[-1]
-    zb     = -0.5#z[0]
+    zb     = z[0]
     
     # original surface height :
     zo     = firn.zo
 
-    zmax   = zs + (zs - zb) / 5                   # max z-coord
-    zmin   = zb                                   # min z-coord
+    #zmax   = zs + (zs - zb) / 5                   # max z-coord
+    zmax   = zMax
+    zmin   = zMin                                 # min z-coord
 
     Tmin   = firn.Tavg - Tw - 20                  # T x-coord min
     Tmax   = firn.Tavg - Tw + 20                  # T x-coord max
@@ -85,15 +86,15 @@ class Plot():
     Omax   = 0.3
 
     rhoMin = 0.0                                  # rho x-coord min
-    rhoMax = 300                                  # rho x-coord max
+    #rhoMax = 1000                                 # rho x-coord max
     rhoh   = rhoMin + 0.1*(rhoMax - rhoMin) / 2  # rho height x-coord
     
-    wMin   = -25
-    wMax   = 5
+    #wMin   = -200
+    #wMax   = 200
     wh     = wMin + 0.1*(wMax - wMin) / 2
 
     aMin   = 0.0
-    aMax   = 8.0
+    #aMax   = 2007.0
     #kh     = kMin + 0.1*(kMax - kMin) / 2
 
     self.fig   = figure(figsize=(19,6))

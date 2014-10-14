@@ -13,20 +13,32 @@ class TransientSolver(object):
     self.firn   = firn
     self.config = config
 
+    # plotting extents :
+    zMin   = config['plot']['zMin'] 
+    zMax   = config['plot']['zMax'] 
+    wMin   = config['plot']['wMin'] 
+    wMax   = config['plot']['wMax'] 
+    rhoMax = config['plot']['rhoMax'] 
+    ageMax = config['plot']['ageMax'] 
+
     # form the physics :
     self.fe = Enthalpy(firn, config)
     self.fv = Velocity(firn, config)
     self.fd = Density(firn, config)
     self.fa = Age(firn, config)
 
-    if config['plot']:
+    if config['plot']['on']:
       plt.ion() 
-      self.plot = Plot(firn)
+      self.plot = Plot(firn, zMin, zMax, rhoMax, wMin, wMax, ageMax)
       plt.draw()
 
   def solve(self):
     """
     """
+    s    = '::: solving TransientSolver :::'
+    text = colored(s, 'blue')
+    print text
+    
     firn   = self.firn
     config = self.config
 
@@ -96,11 +108,15 @@ class TransientSolver(object):
          firn.m_1.assign(firn.m)
     
       # update the plotting parameters :
-      if config['plot']:
+      if config['plot']['on']:
         self.plot.update_plot()
         plt.draw()
+        
+      s = '>>> Time: %i yr <<<'
+      text = colored(s, 'red', attrs=['bold'])
+      print text % (t / firn.spy)
     
-    if config['plot']:
+    if config['plot']['on']:
       plt.ioff()
       plt.show()
 

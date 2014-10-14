@@ -39,7 +39,7 @@ import time
 # constants :
 
 # model variables :
-spy   = 31556926.0             # seconds per year ............... s/a
+spy   = 365*24*60*60           # seconds per year ............... s/a
 cpi   = 2009.                  # const. heat capacitity of ice .. J/(kg K)
 Tw    = 273.15                 # triple point water ............. degrees K
 n     = 100                    # num of z-positions
@@ -52,7 +52,7 @@ Tavg  = Tw - 20.0              # average temperature ............ degrees K
 cp    = 152.5 + 7.122*Tavg     # heat capacity of ice ........... J/(kg K)
 cp    = cpi                    # heat capacity of ice ........... J/(kg K)
 zs    = 0.                     # surface start .................. m
-zb    = -5.0                   # depth .......................... m
+zb    = -500.0                 # depth .......................... m
 dt1   = 10.0*spy               # time-step ...................... s
 dt2   = 1/365.0*spy            # time-step ...................... s
 t0    = 0.0                    # begin time ..................... s
@@ -66,8 +66,9 @@ times  = data['years'].T[0] * spy
 temp   = data['TT_9_Monthly'].T[0] + Tw
 dens   = data['RO1_Monthly'].T[0]
 dens[dens == 0.0] = 100.0
-adot   = data['SF_Monthly'].T[0] * 1000 * 12 / spy
-rain   = data['RF_Monthly'].T[0] * 1000 * 12 / spy
+adot   = data['SF_Monthly'].T[0] * 1000 * 365 / spy
+rain   = data['RF_Monthly'].T[0] * 1000 * 365 / spy
+melt   = data['ME_Monthly'].T[0] * 1000 * 365 / spy
 
 t0     = 1000.0
 tm     = times[0]
@@ -96,7 +97,7 @@ class BCrho(Expression):
   def __init__(self, t):
     self.t    = t
   def eval(self, values, x):
-    values[0] = dens_i(self.t)
+    values[0] = dens_i(self.t) 
 rho_exp = BCrho(times[0])
 
 # velocity BC :
@@ -110,20 +111,6 @@ class BCw(Expression):
     values[0]   = - rhoi / self.rhos * self.adot / spy
 w_exp = BCw(times[0], dens[0], adot[0])
 
-#code    = 'c*( Tavg + 10.0*(sin(2*omega*t) + 5*sin(4*omega*t)))'
-#H_exp   = Expression(code, c=cp, Tavg=Tavg, omega=pi/spy, t=t0)
-#
-## experimental surface density :
-#code    = 'dp*rhon + (1 - dp)*rhoi'
-#rho_exp = Expression(code, rhon=rhos, rhoi=rhoi, dp=1e-3)
-#
-## constant surface density :
-#rho_exp = Expression('rhon', rhon=rhos)
-#
-## velocity of surface (-acc / rhos) [m/s] :
-#code    = '- rhoi/rhos * adot / spy'
-#w_exp   = Expression(code, rhoi=rhoi, adot=adot, spy=spy, rhos=rhos)
-
 
 #===============================================================================
 # initialize the firn object :
@@ -131,6 +118,7 @@ firn = Firn(Tin, rhoin, rhos, adoti, dt1)
 firn.set_geometry(zs, zb)
 firn.generate_uniform_mesh(n)
 firn.refine_mesh(divs=3, i=1/3., k=1/20.)
+firn.refine_mesh(divs=2, i=1/5., k=1/4.)
 firn.refine_mesh(divs=2, i=1/5., k=1/4.)
 firn.refine_mesh(divs=2, i=1/5., k=1/4.)
 firn.set_parameters(FirnParameters())
@@ -155,7 +143,6 @@ config = { 'mode'                  : 'transient',
            'dt_list'               : [dt1, dt2],
            'output_path'           : '.',
            'log'                   : True,
-           'plot'                  : bp,
            'coupled' : 
            { 
              'on'                  : False,
@@ -191,6 +178,16 @@ config = { 'mode'                  : 'transient',
              'beta_w'              : None,
              'sigma'               : None,
              'precip'              : None
+           },
+           'plot' :
+           {
+             'on'                  : bp,
+             'zMin'                : -25, 
+             'zMax'                : 5, 
+             'wMax'                : 300,
+             'wMin'                : -1500,
+             'rhoMax'              : 600,
+             'ageMax'              : 15, 
            }}
 
 

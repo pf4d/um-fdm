@@ -57,11 +57,12 @@ class FirnParameters(object):
     cpi   = 2009.
     Tw    = 273.15
     Hsp   = cpi * Tw
+    spy   = 365*24*60*60
 
     d_params = \
     {'g'     : (9.81,        'gravitational acceleration',    'm/s^2'),
      'R'     : (8.3144621,   'gas constant',                  'J/(mol K)'),
-     'spy'   : (31556926.0,  'seconds per year',              's/a'),
+     'spy'   : (spy,         'seconds per year',              's/a'),
      'rhoi'  : (917.,        'density of ice',                'kg/m^3'),
      'rhow'  : (1000.,       'density of water',              'kg/m^3'),
      'rhom'  : (550.,        'density at 15 m',               'kg/m^3'),

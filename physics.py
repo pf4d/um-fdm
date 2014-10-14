@@ -21,8 +21,9 @@ Evan Cummings
 FEniCS solution to firn enthalpy / density profile.
 
 """
-from fenics import *
-from pylab  import intersect1d, where, zeros, ones
+from fenics    import *
+from pylab     import intersect1d, where, zeros, ones
+from termcolor import colored
 
 class Enthalpy(object):
 
@@ -80,6 +81,10 @@ class Enthalpy(object):
   def solve(self):
     """
     """
+    s    = "::: solving enthalpy :::"
+    text = colored(s, 'cyan')
+    print text
+    
     firn   = self.firn
     config = self.config
 
@@ -127,6 +132,10 @@ class Enthalpy(object):
     #firn.assign_variable(firn.Kcoef,   KcoefNew)
     
     firn.domega = domega
+      
+    firn.print_min_max(firn.T,     'T')
+    firn.print_min_max(firn.H,     'H')
+    firn.print_min_max(firn.omega, 'omega')
 
 
 class Density(object):
@@ -202,6 +211,10 @@ class Density(object):
   def solve(self):
     """
     """
+    s    = "::: solving density :::"
+    text = colored(s, 'cyan')
+    print text
+    
     firn   = self.firn
     config = self.config
 
@@ -235,6 +248,7 @@ class Density(object):
     rhop[domNeg] = rhop[domNeg] + domega[domNeg]*(rhow - rhoi)
 
     firn.assign_variable(firn.rho, rhop)
+    firn.print_min_max(firn.rho, 'rho')
 
 
 class Velocity(object):
@@ -290,6 +304,10 @@ class Velocity(object):
   def solve(self):
     """
     """
+    s    = "::: solving velocity :::"
+    text = colored(s, 'cyan')
+    print text
+    
     firn   = self.firn
     config = self.config
 
@@ -298,6 +316,7 @@ class Velocity(object):
     #h.vector().set_local(h.vector().array() + epi)
     solve(self.delta == 0, firn.w, firn.wBc, J=self.J, 
           solver_parameters=config['enthalpy']['solver_params'])
+    firn.print_min_max(firn.w, 'w')
     
 
 class Age(object):
@@ -342,12 +361,18 @@ class Age(object):
   def solve(self):
     """
     """
-    a      = self.firn.a
-    ageBc  = self.firn.ageBc
+    s    = "::: solving age :::"
+    text = colored(s, 'cyan')
+    print text
+    
+    firn   = self.firn
+    a      = firn.a
+    ageBc  = firn.ageBc
     config = self.config
 
     # solve for age :
     solve(self.f == 0, a, ageBc, J=self.J,
           solver_parameters=config['age']['solver_params'])
+    firn.print_min_max(firn.a, 'age')
   
 

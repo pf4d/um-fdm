@@ -17,6 +17,7 @@ from pylab             import *
 from scipy.interpolate import interp1d
 from fenics            import *
 from ufl.indexed       import Indexed
+from termcolor         import colored
 
 
 class Firn(object):
@@ -443,6 +444,31 @@ class Firn(object):
     self.assign_variable(self.w_i,   self.w)
     self.assign_variable(self.aF,    self.a)
     self.assign_variable(self.a_1,   self.a)
+
+  def print_min_max(self, u, title):
+    """
+    Print the minimum and maximum values of <u>, a Vector, Function, or array.
+    """
+    if isinstance(u, GenericVector):
+      uMin = u.array().min()
+      uMax = u.array().max()
+    elif isinstance(u, Function):
+      uMin = u.vector().array().min()
+      uMax = u.vector().array().max()
+    elif isinstance(u, np.ndarray):
+      uMin = u.min()
+      uMax = u.max()
+    elif isinstance(u, Indexed):
+      u_n  = project(u, self.Q)
+      uMin = u_n.vector().array().min()
+      uMax = u_n.vector().array().max()
+    else:
+      print "print_min_max function requires a Vector, Function, array," \
+            + " or Indexed, not %s." % type(u)
+      uMin = uMax = 0.0
+    s    = title + ' <min, max> : <%f, %f>' % (uMin, uMax)
+    text = colored(s, 'yellow')
+    print text
 
 
 
