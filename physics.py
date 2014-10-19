@@ -208,6 +208,75 @@ class Density(object):
     self.delta = delta
     self.J     = J
 
+class FullDensity(object):
+
+  def __init__(self, firn, config):
+    """
+    """
+    self.firn   = firn
+    self.config = config
+
+    mesh    = firn.mesh
+    V       = firn.V
+
+    phi     = firn.phi                       # test function for rho
+    drho    = firn.drho 
+  
+    A       = firn.A
+    kcHh    = firn.kcHh
+    kcLw    = firn.kcLw
+   
+    H       = firn.H                         # enthalpy
+    T       = firn.T                         # temperature
+    rho     = firn.rho                       # density
+    rho_1   = firn.rho_1                     # previous density
+    w       = firn.w                         # velocity
+    m       = firn.m                         # mesh velocity
+    bdot    = firn.bdot                      # average annual accumulation
+    Tavg    = firn.Tavg                      # average surface temperature
+    rhoCoef = firn.rhoCoef                   # density ceofficient
+    Ta      = firn.Ta                        # average temperature 
+    dt      = firn.dt_v                      # timestep
+    g       = firn.g                         # gravitational acceleration
+    kg      = firn.kg                        # grain growth coefficient
+    Ec      = firn.Ec                        # act. energy for water in ice
+    Eg      = firn.Eg                        # act. energy for grain growth
+    R       = firn.R                         # universal gas constant
+    rhoi    = firn.rhoi                      # density of ice
+    rhom    = firn.rhom                      # critical density
+    c       = firn.c
+    k       = firn.k
+    Ta      = firn.Ta
+    T       = firn.T                         # temperature
+
+    w       = w - m
+
+    # material derivative :
+    #  dr   pr     pr
+    #  -- = -- + w --
+    #  dt   pt     pz
+    #rhoCoef = conditional( gt(rho, rhom), 
+    #                       kcHh * (2.366 - 0.293*ln(A)),
+    #                       kcLw * (1.435 - 0.151*ln(A)) )
+    
+    # SUPG method phihat :
+    vnorm     = sqrt(dot(w, w) + 1e-10)
+    cellh     = CellSize(mesh)
+    phihat    = phi + cellh/(2*vnorm)*dot(w, phi.dx(0))
+    
+    theta     = 0.878
+    rho_mid   = theta*rho + (1 - theta)*rho_1
+    
+    drhodt    = kcLw * (rhoi - rho_mid) * exp( -Ec/(R*T) ) * sigma / r**2
+    delta     = + (rho - rho_1)/dt * phi * dx \
+                - drhodt * phi * dx \
+                + w * rho_mid.dx(0) * phihat * dx 
+    
+    J         = derivative(delta, rho, drho)
+
+    self.delta = delta
+    self.J     = J
+
   def solve(self):
     """
     """
@@ -249,6 +318,42 @@ class Density(object):
 
     firn.assign_variable(firn.rho, rhop)
     firn.print_min_max(firn.rho, 'rho')
+
+
+class OverburdenPressure(object):
+
+  def __init__(self, firn, config):
+    """
+    """
+    self.firn   = firn
+    self.config = config
+
+    bdot = firn.bdot
+    g    = firn.g
+    dt   = firn.dt
+
+    sigma   = firn.sigma
+    sigma_1 = firn.sigma_1
+    phi     = firn.phi
+    dsigma  = firn.test
+    
+    theta       = 0.5
+    sigma_mid   = theta*sigma + (1 - theta)*sigma_1
+
+    delta = + (sigma - sigma_1)/dt * phi * dx \
+            - bdot * g * phi * dx
+
+    J     = derivative(delta, sigma, dsigma)
+
+    self.delta = delta
+    self.J     = J
+
+  def solve(self):
+    """
+    """
+    solve(self.delta == 0, firn.sigma, self.bc, J=self.J,
+          solver_parameters=config['enthalpy']['solver_params'])
+
 
 
 class Velocity(object):

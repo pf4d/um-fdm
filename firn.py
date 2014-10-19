@@ -63,7 +63,7 @@ class Firn(object):
     z         = mesh.coordinates()[:,0]          # z-coordinates
     index     = argsort(z)                       # ordered z-coord index
     
-  def set_boundary_conditions(self, H_exp, rho_exp, w_exp):
+  def set_boundary_conditions(self, H_exp, rho_exp, w_exp, r_exp):
     """
     """
     # enthalpy surface condition :
@@ -75,8 +75,14 @@ class Firn(object):
     # velocity surface condition :
     self.w_S   = w_exp
 
+    # grain radius surface condition :
+    self.r_S = r_exp
+
     # age surface condition (always zero at surface) :
-    self.age_S = Constant(0.0)
+    self.age_S   = Constant(0.0)
+
+    # sigma suface condition (always zero at surface) :
+    self.sigma_S = Constant(0.0)
 
   def refine_mesh(self, divs, i, k,  m=1):
     """
@@ -143,10 +149,11 @@ class Firn(object):
     def base(x, on_boundary):
       return on_boundary and x[0] == self.B
     
-    HBc   = DirichletBC(V, self.H_S,   surface)   # enthalpy of surface
-    rhoBc = DirichletBC(V, self.rho_S, surface)   # density of surface
-    wBc   = DirichletBC(V, self.w_S,   surface)   # velocity of surface
-    ageBc = DirichletBC(V, self.age_S, surface)   # age of surface
+    HBc     = DirichletBC(V, self.H_S,     surface)   # enthalpy of surface
+    rhoBc   = DirichletBC(V, self.rho_S,   surface)   # density of surface
+    wBc     = DirichletBC(V, self.w_S,     surface)   # velocity of surface
+    ageBc   = DirichletBC(V, self.age_S,   surface)   # age of surface
+    sigmaBc = DirichletBC(V, self.sigma_S, surface)   # stress on surface
     
     #===========================================================================
     # Define variational problem spaces :
