@@ -47,7 +47,7 @@ class Plot():
   """
   Plotting class handles all things related to plotting.
   """
-  def __init__(self, firn, zMin, zMax, rhoMax, wMin, wMax, aMax):
+  def __init__(self, firn, zMin, zMax, rhoMax, wMin, wMax, aMax, omegaMax):
     """
     Initialize plots with firn object as input.
     """   
@@ -83,7 +83,7 @@ class Plot():
     Tz     = zmax - 0.15*(zmax - zmin) / 2        # z-coord of Ts
 
     Omin   = 0.0
-    Omax   = 0.3
+    Omax   = omegaMax
 
     rhoMin = 0.0                                  # rho x-coord min
     #rhoMax = 1000                                 # rho x-coord max

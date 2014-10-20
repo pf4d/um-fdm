@@ -69,7 +69,7 @@ class Enthalpy(object):
     theta   = 0.5
     H_mid   = theta*H + (1 - theta)*H_1
     delta   = - k/(rho*c) * Kcoef * inner(H_mid.dx(0), psi.dx(0)) * dx \
-              + w * H_mid.dx(0) * psihat * dx \
+              + w * H_mid.dx(0) * psi * dx \
               - (H - H_1)/dt * psi * dx
     
     # equation to be minimzed :
@@ -123,7 +123,7 @@ class Enthalpy(object):
     # update water content and density :
     omegap[Hhigh]    = (Hp[Hhigh] - firn.cp[Hhigh]*(Tw - T0)) / Lf
     omegap[Hlow]     = 0.0
-    domega           = omegap - omegap_1              # water content chg.
+    domega           = omegap - omegap_1    # water content chg.
 
     # update the dolfin vectors :
     firn.assign_variable(firn.T,       Tp)
@@ -201,81 +201,14 @@ class Density(object):
                 (rhoi - rho_mid)
     delta     = + (rho - rho_1)/dt * phi * dx \
                 - drhodt * phi * dx \
-                + w * rho_mid.dx(0) * phihat * dx 
+                + w * rho_mid.dx(0) * phi * dx 
     
     J         = derivative(delta, rho, drho)
 
-    self.delta = delta
-    self.J     = J
+    self.delta  = delta
+    self.J      = J
+    firn.drhodt = drhodt
 
-class FullDensity(object):
-
-  def __init__(self, firn, config):
-    """
-    """
-    self.firn   = firn
-    self.config = config
-
-    mesh    = firn.mesh
-    V       = firn.V
-
-    phi     = firn.phi                       # test function for rho
-    drho    = firn.drho 
-  
-    A       = firn.A
-    kcHh    = firn.kcHh
-    kcLw    = firn.kcLw
-   
-    H       = firn.H                         # enthalpy
-    T       = firn.T                         # temperature
-    rho     = firn.rho                       # density
-    rho_1   = firn.rho_1                     # previous density
-    w       = firn.w                         # velocity
-    m       = firn.m                         # mesh velocity
-    bdot    = firn.bdot                      # average annual accumulation
-    Tavg    = firn.Tavg                      # average surface temperature
-    rhoCoef = firn.rhoCoef                   # density ceofficient
-    Ta      = firn.Ta                        # average temperature 
-    dt      = firn.dt_v                      # timestep
-    g       = firn.g                         # gravitational acceleration
-    kg      = firn.kg                        # grain growth coefficient
-    Ec      = firn.Ec                        # act. energy for water in ice
-    Eg      = firn.Eg                        # act. energy for grain growth
-    R       = firn.R                         # universal gas constant
-    rhoi    = firn.rhoi                      # density of ice
-    rhom    = firn.rhom                      # critical density
-    c       = firn.c
-    k       = firn.k
-    Ta      = firn.Ta
-    T       = firn.T                         # temperature
-
-    w       = w - m
-
-    # material derivative :
-    #  dr   pr     pr
-    #  -- = -- + w --
-    #  dt   pt     pz
-    #rhoCoef = conditional( gt(rho, rhom), 
-    #                       kcHh * (2.366 - 0.293*ln(A)),
-    #                       kcLw * (1.435 - 0.151*ln(A)) )
-    
-    # SUPG method phihat :
-    vnorm     = sqrt(dot(w, w) + 1e-10)
-    cellh     = CellSize(mesh)
-    phihat    = phi + cellh/(2*vnorm)*dot(w, phi.dx(0))
-    
-    theta     = 0.878
-    rho_mid   = theta*rho + (1 - theta)*rho_1
-    
-    drhodt    = kcLw * (rhoi - rho_mid) * exp( -Ec/(R*T) ) * sigma / r**2
-    delta     = + (rho - rho_1)/dt * phi * dx \
-                - drhodt * phi * dx \
-                + w * rho_mid.dx(0) * phihat * dx 
-    
-    J         = derivative(delta, rho, drho)
-
-    self.delta = delta
-    self.J     = J
 
   def solve(self):
     """
@@ -318,9 +251,9 @@ class FullDensity(object):
 
     firn.assign_variable(firn.rho, rhop)
     firn.print_min_max(firn.rho, 'rho')
+  
 
-
-class OverburdenPressure(object):
+class FullDensity(object):
 
   def __init__(self, firn, config):
     """
@@ -328,32 +261,140 @@ class OverburdenPressure(object):
     self.firn   = firn
     self.config = config
 
-    bdot = firn.bdot
-    g    = firn.g
-    dt   = firn.dt
+    mesh    = firn.mesh
+    V       = firn.V
 
-    sigma   = firn.sigma
-    sigma_1 = firn.sigma_1
-    phi     = firn.phi
-    dsigma  = firn.test
+    A       = firn.A
+    kcHh    = firn.kcHh
+    kcLw    = firn.kcLw
+   
+    H       = firn.H                         # enthalpy
+    T       = firn.T                         # temperature
+    w       = firn.w                         # velocity
+    m       = firn.m                         # mesh velocity
+    bdot    = firn.bdot                      # average annual accumulation
+    Tavg    = firn.Tavg                      # average surface temperature
+    rhoCoef = firn.rhoCoef                   # density ceofficient
+    Ta      = firn.Ta                        # average temperature 
+    dt      = firn.dt_v                      # timestep
+    g       = firn.g                         # gravitational acceleration
+    kg      = firn.kg                        # grain growth coefficient
+    Ec      = firn.Ec                        # act. energy for water in ice
+    Eg      = firn.Eg                        # act. energy for grain growth
+    R       = firn.R                         # universal gas constant
+    rhoi    = firn.rhoi                      # density of ice
+    rhom    = firn.rhom                      # critical density
+    c       = firn.c
+    k       = firn.k
+    Ta      = firn.Ta
+    T       = firn.T                         # temperature
+
+    w       = w - m
     
-    theta       = 0.5
-    sigma_mid   = theta*sigma + (1 - theta)*sigma_1
+  
+    Q       = MixedFunctionSpace([V,V,V])
+    dQ      = TrialFunction(Q)
 
-    delta = + (sigma - sigma_1)/dt * phi * dx \
-            - bdot * g * phi * dx
+    U       = Function(Q)
+    U_1     = Function(Q)
+    Phi     = TestFunction(Q)
 
-    J     = derivative(delta, sigma, dsigma)
+    rho,   sigma,   r    = U
+    rho_1, sigma_1, r_1  = U_1
+    phi,   psi,     xi   = Phi
 
-    self.delta = delta
-    self.J     = J
+    # initialize :
+    U_i = project(as_vector([firn.rho_i, firn.sigma_i, firn.r_i]), Q)
+    firn.assign_variable(U,   U_i)
+    firn.assign_variable(U_1, U_i)
+  
+    # rho residual :
+    theta     = 0.878
+    rho_mid   = theta*rho + (1 - theta)*rho_1
+    
+    drhodt    = rhoCoef * exp( -Ec/(R*T) ) * (rhoi - rho_mid) * sigma / r
+    d_rho     = + (rho - rho_1)/dt * phi * dx \
+                - drhodt * phi * dx \
+                + w * rho_mid.dx(0) * phi * dx 
+    
+    # sigma residual : 
+    theta     = 0.878
+    sig_mid   = theta*sigma + (1 - theta)*sigma_1
+    dsigdt    = bdot * g
+    d_sigma   = + (sigma - sigma_1)/dt * psi * dx \
+                - dsigdt * psi * dx \
+                + w * sig_mid.dx(0) * psi * dx
+
+    # r residual :
+    theta   = 0.878
+    r_mid   = theta*r + (1 - theta)*r_1
+    drdt    = kg * exp( -Eg/(R*T) )
+    d_r     = + (r - r_1)/dt * xi * dx \
+              - drdt * xi * dx \
+              + w * r_mid.dx(0) * xi * dx
+
+    # boundary conditions :
+    def surface(x, on_boundary):
+      return on_boundary and x[0] == firn.S
+    rhoBc   = DirichletBC(Q.sub(0), firn.rho_S,   surface)
+    sigmaBc = DirichletBC(Q.sub(1), firn.sigma_S, surface)
+    rBc     = DirichletBC(Q.sub(2), firn.r_S,     surface)
+
+    self.bcs = [rhoBc, sigmaBc, rBc]
+    
+    self.delta  = d_rho + d_sigma + d_r
+    self.J      = derivative(self.delta, U, dQ)
+    firn.rho    = rho
+    firn.sigma  = sigma
+    firn.r      = r
+    firn.U      = U
+    firn.U_1    = U_1
+    firn.drhodt = drhodt
 
   def solve(self):
     """
     """
-    solve(self.delta == 0, firn.sigma, self.bc, J=self.J,
-          solver_parameters=config['enthalpy']['solver_params'])
+    s    = "::: solving density, overburden stress, and grain radius :::"
+    text = colored(s, 'cyan')
+    print text
+    
+    firn   = self.firn
+    config = self.config
 
+    # newton's iterative method :
+    solve(self.delta == 0, firn.U, bcs=self.bcs, J=self.J, 
+          solver_parameters=config['enthalpy']['solver_params'])
+    firn.rho, firn.sigma, firn.r = firn.U.split(True)
+
+    rhop = firn.rho.vector().array()
+
+    # update kc term in drhodt :
+    # if rho >  550, kc = kcHigh
+    # if rho <= 550, kc = kcLow
+    # with parameterizations given by ligtenberg et all 2011
+    rhoCoefNew          = ones(firn.n)
+    rhoHigh             = where(rhop >  550)[0]
+    rhoLow              = where(rhop <= 550)[0]
+    rhoCoefNew[rhoHigh] = firn.kcHh * (2.366 - 0.293*ln(firn.A))
+    rhoCoefNew[rhoLow]  = firn.kcLw * (1.435 - 0.151*ln(firn.A))
+    firn.assign_variable(firn.rhoCoef, rhoCoefNew)
+    
+    #rhow   = firn.rhow
+    #rhoi   = firn.rhoi
+    #domega = firn.domega
+
+    ## update density for water content :
+    #domPos       = where(domega > 0)[0]                # water content inc.
+    #domNeg       = where(domega < 0)[0]                # water content dec.
+    #rhoNotLiq    = where(rhop < rhow)[0]               # density < water
+    #rhoInc       = intersect1d(domPos, rhoNotLiq)      # where rho can inc.
+    #rhop[rhoInc] = rhop[rhoInc] + domega[rhoInc]*rhow 
+    #rhop[domNeg] = rhop[domNeg] + domega[domNeg]*(rhow - rhoi)
+
+    #firn.assign_variable(firn.rho, rhop)
+    firn.print_min_max(firn.rho,   'rho')
+    firn.print_min_max(firn.sigma, 'sigma')
+    firn.print_min_max(firn.r,     'r^2')
 
 
 class Velocity(object):
@@ -370,35 +411,24 @@ class Velocity(object):
     eta     = firn.eta                       # test function for w
     dw      = firn.dw
   
-    H       = firn.H                         # enthalpy
-    T       = firn.T                         # temperature
     rho     = firn.rho                       # density
-    rhoi    = firn.rhoi
     w       = firn.w                         # velocity
     w_1     = firn.w_1                       # previous step's velocity
     m       = firn.m                         # mesh velocity
     bdot    = firn.bdot                      # average annual accumulation
-    Tavg    = firn.Tavg                      # average surface temperature
-    rhoCoef = firn.rhoCoef                   # density ceofficient
-    Ta      = firn.Ta                        # average temperature 
     dt      = firn.dt_v                      # timestep
-    g       = firn.g                         # gravitational acceleration
-    kg      = firn.kg                        # grain growth coefficient
-    Ec      = firn.Ec                        # act. energy for water in ice
-    Eg      = firn.Eg                        # act. energy for grain growth
-    R       = firn.R                         # universal gas constant
-    Ta      = firn.Ta
+    drhodt  = firn.drhodt
 
     # velocity residual :
     theta   = 0.878
     w_mid   = theta*w + (1 - theta)*w_1
-    # Zwally equation for surface velocity :
-    drhodt  = bdot*g*rhoCoef/kg * exp( -Ec/(R*T) + Eg/(R*Ta) ) * (rhoi - rho)
+    
     delta   = + rho * w_mid.dx(0) * eta * dx \
               + drhodt * eta * dx
-    # Arthern equation of strain rate from 'Sorge's Law' :
-    #drhodt    = + rho**2 * w_mid.dx(0) * eta * dx \
-    #            - bdot * rho.dx(0) * eta * dx
+    
+    ## Arthern equation of strain rate from 'Sorge's Law' :
+    #delta   = + rho**2 * w_mid.dx(0) * eta * dx \
+    #          - bdot * rho.dx(0) * eta * dx
     
     # equation to be minimzed :
     J         = derivative(delta, w, dw)   # temp/density jacobian
@@ -422,6 +452,65 @@ class Velocity(object):
     solve(self.delta == 0, firn.w, firn.wBc, J=self.J, 
           solver_parameters=config['enthalpy']['solver_params'])
     firn.print_min_max(firn.w, 'w')
+    
+
+class Darcy(object):
+  
+  def __init__(self, firn, config):
+    """
+    """
+    self.firn   = firn
+    self.config = config
+
+    V       = firn.V
+    omega   = firn.omega
+    omega_1 = firn.omega_1
+    r       = firn.r
+    rho     = firn.rho
+    rhow    = firn.rhow
+    etaw    = firn.etaw
+    g       = firn.g
+    dt      = firn.dt
+
+    domega  = TrialFunction(V)
+    phi     = TestFunction(V)
+    
+    # boundary conditions :
+    def surface(x, on_boundary):
+      return on_boundary and x[0] == firn.S
+    self.omegaBc = DirichletBC(V, omega, surface)
+
+    # omega residual :
+    theta   = 0.878
+    omg_mid = theta*omega + (1 - theta)*omega_1
+    
+    ks = 0.077 * (1.0/100)**2 * r * exp(-7.8*rho/rhow)
+    p  = rhow * omg_mid * g
+    u  = - ks/etaw * p.dx(0)
+    
+    self.delta = + (omega - omega_1)/dt * phi * dx \
+                 + u*omg_mid.dx(0) * phi * dx \
+                 + u.dx(0) * omg_mid * phi * dx
+
+    self.J     = derivative(self.delta, omega, domega)
+    firn.u     = u
+
+  def solve(self):
+    """
+    """
+    s    = "::: solving Darcy flow of water :::"
+    text = colored(s, 'cyan')
+    print text
+    
+    firn   = self.firn
+    config = self.config
+
+    # newton's iterative method :
+    solve(self.delta == 0, firn.omega, bcs=self.omegaBc, J=self.J, 
+          solver_parameters=config['enthalpy']['solver_params'])
+    firn.u = project(firn.u, firn.V)
+    firn.print_min_max(firn.omega, 'Darcy omega')
+    firn.print_min_max(firn.u,     'Darcy velocity')
     
 
 class Age(object):

@@ -78,7 +78,8 @@ class FirnParameters(object):
      'T0'    : (0.0,         'reference temperature',         'K'),
      'beta'  : (7.9e-8,      'Clausius-Clapeyron',            'K/Pa'),
      'Lf'    : (3.34e5,      'latent heat of fusion',         'J/kg'),
-     'Hsp'   : (Hsp,         'Enthalpy of ice at Tw',         'J/kg')}
+     'Hsp'   : (Hsp,         'Enthalpy of ice at Tw',         'J/kg'),
+     'etaw'  : (1.787e-3,    'Dynamic viscosity of 0C water', 'Pa s')}
 
     return d_params
 

@@ -1,5 +1,5 @@
 from pylab          import plt, linspace, ones, hstack
-from physics        import Enthalpy, Density, Velocity, Age
+from physics        import Enthalpy, Density, FullDensity, Velocity, Age, Darcy
 from plot           import Plot
 from termcolor      import colored, cprint
 
@@ -14,22 +14,24 @@ class TransientSolver(object):
     self.config = config
 
     # plotting extents :
-    zMin   = config['plot']['zMin'] 
-    zMax   = config['plot']['zMax'] 
-    wMin   = config['plot']['wMin'] 
-    wMax   = config['plot']['wMax'] 
-    rhoMax = config['plot']['rhoMax'] 
-    ageMax = config['plot']['ageMax'] 
+    zMin     = config['plot']['zMin'] 
+    zMax     = config['plot']['zMax'] 
+    wMin     = config['plot']['wMin'] 
+    wMax     = config['plot']['wMax'] 
+    rhoMax   = config['plot']['rhoMax'] 
+    ageMax   = config['plot']['ageMax'] 
+    omegaMax = config['plot']['omegaMax'] 
 
     # form the physics :
     self.fe = Enthalpy(firn, config)
     self.fv = Velocity(firn, config)
-    self.fd = Density(firn, config)
+    self.fd = FullDensity(firn, config)
     self.fa = Age(firn, config)
+    self.ff = Darcy(firn, config)
 
     if config['plot']['on']:
       plt.ion() 
-      self.plot = Plot(firn, zMin, zMax, rhoMax, wMin, wMax, ageMax)
+      self.plot = Plot(firn, zMin, zMax, rhoMax, wMin, wMax, ageMax, omegaMax)
       plt.draw()
 
   def solve(self):
@@ -46,6 +48,7 @@ class TransientSolver(object):
     fv     = self.fv
     fd     = self.fd
     fa     = self.fa
+    ff     = self.ff
     
     t0      = config['t_start']
     tm      = config['t_mid']
@@ -84,6 +87,7 @@ class TransientSolver(object):
     
       # newton's iterative method :
       fe.solve()
+      ff.solve()
       fd.solve()
       fv.solve()
       fa.solve()
@@ -101,7 +105,7 @@ class TransientSolver(object):
       # update model parameters :
       if t != times[-1]:
          firn.H_1.assign(firn.H)
-         firn.rho_1.assign(firn.rho)
+         firn.U_1.assign(firn.U)
          firn.omega_1.assign(firn.omega)
          firn.w_1.assign(firn.w)
          firn.a_1.assign(firn.a)

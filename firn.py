@@ -24,11 +24,12 @@ class Firn(object):
   """
   Data structure to hold firn model state data.
   """
-  def __init__(self, Tavg, rhoin, rhos, adot, dt):
+  def __init__(self, Tavg, rhoin, rin, rhos, adot, dt):
     """
     """
     self.Tavg  = Tavg
     self.rhoin = rhoin
+    self.rin   = rin
     self.rhos  = rhos
     self.adot  = adot
     self.dt    = dt
@@ -127,6 +128,7 @@ class Firn(object):
    
     index = self.index 
     rhoin = self.rhoin
+    rin   = self.rin
     n     = self.n
     cpi   = self.cpi
     T0    = self.T0
@@ -154,45 +156,55 @@ class Firn(object):
     wBc     = DirichletBC(V, self.w_S,     surface)   # velocity of surface
     ageBc   = DirichletBC(V, self.age_S,   surface)   # age of surface
     sigmaBc = DirichletBC(V, self.sigma_S, surface)   # stress on surface
+    rBc     = DirichletBC(V, self.r_S,     surface)   # grain radius on surface
     
     #===========================================================================
     # Define variational problem spaces :
-    H_i    = interpolate(Constant(cpi*(Tavg - T0)), V) # initial enthalpy vector
-    rho_i  = interpolate(Constant(rhoin), V)           # initial density vector
-    a_i    = interpolate(Constant(1.0), V)             # initial age vector
-    w_i    = interpolate(Constant(0.0), V)             # initial velocity vector
-    m      = interpolate(Constant(0.0), V)             # mesh velocity
-    m_1    = interpolate(Constant(0.0), V)             # prev. mesh velocity
-    
-    H      = Function(V)
-    rho    = Function(V)
-    w      = Function(V)                              # solutions for H, rho
-   
-    H_1    = Function(V)
-    rho_1  = Function(V)
-    w_1    = Function(V)
+    H_i     = interpolate(Constant(cpi*(Tavg - T0)), V)
+    rho_i   = interpolate(Constant(rhoin), V)
+    a_i     = interpolate(Constant(1.0), V)
+    w_i     = interpolate(Constant(0.0), V)
+    sigma_i = interpolate(Constant(0.0), V)
+    r_i     = interpolate(Constant(rin), V)
+    m       = interpolate(Constant(0.0), V)
+    m_1     = interpolate(Constant(0.0), V)
+            
+    H       = Function(V)
+    rho     = Function(V)
+    w       = Function(V)
+    a       = Function(V)
+    sigma   = Function(V)
+    r       = Function(V)
+            
+    H_1     = Function(V)
+    rho_1   = Function(V)
+    w_1     = Function(V)
+    a_1     = Function(V)
+    sigma_1 = Function(V)
+    r_1     = Function(V)
     
     dH     = TrialFunction(V)
     drho   = TrialFunction(V)
     dw     = TrialFunction(V)
+    da     = TrialFunction(V)
     
     psi    = TestFunction(V) 
     phi    = TestFunction(V) 
     eta    = TestFunction(V) 
-    
-    a      = Function(V)                      # age solution / trial function
-    da     = TrialFunction(V)                 # trial function for age
-    xi     = TestFunction(V)                  # age test function
-    a_1    = Function(V)                      # previous age solution
+    xi     = TestFunction(V)
    
-    self.assign_variable(H,     H_i)
-    self.assign_variable(H_1,   H_i)
-    self.assign_variable(rho,   rho_i)
-    self.assign_variable(rho_1, rho_i)
-    self.assign_variable(w,     w_i)
-    self.assign_variable(w_1,   w_i)
-    self.assign_variable(a,     a_i)
-    self.assign_variable(a_1,   a_i)
+    self.assign_variable(H,       H_i)
+    self.assign_variable(H_1,     H_i)
+    self.assign_variable(rho,     rho_i)
+    self.assign_variable(rho_1,   rho_i)
+    self.assign_variable(w,       w_i)
+    self.assign_variable(w_1,     w_i)
+    self.assign_variable(a,       a_i)
+    self.assign_variable(a_1,     a_i)
+    self.assign_variable(sigma_1, sigma_i)
+    self.assign_variable(sigma,   sigma_i)
+    self.assign_variable(r,       r_i)
+    self.assign_variable(r_1,     r_i)
     
     T       = interpolate(Constant(Tavg), V)
     omega   = interpolate(Constant(0.0), V)
@@ -224,6 +236,8 @@ class Firn(object):
     
     self.H_i     = H_i                       # initial enthalpy
     self.rho_i   = rho_i                     # initial density
+    self.r_i     = r_i
+    self.sigma_i = sigma_i
     self.w_i     = w_i                       # initial velocity
     self.a_i     = a_i                       # initial age
     self.H       = H                         # enthalpy
@@ -234,6 +248,10 @@ class Firn(object):
     self.omega_1 = omega                     # water content
     self.rho     = rho                       # density
     self.rho_1   = rho_1                     # previous density
+    self.sigma   = sigma
+    self.sigma_1 = sigma_1
+    self.r       = r
+    self.r_1     = r_1
     self.drhodt  = drhodt                    # densification rate
     self.w       = w                         # velocity
     self.w_1     = w_1                       # previous velocity
@@ -324,12 +342,7 @@ class Firn(object):
     self.H_S.t = self.t
     self.H_S.c = self.cp[-1]
 
-  def update_rhoBc(self):
-    """
-    Adjust the density at the surface.
-    """
-    self.rho_S.t = self.t
-  
+
   def update_wBc(self):
     """
     Adjust the velocity at the surface.
@@ -340,19 +353,20 @@ class Firn(object):
     self.assign_variable(self.bdot, bdotNew)
 
   
-  #def update_rhoBc(self):
-  #  """
-  #  Adjust the density at the surface.
-  #  """
-  #  domega_s = self.domega[self.index][-1]
-  #  if self.Ts > self.Tw:
-  #    if domega_s >= 0:
-  #      if self.rho_S.rhon < self.rhoi:
-  #        self.rho_S.rhon += domega_s*self.rhow
-  #    else:
-  #      self.rho_S.rhon += domega_s*self.rhow#83.0
-  #  else:
-  #    self.rho_S.rhon = self.rhos
+  def update_rhoBc(self):
+    """
+    Adjust the density at the surface.
+    """
+    domega_s = self.domega[self.index][-1]
+    if self.Ts > self.Tw:
+      if domega_s > 0:
+        if self.rho_S.rhon < self.rhoi:
+          self.rho_S.rhon += domega_s*self.rhow
+      else:
+        self.rho_S.rhon += domega_s*self.rhow#83.0
+    else:
+      self.rho_S.rhon = self.rhos
+    self.rho_S.t = self.t
 
 
   def update_vars(self, t):
@@ -473,7 +487,7 @@ class Firn(object):
       print "print_min_max function requires a Vector, Function, array," \
             + " or Indexed, not %s." % type(u)
       uMin = uMax = 0.0
-    s    = title + ' <min, max> : <%f, %f>' % (uMin, uMax)
+    s    = title + ' <min, max> : <%.4E, %.4E>' % (uMin, uMax)
     text = colored(s, 'yellow')
     print text
 
