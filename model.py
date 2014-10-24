@@ -55,7 +55,7 @@ adoti = adot
 cp    = 152.5 + 7.122*Tavg     # heat capacity of ice ........... J/(kg K)
 cp    = cpi                    # heat capacity of ice ........... J/(kg K)
 zs    = 0.                     # surface start .................. m
-zb    = -150.0                 # depth .......................... m
+zb    = -10.0                  # depth .......................... m
 dt    = 0.5/365.0*spy          # time-step ...................... s
 #dt    = 10.0*spy              # time-step ...................... s
 t0    = 0.0                    # begin time ..................... s
@@ -88,6 +88,7 @@ firn.generate_uniform_mesh(n)
 firn.refine_mesh(divs=3, i=1/3., k=1/20.)
 firn.refine_mesh(divs=2, i=1/5., k=1/4.)
 #firn.refine_mesh(divs=2, i=1/5., k=1/4.)
+firn.calculate_boundaries()
 firn.set_parameters(FirnParameters())
 firn.set_boundary_conditions(H_exp, rho_exp, w_exp, r_exp)
 firn.initialize_variables()
@@ -149,13 +150,13 @@ config = { 'mode'                  : 'transient',
            'plot' :
            {
              'on'                  : bp,
-             'zMin'                : -20, 
-             'zMax'                : 2, 
-             'wMax'                : 0,
+             'zMin'                : -1.5, 
+             'zMax'                : 0.3,
+             'wMax'                : 5,
              'wMin'                : -30,
              'rhoMax'              : 1000,
              'ageMax'              : 100, 
-             'omegaMax'            : 0.05, 
+             'omegaMax'            : 0.10, 
            }}
 
 F = TransientSolver(firn, config)
@@ -169,7 +170,7 @@ thours = ttot/60
 print "total time to process %i years: %.2e mins" % ((tf - t0)/spy, thours)
 
 # plot the surface height trend :
-F.plot.plot_height(F.times, firn.ht, firn.origHt)
+#F.plot.plot_height(F.times, firn.ht, firn.origHt)
 
 
 

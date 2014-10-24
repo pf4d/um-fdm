@@ -27,7 +27,7 @@ class TransientSolver(object):
     self.fv = Velocity(firn, config)
     self.fd = FullDensity(firn, config)
     self.fa = Age(firn, config)
-    self.ff = Darcy(firn, config)
+    #self.ff = Darcy(firn, config)
 
     if config['plot']['on']:
       plt.ion() 
@@ -48,7 +48,7 @@ class TransientSolver(object):
     fv     = self.fv
     fd     = self.fd
     fa     = self.fa
-    ff     = self.ff
+    #ff     = self.ff
     
     t0      = config['t_start']
     tm      = config['t_mid']
@@ -84,10 +84,11 @@ class TransientSolver(object):
       firn.update_Hbc()
       firn.update_rhoBc()
       firn.update_wBc()
+      firn.update_omegaBc()
     
       # newton's iterative method :
       fe.solve()
-      ff.solve()
+      #ff.solve()
       fd.solve()
       fv.solve()
       fa.solve()

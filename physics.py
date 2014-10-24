@@ -57,8 +57,20 @@ class Enthalpy(object):
     adot    = firn.adot
     bdot    = firn.bdot
     Ta      = firn.Ta
-
+    u       = firn.u
+    p       = firn.p
     w       = w - m
+    
+    etaw  = firn.etaw
+    rhow  = firn.rhow
+    z     = firn.x
+    g     = firn.g
+    omega = firn.omega
+    r     = firn.r
+    S     = firn.S
+    ks    = 0.077 * (1.0/100)**2 * r * exp(-7.8*rho/rhow)   # intrinsic perm.
+
+    u     = ks/etaw * p.dx(0)
 
     # SUPG method psihat :
     vnorm   = sqrt(dot(w, w) + 1e-10)
@@ -69,7 +81,7 @@ class Enthalpy(object):
     theta   = 0.5
     H_mid   = theta*H + (1 - theta)*H_1
     delta   = - k/(rho*c) * Kcoef * inner(H_mid.dx(0), psi.dx(0)) * dx \
-              + w * H_mid.dx(0) * psi * dx \
+              + (w + u) * H_mid.dx(0) * psi * dx \
               - (H - H_1)/dt * psi * dx
     
     # equation to be minimzed :
@@ -77,6 +89,7 @@ class Enthalpy(object):
 
     self.delta = delta
     self.J     = J
+    self.u     = u
 
   def solve(self):
     """
@@ -104,6 +117,7 @@ class Enthalpy(object):
     kcLw  = firn.kcLw
     Hsp   = firn.Hsp
     index = firn.index
+    g     = firn.g
 
     # find vector of T, rho :
     Hp       = firn.H.vector().array()
@@ -132,10 +146,15 @@ class Enthalpy(object):
     #firn.assign_variable(firn.Kcoef,   KcoefNew)
     
     firn.domega = domega
-      
+
     firn.print_min_max(firn.T,     'T')
     firn.print_min_max(firn.H,     'H')
     firn.print_min_max(firn.omega, 'omega')
+
+    firn.p = firn.vert_integrate(-rhow * g * firn.omega)
+    firn.u = project(self.u)
+    firn.print_min_max(firn.pp, 'p')
+    firn.print_min_max(firn.up, 'u')
 
 
 class Density(object):
@@ -249,7 +268,7 @@ class Density(object):
     rhop[rhoInc] = rhop[rhoInc] + domega[rhoInc]*rhow 
     rhop[domNeg] = rhop[domNeg] + domega[domNeg]*(rhow - rhoi)
 
-    firn.assign_variable(firn.rho, rhop)
+    #firn.assign_variable(firn.rho, rhop)
     firn.print_min_max(firn.rho, 'rho')
   
 
@@ -468,32 +487,52 @@ class Darcy(object):
     r       = firn.r
     rho     = firn.rho
     rhow    = firn.rhow
+    rhoi    = firn.rhoi
     etaw    = firn.etaw
     g       = firn.g
     dt      = firn.dt
+    H       = firn.H
+    H_1     = firn.H_1
+    Hsp     = firn.Hsp
+    cp      = firn.c
+    Tw      = firn.Tw
+    Lf      = firn.Lf
+    Hs      = firn.Hp[-1]
+    cps     = firn.cp[-1]
 
     domega  = TrialFunction(V)
     phi     = TestFunction(V)
+
+    ds      = firn.ds
     
+    Fcoef   = conditional( lt(H, Hsp), 0.0, 1.0 )
+        
     # boundary conditions :
     def surface(x, on_boundary):
       return on_boundary and x[0] == firn.S
-    self.omegaBc = DirichletBC(V, omega, surface)
+    
+    self.omegaBc   = DirichletBC(V, firn.omega_S, surface)
 
     # omega residual :
-    theta   = 0.878
+    theta   = 0.5#0.878
     omg_mid = theta*omega + (1 - theta)*omega_1
     
-    ks = 0.077 * (1.0/100)**2 * r * exp(-7.8*rho/rhow)
-    p  = rhow * omg_mid * g
-    u  = - ks/etaw * p.dx(0)
-    
+    k   = 0.077 * (1.0/100)**2 * r * exp(-7.8*rho/rhow)   # intrinsic perm.
+    #k   = 0.0602 * exp(-0.00957 * rho)
+    psi = 1 - rho/rhoi                                    # porosity
+    Wmi = 0.0057 / (1 - psi) + 0.017                      # irr. water content
+    W   = omg_mid / psi
+    We  = (omg_mid - Wmi) / (psi - Wmi)
+    ks  = k * rhow * g / etaw
+    K   = ks * We**3.0 
+    M   = 3.0 * ks / (psi - Wmi) * We**2.0
+
     self.delta = + (omega - omega_1)/dt * phi * dx \
-                 + u*omg_mid.dx(0) * phi * dx \
-                 + u.dx(0) * omg_mid * phi * dx
+                 + K.dx(0) * phi * dx \
+    #             + M * omg_mid.dx(0) * phi * dx \
+    #             - Fcoef * ((H - H_1) - cp*Tw)/Lf * phi * dx \
 
     self.J     = derivative(self.delta, omega, domega)
-    firn.u     = u
 
   def solve(self):
     """
@@ -504,13 +543,17 @@ class Darcy(object):
     
     firn   = self.firn
     config = self.config
+    
+    params = {'newton_solver' : {'relaxation_parameter'    : 0.8,
+                                 'maximum_iterations'      : 50,
+                                 'error_on_nonconvergence' : False,
+                                 'relative_tolerance'      : 1e-10,
+                                 'absolute_tolerance'      : DOLFIN_EPS}}
 
     # newton's iterative method :
     solve(self.delta == 0, firn.omega, bcs=self.omegaBc, J=self.J, 
-          solver_parameters=config['enthalpy']['solver_params'])
-    firn.u = project(firn.u, firn.V)
+          solver_parameters=params)
     firn.print_min_max(firn.omega, 'Darcy omega')
-    firn.print_min_max(firn.u,     'Darcy velocity')
     
 
 class Age(object):

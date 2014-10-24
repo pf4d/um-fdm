@@ -34,7 +34,6 @@ class Firn(object):
     self.adot  = adot
     self.dt    = dt
 
-
   def set_geometry(self, sur, bed):
     """
     """
@@ -56,6 +55,7 @@ class Firn(object):
     """
     """
     self.params = params
+    self.params.globalize_parameters(self)
 
   def set_mesh(self, mesh):
     """
@@ -84,6 +84,86 @@ class Firn(object):
 
     # sigma suface condition (always zero at surface) :
     self.sigma_S = Constant(0.0)
+    
+    Lf  = self.Lf
+    Hsp = self.Hsp
+    Tw  = self.Tw
+    rhoi = self.rhoi
+    rhow = self.rhow
+    g    = self.g
+    etaw = self.etaw
+
+    # water percentage on the surface :
+    class BComega(Expression):
+      def __init__(self, Hs, cps, rhos):
+        self.Hs   = Hs
+        self.cps  = cps
+        self.rhos = rhos
+      def eval(self, values, x):
+        #psis  = 1 - self.rhos/rhoi
+        #Wmi   = 0.0057 / (1 - psis) + 0.017         # irr. water content
+        #if self.Hs > Hsp:
+        #  values[0] = Wmi + (self.Hs - self.cps*Tw) / Lf
+        #else:
+        #  values[0] = Wmi
+        values[0] = 0.08
+    
+    # water flux at the surface :
+    class BComegaFlux(Expression):
+      def __init__(self, rs, rhos, Hs, cps):
+        self.rs     = rs
+        self.rhos   = rhos
+        self.Hs     = Hs
+        self.cps    = cps
+      def eval(self, values, x):
+        rhos  = self.rhos
+        rs    = self.rs
+        #ks    = 0.077 * (1.0/100)**2 * rs * exp(-7.8*rhos/rhow)
+        ks    = 0.0602 * exp(-0.00957 * rhos)
+        psis  = 1 - rhos/rhoi
+        Wmi = 0.0057 / (1 - psis) + 0.017         # irr. water content
+        if self.Hs > Hsp:
+          omg_s = (self.Hs - self.cps*Tw) / Lf
+        else:
+          omg_s = Wmi
+        Wes   = (omg_s - Wmi) / (psis - Wmi)
+        kws   = ks * Wes**3.0
+        Ks    = kws * rhow * g / etaw
+        print "::::::::::::::::::::::::KS", Ks, rs, rhos, omg_s
+        values[0] = Ks
+    self.omega_S = BComega(0.0, 0.0, 0.0)
+    #self.omega_S = BComegaFlux(0.0, 0.0, 0.0, 0.0)
+
+  def calculate_boundaries(self):
+    """
+    Determines the boundaries of the current model mesh
+    """
+    # this function contains markers which may be applied to facets of the mesh
+    self.ff = FacetFunction('size_t', self.mesh)
+    tol     = 1e-3
+   
+    surf = self.S
+    base = self.B
+    
+    # iterate through the facets and mark each if on a boundary :
+    #
+    #   0 = surface
+    #   1 = base
+    class Surface(SubDomain):
+      def inside(self, x, on_boundary):
+        return on_boundary and x[0] == surf
+    
+    class Base(SubDomain):
+      def inside(self, x, on_boundary):
+        return on_boundary and x[0] == base
+
+    S = Surface()
+    B = Base()
+    S.mark(self.ff, 0)
+    B.mark(self.ff, 1)
+
+    self.ds = ds[self.ff]
+      
 
   def refine_mesh(self, divs, i, k,  m=1):
     """
@@ -118,13 +198,12 @@ class Firn(object):
     Initializes the class's variables to default values that are then set
     by the individually created model.
     """
-    self.params.globalize_parameters(self) # make all the variables available 
-
     self.z     = self.mesh.coordinates()[:,0]
     self.index = argsort(self.z)
     self.z     = self.z[self.index]
     self.l     = np.diff(self.z)
     self.n     = len(self.z)
+    self.x     = SpatialCoordinate(self.mesh)[0]
    
     index = self.index 
     rhoin = self.rhoin
@@ -175,6 +254,8 @@ class Firn(object):
     a       = Function(V)
     sigma   = Function(V)
     r       = Function(V)
+    p       = Function(V)
+    u       = Function(V)
             
     H_1     = Function(V)
     rho_1   = Function(V)
@@ -265,6 +346,8 @@ class Firn(object):
     self.Ta      = Ta                        # average surface temperature
     self.Kcoef   = Kcoef                     # enthalpy ceofficient
     self.rhoCoef = rhoCoef                   # density ceofficient
+    self.p       = p
+    self.u       = u
 
     self.Hp      = H.vector().array()[index]
     self.Tp      = T.vector().array()[index]
@@ -275,8 +358,11 @@ class Firn(object):
     self.wp      = w.vector().array()[index]
     self.kp      = project(k,V).vector().array()[index]
     self.cp      = project(c,V).vector().array()[index]
+    self.rp      = project(r,V).vector().array()[index]
     self.rhoinp  = self.rhop                 # initial density
     self.agep    = zeros(n)                  # initial age
+    self.pp      = zeros(n)
+    self.up      = zeros(n)
     
     self.HBc     = HBc                       # enthalpy b.c.
     self.rhoBc   = rhoBc                     # density b.c.
@@ -341,8 +427,18 @@ class Firn(object):
     """
     self.H_S.t = self.t
     self.H_S.c = self.cp[-1]
-
-
+  
+ 
+  def update_omegaBc(self): 
+    """
+    Adjust the water-content at the surface.
+    """
+    self.omega_S.Hs  = self.Hp[-1]
+    self.omega_S.cps = self.cp[-1]
+    self.omega_S.rs   = self.rp[-1]
+    self.omega_S.rhos = self.rhop[-1]
+  
+      
   def update_wBc(self):
     """
     Adjust the velocity at the surface.
@@ -357,15 +453,15 @@ class Firn(object):
     """
     Adjust the density at the surface.
     """
-    domega_s = self.domega[self.index][-1]
-    if self.Ts > self.Tw:
-      if domega_s > 0:
-        if self.rho_S.rhon < self.rhoi:
-          self.rho_S.rhon += domega_s*self.rhow
-      else:
-        self.rho_S.rhon += domega_s*self.rhow#83.0
-    else:
-      self.rho_S.rhon = self.rhos
+    #domega_s = self.domega[self.index][-1]
+    #if self.Ts > self.Tw:
+    #  if domega_s > 0:
+    #    if self.rho_S.rhon < self.rhoi:
+    #      self.rho_S.rhon += domega_s*self.rhow
+    #  else:
+    #    self.rho_S.rhon += domega_s*self.rhow#83.0
+    #else:
+    #  self.rho_S.rhon = self.rhos
     self.rho_S.t = self.t
 
 
@@ -384,12 +480,36 @@ class Firn(object):
     self.ap      = self.a.vector().array()[index]
     self.Tp      = self.T.vector().array()[index]
     self.omegap  = self.omega.vector().array()[index]
+    self.rp      = self.r.vector().array()[index]
+    self.pp      = self.p.vector().array()[index]
+    self.up      = project(self.u).vector().array()[index]
     #self.drhodtp = project(self.drhodt, self.V).vector().array()[index]
     #self.kp      = project(self.k, self.V).vector().array()[index]
     #self.cp      = project(self.c, self.V).vector().array()[index]
     
     self.Ts     = self.Hp[-1] / self.cp[-1]
     self.A      = self.rhoi/self.rhow * 1e3 * adot
+  
+  def vert_integrate(self, u):
+    """
+    Integrate <u> from the surface to the bed.
+    """
+    ff  = self.ff
+    V   = self.V
+    phi = TestFunction(V)
+    v   = TrialFunction(V)
+    
+    # surface Dirichlet boundary :
+    def surface(x, on_boundary):
+      return on_boundary and x[0] == self.S
+    
+    # integral is zero on surface
+    bcs = DirichletBC(V, 0.0, surface)
+    a      = v.dx(0) * phi * dx
+    L      = u * phi * dx
+    v      = Function(V)
+    solve(a == L, v, bcs)
+    return v
 
   def update_height_history(self):
     """

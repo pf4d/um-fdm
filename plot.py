@@ -60,6 +60,7 @@ class Plot():
     omega  = firn.omegap
     rho    = firn.rhop
     w      = firn.wp * self.spy * 1e2 # cm/a
+    u      = firn.up * self.spy * 1e2 # cm/a
     a      = firn.ap /self.spy
     Ts     = firn.Ts - 273.15
     rhos   = rho[-1]
@@ -143,6 +144,8 @@ class Plot():
     self.wSurf    = self.wax.text(wh, Tz, r'$\rho_S$: %.1E $\frac{\mathrm{kg}}{\mathrm{m}^3}$' % rhos)
     self.phw,     = self.wax.plot(w, z, '0.3', lw=1.5,
                                   drawstyle='steps-post')
+    self.phu,     = self.wax.plot(u, z, 'r', lw=1.5,
+                                  drawstyle='steps-post')
     self.phwS,    = self.wax.plot([wMin, wMax], [zs, zs], 'k-', lw=3)
     self.wS_dot,  = self.wax.plot(w[-1], zs, 'ro')
     #self.phws_0,  = self.wax.plot(wh, zo, 'ko')
@@ -186,6 +189,7 @@ class Plot():
     Tw    = firn.Tw
     rho   = firn.rhop
     w     = firn.wp * self.spy * 1e2
+    u     = firn.up * self.spy * 1e2
     a     = firn.ap / self.spy
     z     = firn.z
     zo    = firn.zo
@@ -219,6 +223,8 @@ class Plot():
     self.wSurf.set_text(r'$\dot{a}$: %.1E i.e.$\frac{\mathrm{m}}{\mathrm{a}}$' % firn.w_S.adot)
     self.phw.set_xdata(w)
     self.phw.set_ydata(z)
+    self.phu.set_xdata(u)
+    self.phu.set_ydata(z)
     self.phwS.set_ydata(z[-1])
     self.wS_dot.set_xdata(w[-1])
     self.wS_dot.set_ydata(z[-1])
