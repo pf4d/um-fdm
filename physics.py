@@ -25,6 +25,7 @@ from fenics    import *
 from pylab     import intersect1d, where, zeros, ones
 from termcolor import colored
 
+
 class Enthalpy(object):
 
   def __init__(self, firn, config):
@@ -45,7 +46,7 @@ class Enthalpy(object):
     rho     = firn.rho                       # density
     w       = firn.w                         # velocity
     m       = firn.m                         # mesh velocity
-    k       = firn.k                         # thermal conductivity
+    ki      = firn.k                         # thermal conductivity
     c       = firn.c                         # heat capacity
     Tavg    = firn.Tavg                      # average surface temperature
     Kcoef   = firn.Kcoef                     # enthalpy ceofficient
@@ -56,21 +57,33 @@ class Enthalpy(object):
     cpi     = firn.cpi
     adot    = firn.adot
     bdot    = firn.bdot
+    T       = firn.T
     Ta      = firn.Ta
+    Tw      = firn.Tw
+    T0      = firn.T0
+    Lf      = firn.Lf
+    Hsp     = firn.Hsp
     u       = firn.u
     p       = firn.p
-    w       = w - m
+    ql      = firn.ql
+    etaw    = firn.etaw
+    rhow    = firn.rhow
+    #w       = w - m
+    z       = firn.x
+    g       = firn.g
+    r       = firn.r
+    S       = firn.S
+    #omega   = firn.omega
     
-    etaw  = firn.etaw
-    rhow  = firn.rhow
-    z     = firn.x
-    g     = firn.g
-    omega = firn.omega
-    r     = firn.r
-    S     = firn.S
-    ks    = 0.077 * (1.0/100)**2 * r * exp(-7.8*rho/rhow)   # intrinsic perm.
-
-    u     = ks/etaw * p.dx(0)
+    omega = conditional(lt(H, Hsp), 0, (H - c*(Tw - T0))/Lf)
+    k     = 0.077 * (1.0/100)**2 * r * exp(-7.8*rho/rhow)   # intrinsic perm.
+    u     = - k / etaw * p.dx(0)                            # darcy velocity
+    phi   = 1 - rho/rhoi                                    # porosity
+    Smi   = 0.0057 / (1 - phi) + 0.017                      # irr. water content
+    Se    = (omega - Smi) / (phi - Smi)                     # effective sat.
+    K     = k * rhow * g / etaw
+    krw   = Se**3.0 
+    ql    = K * krw * p.dx(0)                               # water flux
 
     # SUPG method psihat :
     vnorm   = sqrt(dot(w, w) + 1e-10)
@@ -78,10 +91,11 @@ class Enthalpy(object):
     psihat  = psi + cellh/(2*vnorm)*dot(w, psi.dx(0))
 
     # enthalpy residual :
-    theta   = 0.5
+    theta   = 1.0
     H_mid   = theta*H + (1 - theta)*H_1
-    delta   = - k/(rho*c) * Kcoef * inner(H_mid.dx(0), psi.dx(0)) * dx \
-              + (w + u) * H_mid.dx(0) * psi * dx \
+    delta   = - ki/(rho*c) * Kcoef * inner(H_mid.dx(0), psi.dx(0)) * dx \
+              + w * H_mid.dx(0) * psi * dx \
+              + (ql * H_mid).dx(0) * psi * dx \
               - (H - H_1)/dt * psi * dx
     
     # equation to be minimzed :
@@ -90,6 +104,9 @@ class Enthalpy(object):
     self.delta = delta
     self.J     = J
     self.u     = u
+    self.ql    = ql
+    self.omega = omega
+    self.Smi   = Smi
 
   def solve(self):
     """
@@ -106,6 +123,9 @@ class Enthalpy(object):
     #h.vector().set_local(h.vector().array() + epi)
     solve(self.delta == 0, firn.H, firn.HBc, J=self.J, 
           solver_parameters=config['enthalpy']['solver_params'])
+
+    firn.omega = project(self.omega)
+    firn.ql    = project(self.ql)
     
     n     = firn.n
     Tw    = firn.Tw
@@ -141,8 +161,8 @@ class Enthalpy(object):
 
     # update the dolfin vectors :
     firn.assign_variable(firn.T,       Tp)
+    #firn.assign_variable(firn.omega,   omegap)
     firn.assign_variable(firn.omega_1, firn.omega)
-    firn.assign_variable(firn.omega,   omegap)
     #firn.assign_variable(firn.Kcoef,   KcoefNew)
     
     firn.domega = domega
@@ -150,9 +170,15 @@ class Enthalpy(object):
     firn.print_min_max(firn.T,     'T')
     firn.print_min_max(firn.H,     'H')
     firn.print_min_max(firn.omega, 'omega')
+    firn.print_min_max(firn.ql,    'ql')
 
-    firn.p = firn.vert_integrate(-rhow * g * firn.omega)
-    firn.u = project(self.u)
+    p = firn.vert_integrate(rhow * g * firn.omega)
+    rho   = firn.rho
+    phi   = 1 - rho/rhoi                                    # porosity
+    Smi   = 0.0057 / (1 - phi) + 0.017                      # irr. water content
+    firn.assign_variable(firn.p,   p)
+    firn.assign_variable(firn.u,   project(self.u))
+    firn.assign_variable(firn.Smi, project(Smi))
     firn.print_min_max(firn.pp, 'p')
     firn.print_min_max(firn.up, 'u')
 
@@ -198,7 +224,7 @@ class Density(object):
     Ta      = firn.Ta
     T       = firn.T                         # temperature
 
-    w       = w - m
+    #w       = w - m
 
     # material derivative :
     #  dr   pr     pr
@@ -308,7 +334,7 @@ class FullDensity(object):
     Ta      = firn.Ta
     T       = firn.T                         # temperature
 
-    w       = w - m
+    #w       = w - m
     
   
     Q       = MixedFunctionSpace([V,V,V])
@@ -368,7 +394,7 @@ class FullDensity(object):
     firn.r      = r
     firn.U      = U
     firn.U_1    = U_1
-    firn.drhodt = drhodt
+    self.drhodt = drhodt
 
   def solve(self):
     """
@@ -397,6 +423,7 @@ class FullDensity(object):
     rhoCoefNew[rhoHigh] = firn.kcHh * (2.366 - 0.293*ln(firn.A))
     rhoCoefNew[rhoLow]  = firn.kcLw * (1.435 - 0.151*ln(firn.A))
     firn.assign_variable(firn.rhoCoef, rhoCoefNew)
+    firn.assign_variable(firn.drhodt,  project(self.drhodt))
     
     #rhow   = firn.rhow
     #rhoi   = firn.rhoi
@@ -431,7 +458,7 @@ class Velocity(object):
     dw      = firn.dw
   
     rho     = firn.rho                       # density
-    w       = firn.w                         # velocity
+    w       = TrialFunction(V)               # velocity
     w_1     = firn.w_1                       # previous step's velocity
     m       = firn.m                         # mesh velocity
     bdot    = firn.bdot                      # average annual accumulation
@@ -449,11 +476,7 @@ class Velocity(object):
     #delta   = + rho**2 * w_mid.dx(0) * eta * dx \
     #          - bdot * rho.dx(0) * eta * dx
     
-    # equation to be minimzed :
-    J         = derivative(delta, w, dw)   # temp/density jacobian
-
     self.delta = delta
-    self.J     = J
 
   def solve(self):
     """
@@ -464,12 +487,10 @@ class Velocity(object):
     
     firn   = self.firn
     config = self.config
+    delta  = self.delta
 
-    # newton's iterative method :
-    #epi = np.random.rand(self.firn.n)
-    #h.vector().set_local(h.vector().array() + epi)
-    solve(self.delta == 0, firn.w, firn.wBc, J=self.J, 
-          solver_parameters=config['enthalpy']['solver_params'])
+    # linear solve :
+    solve(lhs(delta) == rhs(delta), firn.w, firn.wBc)
     firn.print_min_max(firn.w, 'w')
     
 

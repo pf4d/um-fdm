@@ -45,8 +45,8 @@ Tw    = 273.15                 # triple point water ............. degrees K
 n     = 100                    # num of z-positions
 rhos  = 360.                   # initial density at surface ..... kg/m^3
 rhoi  = 917.                   # density of ice ................. kg/m^3
-rhoin = 917.                   # initial density at surface ..... kg/m^3
-rin   = 0.0005**2              # initial grain radius ...........m^2
+rhoin = 717.                   # initial density at surface ..... kg/m^3
+rin   = 0.0005**2              # initial grain radius ........... m^2
 adot  = 0.1                    # accumulation rate .............. m/a
 Tavg  = Tw - 20.0              # average temperature ............ degrees K
 Tin   = Tavg
@@ -55,17 +55,17 @@ adoti = adot
 cp    = 152.5 + 7.122*Tavg     # heat capacity of ice ........... J/(kg K)
 cp    = cpi                    # heat capacity of ice ........... J/(kg K)
 zs    = 0.                     # surface start .................. m
-zb    = -10.0                  # depth .......................... m
-dt    = 0.5/365.0*spy          # time-step ...................... s
-#dt    = 10.0*spy              # time-step ...................... s
+zb    = -100.0                 # depth .......................... m
+dt1   = 10.0*spy               # time-step ...................... s
+dt2   = 0.5/365.0*spy          # time-step ...................... s
 t0    = 0.0                    # begin time ..................... s
 tf    = sys.argv[1]            # end-time ....................... string
 tf    = float(tf)*spy          # end-time ....................... s
 bp    = int(sys.argv[2])       # plot or not .................... bool
-tm    = 0.0
+tm    = 1000.0 * spy
   
 # enthalpy BC :
-code    = 'c*( Tavg + 5.0*(sin(2*omega*t) + 5*sin(4*omega*t)))'
+code    = 'c*( Tavg + 6.0*(sin(2*omega*t) + 5*sin(4*omega*t)))'
 H_exp   = Expression(code, c=cp, Tavg=Tavg, omega=pi/spy, t=t0)
 
 # surface density :
@@ -82,7 +82,7 @@ r_exp   = Expression('r_s', r_s=rin)
 
 #===============================================================================
 # initialize the firn object :
-firn = Firn(Tin, rhoin, rin, rhos, adoti, dt)
+firn = Firn(Tin, rhoin, rin, rhos, adoti, dt1)
 firn.set_geometry(zs, zb)
 firn.generate_uniform_mesh(n)
 firn.refine_mesh(divs=3, i=1/3., k=1/20.)
@@ -107,8 +107,8 @@ config = { 'mode'                  : 'transient',
            't_start'               : t0,
            't_mid'                 : tm,
            't_end'                 : tf,
-           'time_step'             : dt,
-           'dt_list'               : None,
+           'time_step'             : dt1,
+           'dt_list'               : [dt1, dt2],
            'output_path'           : '.',
            'log'                   : True,
            'coupled' : 
@@ -133,7 +133,7 @@ config = { 'mode'                  : 'transient',
            },  
            'age' : 
            { 
-             'on'                  : True,
+             'on'                  : False,
              'use_smb_for_ela'     : True,
              'ela'                 : None,
              'solver_params'       : params,
@@ -150,8 +150,8 @@ config = { 'mode'                  : 'transient',
            'plot' :
            {
              'on'                  : bp,
-             'zMin'                : -1.5, 
-             'zMax'                : 0.3,
+             'zMin'                : zb, 
+             'zMax'                : 10.0,
              'wMax'                : 5,
              'wMin'                : -30,
              'rhoMax'              : 1000,

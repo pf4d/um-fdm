@@ -62,6 +62,7 @@ class Plot():
     w      = firn.wp * self.spy * 1e2 # cm/a
     u      = firn.up * self.spy * 1e2 # cm/a
     a      = firn.ap /self.spy
+    Smi    = firn.Smip
     Ts     = firn.Ts - 273.15
     rhos   = rho[-1]
     adot   = firn.w_S.adot
@@ -130,6 +131,8 @@ class Plot():
     
     self.phO,     = self.Oax.plot(omega, z, '0.3', lw=1.5,
                                   drawstyle='steps-post')
+    self.phSmi,   = self.Oax.plot(Smi,   z, 'r',   lw=1.5,
+                                  drawstyle='steps-post')
     self.phOS,    = self.Oax.plot([Omin, Omax], [zs, zs], 'k-', lw=3)
     self.phOS_dot,= self.Oax.plot(omega[-1], zs, 'ro')
     
@@ -191,10 +194,14 @@ class Plot():
     w     = firn.wp * self.spy * 1e2
     u     = firn.up * self.spy * 1e2
     a     = firn.ap / self.spy
+    Smi   = firn.Smip
     z     = firn.z
     zo    = firn.zo
     Ts    = firn.Ts - Tw
     t     = firn.t / self.spy
+    
+    phi   = 1 - rho/917.0
+    Smi   = 0.0057 / (1 - phi) + 0.017
 
     self.fig.canvas.set_window_title('Time = %.2f yr' % t)
     
@@ -209,6 +216,8 @@ class Plot():
     
     self.phO.set_xdata(omega)
     self.phO.set_ydata(z)
+    self.phSmi.set_xdata(Smi)
+    self.phSmi.set_ydata(z)
     self.phOS.set_ydata(z[-1])
     self.phOS_dot.set_xdata(omega[-1])
     self.phOS_dot.set_ydata(z[-1])

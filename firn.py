@@ -256,6 +256,8 @@ class Firn(object):
     r       = Function(V)
     p       = Function(V)
     u       = Function(V)
+    ql      = Function(V)
+    Smi     = Function(V)
             
     H_1     = Function(V)
     rho_1   = Function(V)
@@ -348,6 +350,8 @@ class Firn(object):
     self.rhoCoef = rhoCoef                   # density ceofficient
     self.p       = p
     self.u       = u
+    self.ql      = ql
+    self.Smi     = Smi
 
     self.Hp      = H.vector().array()[index]
     self.Tp      = T.vector().array()[index]
@@ -363,6 +367,7 @@ class Firn(object):
     self.agep    = zeros(n)                  # initial age
     self.pp      = zeros(n)
     self.up      = zeros(n)
+    self.Smip    = zeros(n)
     
     self.HBc     = HBc                       # enthalpy b.c.
     self.rhoBc   = rhoBc                     # density b.c.
@@ -482,7 +487,8 @@ class Firn(object):
     self.omegap  = self.omega.vector().array()[index]
     self.rp      = self.r.vector().array()[index]
     self.pp      = self.p.vector().array()[index]
-    self.up      = project(self.u).vector().array()[index]
+    self.up      = self.u.vector().array()[index]
+    self.Smip    = self.Smi.vector().array()[index]
     #self.drhodtp = project(self.drhodt, self.V).vector().array()[index]
     #self.kp      = project(self.k, self.V).vector().array()[index]
     #self.cp      = project(self.c, self.V).vector().array()[index]
