@@ -59,6 +59,8 @@ class Plot():
     zMax     = config['plot']['zMax'] 
     wMin     = config['plot']['wMin'] 
     wMax     = config['plot']['wMax'] 
+    uMin     = config['plot']['uMin'] 
+    uMax     = config['plot']['uMax'] 
     rhoMin   = config['plot']['rhoMin'] 
     rhoMax   = config['plot']['rhoMax'] 
     rMin     = config['plot']['rMin'] 
@@ -108,6 +110,7 @@ class Plot():
 
     figx = 4.0 * sum(blist)
     i    = 1
+    pur = '#880cbc'
     self.fig   = figure(figsize=(figx,6))
     if Tb:
       self.Tax   = self.fig.add_subplot(totb + i)
@@ -125,13 +128,13 @@ class Plot():
       self.Oax   = self.Tax.twiny()
       self.Oax.axis([omegaMin, omegaMax, zMin, zMax])
       self.Oax.grid()
-      self.phO,     = self.Oax.plot(omega, z, 'r', lw=1.5,
+      self.phO,     = self.Oax.plot(omega, z, pur, lw=1.5,
                                     drawstyle='steps-post')
       self.phSmi,   = self.Oax.plot(Smi,   z, 'r--',   lw=1.5,
                                     drawstyle='steps-post')
-      self.Oax.set_xlabel(r'$\omega\ [\%]$', color='r')
+      self.Oax.set_xlabel(r'$\omega\ [\%]$', color=pur)
       for tl in self.Oax.get_xticklabels():
-        tl.set_color('r')
+        tl.set_color(pur)
       i += 1
     if rhob:
       self.rhoax = self.fig.add_subplot(totb + i)
@@ -145,10 +148,10 @@ class Plot():
       self.rhoSurf  = self.rhoax.text(rhoh, Tz, text)
       self.phrho,   = self.rhoax.plot(rho, z, '0.3', lw=1.5,
                                       drawstyle='steps-post')
-      self.phr,     = self.rax.plot(r, z, 'r', lw=1.5,
+      self.phr,     = self.rax.plot(r, z, pur, lw=1.5,
                                     drawstyle='steps-post')
       for tl in self.rax.get_xticklabels():
-        tl.set_color('r')
+        tl.set_color(pur)
       self.phrhoS,  = self.rhoax.plot([rhoMin, rhoMax], [zs, zs], 'k-', lw=3)
       self.phrhoS_dot, = self.rhoax.plot(rho[-1], zs, 'ro')
       #self.phrhoS_0,= self.rhoax.plot(rhoh, zo, 'ko')
@@ -156,24 +159,30 @@ class Plot():
       text = r'$\rho\ \left[\frac{\mathrm{kg}}{\mathrm{m}^3}\right]$'
       self.rhoax.set_xlabel(text)
       text = r'$r\ \left[\mathrm{mm}\right]$'
-      self.rax.set_xlabel(text, color='r')
+      self.rax.set_xlabel(text, color=pur)
       i += 1
     if wb:
       self.wax   = self.fig.add_subplot(totb + i)
+      self.uax   = self.wax.twiny()
       self.wax.axis([wMin, wMax, zMin, zMax])
+      self.uax.axis([uMin, uMax, zMin, zMax])
       self.wax.grid()
+      self.uax.grid()
       text = r'$\rho_S$: %.1E $\frac{\mathrm{kg}}{\mathrm{m}^3}$' % rhos
       self.wSurf    = self.wax.text(wh, Tz, text)
       self.phw,     = self.wax.plot(w, z, '0.3', lw=1.5,
                                     drawstyle='steps-post')
-      self.phu,     = self.wax.plot(u, z, 'r', lw=1.5,
+      self.phu,     = self.uax.plot(u, z, pur, lw=1.5,
                                     drawstyle='steps-post')
+      for tl in self.uax.get_xticklabels():
+        tl.set_color(pur)
       self.phwS,    = self.wax.plot([wMin, wMax], [zs, zs], 'k-', lw=3)
       self.wS_dot,  = self.wax.plot(w[-1], zs, 'ro')
       #self.phws_0,  = self.wax.plot(wh, zo, 'ko')
       #self.phwsp,   = self.wax.plot(wh*ones(len(z)), z, 'r+')
-      self.wax.set_title('Velocity')
       self.wax.set_xlabel(r'$w\ \left[\frac{\mathrm{cm}}{\mathrm{a}}\right]$')
+      text = r'$u\ \left[\frac{\mathrm{cm}}{\mathrm{a}}\right]$'
+      self.uax.set_xlabel(text, color = pur)
 
       i += 1
     if ageb:

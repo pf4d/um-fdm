@@ -22,7 +22,7 @@ FEniCS solution to firn enthalpy / density profile.
 
 """
 from fenics    import *
-from pylab     import intersect1d, where, zeros, ones
+from pylab     import intersect1d, where, ones
 from termcolor import colored
 
 
@@ -76,14 +76,15 @@ class Enthalpy(object):
     #omega   = firn.omega
     
     omega = conditional(lt(H, Hsp), 0, (H - c*(Tw - T0))/Lf)
-    k     = 0.077 * (1.0/100)**2 * r * exp(-7.8*rho/rhow)   # intrinsic perm.
-    u     = - k / etaw * p.dx(0)                            # darcy velocity
-    phi   = 1 - rho/rhoi                                    # porosity
-    Smi   = 0.0057 / (1 - phi) + 0.017                      # irr. water content
-    Se    = (omega - Smi) / (phi - Smi)                     # effective sat.
+    k     = 0.077 * r * exp(-7.8*rho/rhow)                # intrinsic perm.
+    phi   = 1 - rho/rhoi                                  # porosity
+    Smi   = 0.0057 / (1 - phi) + 0.017                    # irr. water content
+    Se    = (omega - Smi) / (1 - Smi)                     # effective sat.
     K     = k * rhow * g / etaw
     krw   = Se**3.0 
-    ql    = K * krw * p.dx(0)                               # water flux
+    ql    = K * krw * (p / (rhow * g) + z).dx(0)          # water flux
+    u     = - k / etaw * p.dx(0)                          # darcy velocity
+    u     = - ql/phi                                      # darcy velocity
 
     # SUPG method psihat :
     vnorm   = sqrt(dot(w, w) + 1e-10)

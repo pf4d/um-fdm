@@ -48,7 +48,7 @@ rhoi  = 917.                   # density of ice ................. kg/m^3
 rhoin = 717.                   # initial density at surface ..... kg/m^3
 rin   = 0.0005**2              # initial grain radius ........... m^2
 adot  = 0.1                    # accumulation rate .............. m/a
-Tavg  = Tw - 20.0              # average temperature ............ degrees K
+Tavg  = Tw - 15.0              # average temperature ............ degrees K
 Tin   = Tavg
 adoti = adot
 
@@ -62,10 +62,10 @@ t0    = 0.0                    # begin time ..................... s
 tf    = sys.argv[1]            # end-time ....................... string
 tf    = float(tf)*spy          # end-time ....................... s
 bp    = int(sys.argv[2])       # plot or not .................... bool
-tm    = 1000.0 * spy
+tm    = 500.0 * spy
   
 # enthalpy BC :
-code    = 'c*( Tavg + 6.0*(sin(2*omega*t) + 5*sin(4*omega*t)))'
+code    = 'c*( Tavg + 5.0*(sin(2*omega*t) + 5*sin(4*omega*t)))'
 H_exp   = Expression(code, c=cp, Tavg=Tavg, omega=pi/spy, t=t0)
 
 # surface density :
@@ -86,10 +86,10 @@ firn = Firn(Tin, rhoin, rin, rhos, adoti, dt1)
 firn.set_geometry(zs, zb)
 firn.generate_uniform_mesh(n)
 #firn.refine_mesh(divs=3, i=1/3., k=1/20.)
-firn.refine_mesh(divs=2, i=1/5., k=1/4.)
-firn.refine_mesh(divs=2, i=1/5., k=1/4.)
-firn.refine_mesh(divs=2, i=1/5., k=1/4.)
-firn.refine_mesh(divs=2, i=1/5., k=1/4.)
+firn.refine_mesh(divs=2, i=1/5.,  k=1/4.)
+firn.refine_mesh(divs=2, i=1/5.,  k=1/4.)
+firn.refine_mesh(divs=2, i=1/10., k=1/4.)
+firn.refine_mesh(divs=2, i=1/10., k=1/4.)
 firn.calculate_boundaries()
 firn.set_parameters(FirnParameters())
 firn.set_boundary_conditions(H_exp, rho_exp, w_exp, r_exp)
@@ -141,9 +141,11 @@ config = { 'mode'                  : 'transient',
            {
              'on'                  : bp,
              'zMin'                : -20,
-             'zMax'                : 4.0,
+             'zMax'                : 2.0,
              'wMin'                : -30,
              'wMax'                : 5,
+             'uMin'                : -1500,
+             'uMax'                : 300,
              'rhoMin'              : 0.0,
              'rhoMax'              : 1000,
              'rMin'                : 0.0,
