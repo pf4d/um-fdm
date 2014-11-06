@@ -86,10 +86,10 @@ firn = Firn(Tin, rhoin, rin, rhos, adoti, dt1)
 firn.set_geometry(zs, zb)
 firn.generate_uniform_mesh(n)
 #firn.refine_mesh(divs=3, i=1/3., k=1/20.)
-firn.refine_mesh(divs=2, i=1/5.,  k=1/4.)
-firn.refine_mesh(divs=2, i=1/5.,  k=1/4.)
-firn.refine_mesh(divs=2, i=1/10., k=1/4.)
-firn.refine_mesh(divs=2, i=1/10., k=1/4.)
+firn.refine_mesh(divs=2, i=1/3.,  k=1/4.)
+firn.refine_mesh(divs=2, i=1/3.,  k=1/4.)
+firn.refine_mesh(divs=2, i=1/3.,  k=1/4.)
+firn.refine_mesh(divs=2, i=1/3.,  k=1/4.)
 firn.calculate_boundaries()
 firn.set_parameters(FirnParameters())
 firn.set_boundary_conditions(H_exp, rho_exp, w_exp, r_exp)
@@ -140,8 +140,8 @@ config = { 'mode'                  : 'transient',
            'plot' :
            {
              'on'                  : bp,
-             'zMin'                : -20,
-             'zMax'                : 2.0,
+             'zMin'                : zb,
+             'zMax'                : 10.0,
              'wMin'                : -30,
              'wMax'                : 5,
              'uMin'                : -1500,

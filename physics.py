@@ -79,7 +79,7 @@ class Enthalpy(object):
     k     = 0.077 * r * exp(-7.8*rho/rhow)                # intrinsic perm.
     phi   = 1 - rho/rhoi                                  # porosity
     Smi   = 0.0057 / (1 - phi) + 0.017                    # irr. water content
-    Se    = (omega - Smi) / (1 - Smi)                     # effective sat.
+    Se    = (omega - Smi) / (phi - Smi)                   # effective sat.
     K     = k * rhow * g / etaw
     krw   = Se**3.0 
     ql    = K * krw * (p / (rhow * g) + z).dx(0)          # water flux
@@ -182,7 +182,8 @@ class Enthalpy(object):
     firn.assign_variable(firn.Smi, project(Smi))
     firn.print_min_max(firn.pp, 'p')
     firn.print_min_max(firn.up, 'u')
-
+    firn.print_min_max((1-firn.rhop/rhoi)*100 - firn.omegap*100, 'phi - omega')
+    
 
 class Density(object):
 
