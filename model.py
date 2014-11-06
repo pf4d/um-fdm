@@ -85,9 +85,11 @@ r_exp   = Expression('r_s', r_s=rin)
 firn = Firn(Tin, rhoin, rin, rhos, adoti, dt1)
 firn.set_geometry(zs, zb)
 firn.generate_uniform_mesh(n)
-firn.refine_mesh(divs=3, i=1/3., k=1/20.)
+#firn.refine_mesh(divs=3, i=1/3., k=1/20.)
 firn.refine_mesh(divs=2, i=1/5., k=1/4.)
-#firn.refine_mesh(divs=2, i=1/5., k=1/4.)
+firn.refine_mesh(divs=2, i=1/5., k=1/4.)
+firn.refine_mesh(divs=2, i=1/5., k=1/4.)
+firn.refine_mesh(divs=2, i=1/5., k=1/4.)
 firn.calculate_boundaries()
 firn.set_parameters(FirnParameters())
 firn.set_boundary_conditions(H_exp, rho_exp, w_exp, r_exp)
@@ -115,10 +117,6 @@ config = { 'mode'                  : 'transient',
              'solver_params'       : params,
              'plot'                : True, 
            },
-           'water' : 
-           { 
-             'plot'                : True, 
-           },
            'density' : 
            { 
              'solver_params'       : params,
@@ -142,19 +140,19 @@ config = { 'mode'                  : 'transient',
            'plot' :
            {
              'on'                  : bp,
-             'zMin'                : zb, 
-             'zMax'                : 10.0,
+             'zMin'                : -20,
+             'zMax'                : 4.0,
              'wMin'                : -30,
              'wMax'                : 5,
              'rhoMin'              : 0.0,
              'rhoMax'              : 1000,
              'rMin'                : 0.0,
              'rMax'                : 3.0,
-             'Tmin'                : Tavg - Tw - 20,
-             'Tmax'                : Tavg - Tw + 20,
+             'Tmin'                : -50.0,
+             'Tmax'                : 5.0,
              'ageMin'              : 0.0,
              'ageMax'              : 100,
-             'omegaMin'            : 0.0, 
+             'omegaMin'            : -0.01, 
              'omegaMax'            : 0.10, 
            }}
 

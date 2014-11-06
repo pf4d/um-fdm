@@ -72,12 +72,11 @@ class Plot():
 
     # plotting windows :
     Tb       = config['enthalpy']['plot']
-    omegab   = config['water']['plot']
     rhob     = config['density']['plot']
     wb       = config['velocity']['plot']
     ageb     = config['age']['plot']
              
-    blist    = [Tb, omegab, rhob, wb, ageb]
+    blist    = [Tb, rhob, wb, ageb]
     totb     = 100 + 10 * sum(blist)
 
     # x-values :
@@ -120,23 +119,19 @@ class Plot():
       self.phTs,    = self.Tax.plot([Tmin, Tmax], [zs, zs], 'k-', lw=3)
       self.phTs_0,  = self.Tax.plot(Th, zo, 'ko')
       self.phTs_dot,= self.Tax.plot(Ts, zs, 'ro')
-      self.phTsp,   = self.Tax.plot(Th*ones(len(z)), z, 'r+')
-      self.Tax.set_title('Temperature')
+      self.phTsp,   = self.Tax.plot(Th*ones(len(z)), z, 'g+')
       self.Tax.set_xlabel(r'$T\ [\degree \mathrm{C}]$')
       self.Tax.set_ylabel('Depth [m]')
-      i += 1
-    if omegab:
-      self.Oax   = self.fig.add_subplot(totb + i)
+      self.Oax   = self.Tax.twiny()
       self.Oax.axis([omegaMin, omegaMax, zMin, zMax])
       self.Oax.grid()
-      self.phO,     = self.Oax.plot(omega, z, '0.3', lw=1.5,
+      self.phO,     = self.Oax.plot(omega, z, 'r', lw=1.5,
                                     drawstyle='steps-post')
-      self.phSmi,   = self.Oax.plot(Smi,   z, 'r',   lw=1.5,
+      self.phSmi,   = self.Oax.plot(Smi,   z, 'r--',   lw=1.5,
                                     drawstyle='steps-post')
-      self.phOS,    = self.Oax.plot([omegaMin, omegaMax], [zs, zs], 'k-', lw=3)
-      self.phOS_dot,= self.Oax.plot(omega[-1], zs, 'ro')
-      self.Oax.set_title('Water Content')
-      self.Oax.set_xlabel(r'$\omega\ [\%]$')
+      self.Oax.set_xlabel(r'$\omega\ [\%]$', color='r')
+      for tl in self.Oax.get_xticklabels():
+        tl.set_color('r')
       i += 1
     if rhob:
       self.rhoax = self.fig.add_subplot(totb + i)
@@ -158,7 +153,6 @@ class Plot():
       self.phrhoS_dot, = self.rhoax.plot(rho[-1], zs, 'ro')
       #self.phrhoS_0,= self.rhoax.plot(rhoh, zo, 'ko')
       #self.phrhoSp, = self.rhoax.plot(rhoh*ones(len(z)), z, 'r+')
-      #self.rhoax.set_title('Density')
       text = r'$\rho\ \left[\frac{\mathrm{kg}}{\mathrm{m}^3}\right]$'
       self.rhoax.set_xlabel(text)
       text = r'$r\ \left[\mathrm{mm}\right]$'
@@ -237,15 +231,10 @@ class Plot():
       self.phTsp.set_ydata(z)
       self.phTs_dot.set_xdata(Ts)
       self.phTs_dot.set_ydata(z[-1])
-      
-    if config['water']['plot']: 
       self.phO.set_xdata(omega)
       self.phO.set_ydata(z)
       self.phSmi.set_xdata(Smi)
       self.phSmi.set_ydata(z)
-      self.phOS.set_ydata(z[-1])
-      self.phOS_dot.set_xdata(omega[-1])
-      self.phOS_dot.set_ydata(z[-1])
       
     if config['density']['plot']: 
       text = r'$\rho_S$: %.1E $\frac{\mathrm{kg}}{\mathrm{m}^3}$' % rho[-1]
