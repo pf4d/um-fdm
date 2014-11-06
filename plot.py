@@ -14,7 +14,7 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 """
-enthPlot.py
+plot.py
 Evan Cummings
 07.09.12
 
@@ -47,22 +47,48 @@ class Plot():
   """
   Plotting class handles all things related to plotting.
   """
-  def __init__(self, firn, zMin, zMax, rhoMax, wMin, wMax, aMax, omegaMax):
+  def __init__(self, firn, config):
     """
     Initialize plots with firn object as input.
     """   
-    self.spy  = firn.spy
-    Tw        = firn.Tw
-    self.firn = firn
-     
+    self.firn   = firn
+    self.config = config
+    
+    # plotting extents :
+    zMin     = config['plot']['zMin'] 
+    zMax     = config['plot']['zMax'] 
+    wMin     = config['plot']['wMin'] 
+    wMax     = config['plot']['wMax'] 
+    rhoMin   = config['plot']['rhoMin'] 
+    rhoMax   = config['plot']['rhoMax'] 
+    rMin     = config['plot']['rMin'] 
+    rMax     = config['plot']['rMax'] 
+    Tmin     = config['plot']['Tmin'] 
+    Tmax     = config['plot']['Tmax'] 
+    ageMin   = config['plot']['ageMin'] 
+    ageMax   = config['plot']['ageMax'] 
+    omegaMin = config['plot']['omegaMin'] 
+    omegaMax = config['plot']['omegaMax'] 
+
+    # plotting windows :
+    Tb       = config['enthalpy']['plot']
+    omegab   = config['water']['plot']
+    rhob     = config['density']['plot']
+    wb       = config['velocity']['plot']
+    ageb     = config['age']['plot']
+             
+    blist    = [Tb, omegab, rhob, wb, ageb]
+    totb     = 100 + 10 * sum(blist)
+
     # x-values :
     T      = firn.Tp
     omega  = firn.omegap
     rho    = firn.rhop
-    w      = firn.wp * self.spy * 1e2 # cm/a
-    u      = firn.up * self.spy * 1e2 # cm/a
-    a      = firn.ap /self.spy
+    w      = firn.wp * firn.spy * 1e2 # cm/a
+    u      = firn.up * firn.spy * 1e2 # cm/a
+    a      = firn.ap /firn.spy
     Smi    = firn.Smip
+    r      = sqrt(firn.rp) * 1000
     Ts     = firn.Ts - 273.15
     rhos   = rho[-1]
     adot   = firn.w_S.adot
@@ -75,109 +101,104 @@ class Plot():
     # original surface height :
     zo     = firn.zo
 
-    #zmax   = zs + (zs - zb) / 5                   # max z-coord
-    zmax   = zMax
-    zmin   = zMin                                 # min z-coord
-
-    Tmin   = firn.Tavg - Tw - 20                  # T x-coord min
-    Tmax   = firn.Tavg - Tw + 20                  # T x-coord max
     Th     = Tmin + 0.1*(Tmax - Tmin) / 2         # T height x-coord
-    Tz     = zmax - 0.15*(zmax - zmin) / 2        # z-coord of Ts
-
-    Omin   = 0.0
-    Omax   = omegaMax
-
-    rhoMin = 0.0                                  # rho x-coord min
-    #rhoMax = 1000                                 # rho x-coord max
+    Tz     = zMax - 0.15*(zMax - zMin) / 2        # z-coord of Ts
     rhoh   = rhoMin + 0.1*(rhoMax - rhoMin) / 2  # rho height x-coord
-    
-    #wMin   = -200
-    #wMax   = 200
     wh     = wMin + 0.1*(wMax - wMin) / 2
+    #kh    = kMin + 0.1*(kMax - kMin) / 2
 
-    aMin   = 0.0
-    #aMax   = 2007.0
-    #kh     = kMin + 0.1*(kMax - kMin) / 2
-
-    self.fig   = figure(figsize=(19,6))
-    self.Tax   = self.fig.add_subplot(151)
-    self.Oax   = self.fig.add_subplot(152)
-    self.rhoax = self.fig.add_subplot(153)
-    self.wax   = self.fig.add_subplot(154)
-    self.aax   = self.fig.add_subplot(155)
-
-    # format : [xmin, xmax, ymin, ymax]
-    self.Tax.axis([Tmin, Tmax, zmin, zmax])
-    self.Tax.grid()
-    self.Oax.axis([Omin, Omax, zmin, zmax])
-    self.Oax.grid()
-    self.rhoax.axis([rhoMin, rhoMax, zmin, zmax])
-    self.rhoax.grid()
-    self.rhoax.xaxis.set_major_formatter(FixedOrderFormatter(2))
-    self.wax.axis([wMin, wMax, zmin, zmax])
-    self.wax.grid()
-    self.aax.axis([aMin, aMax, zmin, zmax])
-    #self.aax.xaxis.set_major_formatter(FixedOrderFormatter(3))
-    self.aax.grid()
-
-    # plots :
-    self.Tsurf    = self.Tax.text(Th, Tz, r'$T_S$: %.1E $\degree$C' % Ts)
-    self.phT,     = self.Tax.plot(T - 273.15, z, '0.3', lw=1.5,
-                                  drawstyle='steps-post')
-    self.phTs,    = self.Tax.plot([Tmin, Tmax], [zs, zs], 'k-', lw=3)
-    self.phTs_0,  = self.Tax.plot(Th, zo, 'ko')
-    self.phTs_dot,= self.Tax.plot(Ts, zs, 'ro')
-    self.phTsp,   = self.Tax.plot(Th*ones(len(z)), z, 'r+')
-    
-    self.phO,     = self.Oax.plot(omega, z, '0.3', lw=1.5,
-                                  drawstyle='steps-post')
-    self.phSmi,   = self.Oax.plot(Smi,   z, 'r',   lw=1.5,
-                                  drawstyle='steps-post')
-    self.phOS,    = self.Oax.plot([Omin, Omax], [zs, zs], 'k-', lw=3)
-    self.phOS_dot,= self.Oax.plot(omega[-1], zs, 'ro')
-    
-    self.rhoSurf  = self.rhoax.text(rhoh, Tz, r'$\dot{a}$: %.1E i.e.$\frac{\mathrm{m}}{\mathrm{a}}$' % adot)
-    self.phrho,   = self.rhoax.plot(rho, z, '0.3', lw=1.5,
+    figx = 4.0 * sum(blist)
+    i    = 1
+    self.fig   = figure(figsize=(figx,6))
+    if Tb:
+      self.Tax   = self.fig.add_subplot(totb + i)
+      self.Tax.axis([Tmin, Tmax, zMin, zMax])
+      self.Tax.grid()
+      self.Tsurf    = self.Tax.text(Th, Tz, r'$T_S$: %.1E $\degree$C' % Ts)
+      self.phT,     = self.Tax.plot(T - 273.15, z, '0.3', lw=1.5,
                                     drawstyle='steps-post')
-    self.phrhoS,  = self.rhoax.plot([rhoMin, rhoMax], [zs, zs], 'k-', lw=3)
-    self.phrhoS_dot, = self.rhoax.plot(rho[-1], zs, 'ro')
-    #self.phrhoS_0,= self.rhoax.plot(rhoh, zo, 'ko')
-    #self.phrhoSp, = self.rhoax.plot(rhoh*ones(len(z)), z, 'r+')
+      self.phTs,    = self.Tax.plot([Tmin, Tmax], [zs, zs], 'k-', lw=3)
+      self.phTs_0,  = self.Tax.plot(Th, zo, 'ko')
+      self.phTs_dot,= self.Tax.plot(Ts, zs, 'ro')
+      self.phTsp,   = self.Tax.plot(Th*ones(len(z)), z, 'r+')
+      self.Tax.set_title('Temperature')
+      self.Tax.set_xlabel(r'$T\ [\degree \mathrm{C}]$')
+      self.Tax.set_ylabel('Depth [m]')
+      i += 1
+    if omegab:
+      self.Oax   = self.fig.add_subplot(totb + i)
+      self.Oax.axis([omegaMin, omegaMax, zMin, zMax])
+      self.Oax.grid()
+      self.phO,     = self.Oax.plot(omega, z, '0.3', lw=1.5,
+                                    drawstyle='steps-post')
+      self.phSmi,   = self.Oax.plot(Smi,   z, 'r',   lw=1.5,
+                                    drawstyle='steps-post')
+      self.phOS,    = self.Oax.plot([omegaMin, omegaMax], [zs, zs], 'k-', lw=3)
+      self.phOS_dot,= self.Oax.plot(omega[-1], zs, 'ro')
+      self.Oax.set_title('Water Content')
+      self.Oax.set_xlabel(r'$\omega\ [\%]$')
+      i += 1
+    if rhob:
+      self.rhoax = self.fig.add_subplot(totb + i)
+      self.rax   = self.rhoax.twiny()
+      self.rhoax.axis([rhoMin, rhoMax, zMin, zMax])
+      self.rax.axis([rMin, rMax, zMin, zMax])
+      self.rhoax.grid()
+      self.rax.grid()
+      self.rhoax.xaxis.set_major_formatter(FixedOrderFormatter(2))
+      text = r'$\dot{a}$: %.1E i.e.$\frac{\mathrm{m}}{\mathrm{a}}$' % adot
+      self.rhoSurf  = self.rhoax.text(rhoh, Tz, text)
+      self.phrho,   = self.rhoax.plot(rho, z, '0.3', lw=1.5,
+                                      drawstyle='steps-post')
+      self.phr,     = self.rax.plot(r, z, 'r', lw=1.5,
+                                    drawstyle='steps-post')
+      for tl in self.rax.get_xticklabels():
+        tl.set_color('r')
+      self.phrhoS,  = self.rhoax.plot([rhoMin, rhoMax], [zs, zs], 'k-', lw=3)
+      self.phrhoS_dot, = self.rhoax.plot(rho[-1], zs, 'ro')
+      #self.phrhoS_0,= self.rhoax.plot(rhoh, zo, 'ko')
+      #self.phrhoSp, = self.rhoax.plot(rhoh*ones(len(z)), z, 'r+')
+      #self.rhoax.set_title('Density')
+      text = r'$\rho\ \left[\frac{\mathrm{kg}}{\mathrm{m}^3}\right]$'
+      self.rhoax.set_xlabel(text)
+      text = r'$r\ \left[\mathrm{mm}\right]$'
+      self.rax.set_xlabel(text, color='r')
+      i += 1
+    if wb:
+      self.wax   = self.fig.add_subplot(totb + i)
+      self.wax.axis([wMin, wMax, zMin, zMax])
+      self.wax.grid()
+      text = r'$\rho_S$: %.1E $\frac{\mathrm{kg}}{\mathrm{m}^3}$' % rhos
+      self.wSurf    = self.wax.text(wh, Tz, text)
+      self.phw,     = self.wax.plot(w, z, '0.3', lw=1.5,
+                                    drawstyle='steps-post')
+      self.phu,     = self.wax.plot(u, z, 'r', lw=1.5,
+                                    drawstyle='steps-post')
+      self.phwS,    = self.wax.plot([wMin, wMax], [zs, zs], 'k-', lw=3)
+      self.wS_dot,  = self.wax.plot(w[-1], zs, 'ro')
+      #self.phws_0,  = self.wax.plot(wh, zo, 'ko')
+      #self.phwsp,   = self.wax.plot(wh*ones(len(z)), z, 'r+')
+      self.wax.set_title('Velocity')
+      self.wax.set_xlabel(r'$w\ \left[\frac{\mathrm{cm}}{\mathrm{a}}\right]$')
 
-    self.wSurf    = self.wax.text(wh, Tz, r'$\rho_S$: %.1E $\frac{\mathrm{kg}}{\mathrm{m}^3}$' % rhos)
-    self.phw,     = self.wax.plot(w, z, '0.3', lw=1.5,
-                                  drawstyle='steps-post')
-    self.phu,     = self.wax.plot(u, z, 'r', lw=1.5,
-                                  drawstyle='steps-post')
-    self.phwS,    = self.wax.plot([wMin, wMax], [zs, zs], 'k-', lw=3)
-    self.wS_dot,  = self.wax.plot(w[-1], zs, 'ro')
-    #self.phws_0,  = self.wax.plot(wh, zo, 'ko')
-    #self.phwsp,   = self.wax.plot(wh*ones(len(z)), z, 'r+')
-    
-    self.pha,     = self.aax.plot(a, z, '0.3', lw=1.5,
-                                  drawstyle='steps-post')
-    self.phaS,    = self.aax.plot([aMin, aMax], [zs, zs], 'k-', lw=3)
+      i += 1
+    if ageb:
+      self.aax   = self.fig.add_subplot(totb + i)
+      self.aax.axis([ageMin, ageMax, zMin, zMax])
+      #self.aax.xaxis.set_major_formatter(FixedOrderFormatter(3))
+      self.aax.grid()
+      self.pha,     = self.aax.plot(a, z, '0.3', lw=1.5,
+                                    drawstyle='steps-post')
+      self.phaS,    = self.aax.plot([ageMin, ageMax], [zs, zs], 'k-', lw=3)
+      self.aax.set_title('Age')
+      self.aax.set_xlabel(r'$a\ [\mathrm{a}]$')
+
+      
     #self.phks_0,  = self.kax.plot(kh, zo, 'ko')
     #self.phksp,   = self.kax.plot(kh*ones(len(z)), z, 'r+')
 
     # formatting :
     self.fig.canvas.set_window_title('Time = 0.0 yr')
-
-    self.Tax.set_title('Temperature')
-    self.Tax.set_xlabel(r'$T\ [\degree \mathrm{C}]$')
-    self.Tax.set_ylabel('Depth [m]')
-
-    self.Oax.set_title('Water Content')
-    self.Oax.set_xlabel(r'$\omega\ [\%]$')
-
-    self.rhoax.set_title('Density')
-    self.rhoax.set_xlabel(r'$\rho\ \left[\frac{\mathrm{kg}}{\mathrm{m}^3}\right]$')
-    
-    self.wax.set_title('Velocity')
-    self.wax.set_xlabel(r'$w\ \left[\frac{\mathrm{cm}}{\mathrm{a}}\right]$')
-
-    self.aax.set_title('Age')
-    self.aax.set_xlabel(r'$a\ [\mathrm{a}]$')
     tight_layout()
     
 
@@ -185,62 +206,73 @@ class Plot():
     """
     Update the plot for each time step at time t.
     """
-    firn  = self.firn
-    index = firn.index 
-    T     = firn.Tp
-    omega = firn.omegap
-    Tw    = firn.Tw
-    rho   = firn.rhop
-    w     = firn.wp * self.spy * 1e2
-    u     = firn.up * self.spy * 1e2
-    a     = firn.ap / self.spy
-    Smi   = firn.Smip
-    z     = firn.z
-    zo    = firn.zo
-    Ts    = firn.Ts - Tw
-    t     = firn.t / self.spy
+    firn   = self.firn
+    config = self.config
+    index  = firn.index 
+    T      = firn.Tp
+    omega  = firn.omegap
+    Tw     = firn.Tw
+    rho    = firn.rhop
+    w      = firn.wp * firn.spy * 1e2
+    u      = firn.up * firn.spy * 1e2
+    a      = firn.ap / firn.spy
+    Smi    = firn.Smip
+    r      = sqrt(firn.rp) * 1000
+    z      = firn.z
+    zo     = firn.zo
+    Ts     = firn.Ts - Tw
+    t      = firn.t / firn.spy
     
     phi   = 1 - rho/917.0
     Smi   = 0.0057 / (1 - phi) + 0.017
 
     self.fig.canvas.set_window_title('Time = %.2f yr' % t)
-    
-    self.Tsurf.set_text(r'$T_S$: %.1E $\degree$C' % Ts)
-    self.phT.set_xdata(T - Tw)
-    self.phT.set_ydata(z)
-    self.phTs.set_ydata(z[-1])
-    self.phTs_0.set_ydata(zo)
-    self.phTsp.set_ydata(z)
-    self.phTs_dot.set_xdata(Ts)
-    self.phTs_dot.set_ydata(z[-1])
-    
-    self.phO.set_xdata(omega)
-    self.phO.set_ydata(z)
-    self.phSmi.set_xdata(Smi)
-    self.phSmi.set_ydata(z)
-    self.phOS.set_ydata(z[-1])
-    self.phOS_dot.set_xdata(omega[-1])
-    self.phOS_dot.set_ydata(z[-1])
-    
-    self.rhoSurf.set_text(r'$\rho_S$: %.1E $\frac{\mathrm{kg}}{\mathrm{m}^3}$' % rho[-1])
-    self.phrho.set_xdata(rho)
-    self.phrho.set_ydata(z)
-    self.phrhoS.set_ydata(z[-1])
-    self.phrhoS_dot.set_xdata(rho[-1])
-    self.phrhoS_dot.set_ydata(z[-1])
-    
-    self.wSurf.set_text(r'$\dot{a}$: %.1E i.e.$\frac{\mathrm{m}}{\mathrm{a}}$' % firn.w_S.adot)
-    self.phw.set_xdata(w)
-    self.phw.set_ydata(z)
-    self.phu.set_xdata(u)
-    self.phu.set_ydata(z)
-    self.phwS.set_ydata(z[-1])
-    self.wS_dot.set_xdata(w[-1])
-    self.wS_dot.set_ydata(z[-1])
    
-    self.pha.set_xdata(a)
-    self.pha.set_ydata(z)
-    self.phaS.set_ydata(z[-1])
+    if config['enthalpy']['plot']: 
+      self.Tsurf.set_text(r'$T_S$: %.1E $\degree$C' % Ts)
+      self.phT.set_xdata(T - Tw)
+      self.phT.set_ydata(z)
+      self.phTs.set_ydata(z[-1])
+      self.phTs_0.set_ydata(zo)
+      self.phTsp.set_ydata(z)
+      self.phTs_dot.set_xdata(Ts)
+      self.phTs_dot.set_ydata(z[-1])
+      
+    if config['water']['plot']: 
+      self.phO.set_xdata(omega)
+      self.phO.set_ydata(z)
+      self.phSmi.set_xdata(Smi)
+      self.phSmi.set_ydata(z)
+      self.phOS.set_ydata(z[-1])
+      self.phOS_dot.set_xdata(omega[-1])
+      self.phOS_dot.set_ydata(z[-1])
+      
+    if config['density']['plot']: 
+      text = r'$\rho_S$: %.1E $\frac{\mathrm{kg}}{\mathrm{m}^3}$' % rho[-1]
+      self.rhoSurf.set_text(text)
+      self.phrho.set_xdata(rho)
+      self.phrho.set_ydata(z)
+      self.phr.set_xdata(r)
+      self.phr.set_ydata(z)
+      self.phrhoS.set_ydata(z[-1])
+      self.phrhoS_dot.set_xdata(rho[-1])
+      self.phrhoS_dot.set_ydata(z[-1])
+      
+    if config['velocity']['plot']: 
+      text = r'$\dot{a}$: %.1E i.e.$\frac{\mathrm{m}}{\mathrm{a}}$'
+      self.wSurf.set_text(text % firn.w_S.adot )
+      self.phw.set_xdata(w)
+      self.phw.set_ydata(z)
+      self.phu.set_xdata(u)
+      self.phu.set_ydata(z)
+      self.phwS.set_ydata(z[-1])
+      self.wS_dot.set_xdata(w[-1])
+      self.wS_dot.set_ydata(z[-1])
+     
+    if config['age']['plot']: 
+      self.pha.set_xdata(a)
+      self.pha.set_ydata(z)
+      self.phaS.set_ydata(z[-1])
     
 
   def plot_all(self, firns, titles, colors):
@@ -264,8 +296,8 @@ class Plot():
     kMax   = 2.2
     kh     = kMin + 0.1*(kMax - kMin) / 2
     
-    zmax   = firns[0].zs + 20                    # max z-coord
-    zmin   = firns[0].zb                         # min z-coord
+    zMax   = firns[0].zs + 20                    # max z-coord
+    zMin   = firns[0].zb                         # min z-coord
 
     fig    = figure(figsize=(16,6))
     Tax    = fig.add_subplot(141)
@@ -274,15 +306,15 @@ class Plot():
     kax    = fig.add_subplot(144)
 
     # format : [xmin, xmax, ymin, ymax]
-    Tax.axis([Tmin, Tmax, zmin, zmax])
+    Tax.axis([Tmin, Tmax, zMin, zMax])
     Tax.grid()
-    rhoax.axis([rhoMin, rhoMax, zmin, zmax])
+    rhoax.axis([rhoMin, rhoMax, zMin, zMax])
     rhoax.grid()
     rhoax.xaxis.set_major_formatter(FixedOrderFormatter(2))
-    wax.axis([wMin, wMax, zmin, zmax])
+    wax.axis([wMin, wMax, zMin, zMax])
     wax.grid()
     wax.xaxis.set_major_formatter(FixedOrderFormatter(-6))
-    kax.axis([kMin, kMax, zmin, zmax])
+    kax.axis([kMin, kMax, zMin, zMax])
     kax.grid()
 
     # plots :
@@ -334,7 +366,7 @@ class Plot():
     Plot the height history of a column of firn for times x, current height ht, 
     and original surface height origHt.
     """
-    x /= self.spy
+    x /= self.firn.spy
 
     # plot the surface height information :
     plot(x,               ht,     'k-',  lw=1.5, label=r'Surface Height')

@@ -110,22 +110,24 @@ config = { 'mode'                  : 'transient',
            'time_step'             : dt1,
            'dt_list'               : [dt1, dt2],
            'output_path'           : '.',
-           'log'                   : True,
-           'coupled' : 
-           { 
-             'on'                  : False,
-             'inner_tol'           : 0.0,
-             'max_iter'            : 0
-           },
            'enthalpy' : 
            { 
-             'on'                  : False,
-             'use_surface_climate' : False,
-             'T_surface'           : None,
-             'q_geo'               : None,
-             'lateral_boundaries'  : None,
              'solver_params'       : params,
-             'log'                 : True 
+             'plot'                : True, 
+           },
+           'water' : 
+           { 
+             'plot'                : True, 
+           },
+           'density' : 
+           { 
+             'solver_params'       : params,
+             'plot'                : True, 
+           },
+           'velocity' : 
+           { 
+             'solver_params'       : params,
+             'plot'                : True, 
            },
            'free_surface' :
            { 
@@ -134,28 +136,25 @@ config = { 'mode'                  : 'transient',
            'age' : 
            { 
              'on'                  : False,
-             'use_smb_for_ela'     : True,
-             'ela'                 : None,
              'solver_params'       : params,
-           },
-           'surface_climate' : 
-           { 
-             'on'                  : False,
-             'T_ma'                : None,
-             'T_ju'                : None,
-             'beta_w'              : None,
-             'sigma'               : None,
-             'precip'              : None
+             'plot'                : False, 
            },
            'plot' :
            {
              'on'                  : bp,
              'zMin'                : zb, 
              'zMax'                : 10.0,
-             'wMax'                : 5,
              'wMin'                : -30,
+             'wMax'                : 5,
+             'rhoMin'              : 0.0,
              'rhoMax'              : 1000,
-             'ageMax'              : 100, 
+             'rMin'                : 0.0,
+             'rMax'                : 3.0,
+             'Tmin'                : Tavg - Tw - 20,
+             'Tmax'                : Tavg - Tw + 20,
+             'ageMin'              : 0.0,
+             'ageMax'              : 100,
+             'omegaMin'            : 0.0, 
              'omegaMax'            : 0.10, 
            }}
 

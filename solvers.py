@@ -1,7 +1,7 @@
-from pylab          import plt, linspace, ones, hstack
-from physics        import Enthalpy, Density, FullDensity, Velocity, Age, Darcy
-from plot           import Plot
-from termcolor      import colored, cprint
+from pylab     import plt, linspace, ones, hstack
+from physics   import Enthalpy, Density, FullDensity, Velocity, Age, Darcy
+from plot      import Plot
+from termcolor import colored, cprint
 
 
 class TransientSolver(object):
@@ -12,16 +12,7 @@ class TransientSolver(object):
     """
     self.firn   = firn
     self.config = config
-
-    # plotting extents :
-    zMin     = config['plot']['zMin'] 
-    zMax     = config['plot']['zMax'] 
-    wMin     = config['plot']['wMin'] 
-    wMax     = config['plot']['wMax'] 
-    rhoMax   = config['plot']['rhoMax'] 
-    ageMax   = config['plot']['ageMax'] 
-    omegaMax = config['plot']['omegaMax'] 
-
+    
     # form the physics :
     self.fe = Enthalpy(firn, config)
     self.fv = Velocity(firn, config)
@@ -31,8 +22,8 @@ class TransientSolver(object):
     #self.ff = Darcy(firn, config)
 
     if config['plot']['on']:
-      plt.ion() 
-      self.plot = Plot(firn, zMin, zMax, rhoMax, wMin, wMax, ageMax, omegaMax)
+      plt.ion()
+      self.plot = Plot(firn, config)
       plt.draw()
 
   def solve(self):
