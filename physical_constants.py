@@ -3,7 +3,6 @@ This module contains the classes that hold known
 physical constants relavent to the simulations and a class to create new 
 constants
 """
-from dolfin import Function
 
 class PhysicalConstant(float):
   """

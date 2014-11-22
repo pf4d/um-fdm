@@ -65,8 +65,9 @@ bp    = int(sys.argv[2])       # plot or not .................... bool
 tm    = 500.0 * spy
   
 # enthalpy BC :
-code    = 'c*( Tavg + 5.0*(sin(2*omega*t) + 5*sin(4*omega*t)))'
-H_exp   = Expression(code, c=cp, Tavg=Tavg, omega=pi/spy, t=t0)
+#code  = '(152.5 + 7.122*Tavg)*(Tavg + 5.0*(sin(2*omega*t) + 5*sin(4*omega*t)))'
+code  = 'cp*(Tavg + 5*(sin(2*omega*t) + 5*sin(4*omega*t)))'
+H_exp = Expression(code, cp=cpi, Tavg=Tavg, omega=pi/spy, t=t0)
 
 # surface density :
 rho_exp = Expression('rhon', rhon=rhos)
@@ -140,8 +141,8 @@ config = { 'mode'                  : 'transient',
            'plot' :
            {
              'on'                  : bp,
-             'zMin'                : zb,
-             'zMax'                : 10.0,
+             'zMin'                : -20,
+             'zMax'                : 2.0,
              'wMin'                : -30,
              'wMax'                : 5,
              'uMin'                : -1500,

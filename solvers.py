@@ -1,5 +1,5 @@
 from pylab     import plt, linspace, ones, hstack
-from physics   import Enthalpy, Density, FullDensity, Velocity, Age, Darcy
+from physics   import Enthalpy, Density, FullDensity, Velocity, Age
 from plot      import Plot
 from termcolor import colored, cprint
 
@@ -19,7 +19,6 @@ class TransientSolver(object):
     self.fd = FullDensity(firn, config)
     if config['age']['on']:
       self.fa = Age(firn, config)
-    #self.ff = Darcy(firn, config)
 
     if config['plot']['on']:
       plt.ion()
@@ -41,7 +40,6 @@ class TransientSolver(object):
     fd     = self.fd
     if config['age']['on']:
       fa     = self.fa
-    #ff     = self.ff
     
     t0      = config['t_start']
     tm      = config['t_mid']
@@ -81,7 +79,6 @@ class TransientSolver(object):
     
       # newton's iterative method :
       fe.solve()
-      #ff.solve()
       fd.solve()
       fv.solve()
       if config['age']['on']:
