@@ -73,7 +73,7 @@ class Enthalpy(object):
     
     # thermal parameters
     ki  = 2.1*(rho / rhoi)**2
-    ci  = cpi#152.5 + 7.122*T
+    ci  = cpi
    
     # Darcy flux :
     omega = conditional(lt(H, Hsp), 0, (H - ci*(Tw - T0))/Lf)
@@ -92,8 +92,8 @@ class Enthalpy(object):
     H_mid   = theta*H + (1 - theta)*H_1
     delta   = - ki/(rho*ci) * Kcoef * inner(H_mid.dx(0), psi.dx(0)) * dx \
               + w * H_mid.dx(0) * psi * dx \
+              - (H - H_1)/dt * psi * dx \
               + (ql * H_mid).dx(0) * psi * dx \
-              - (H - H_1)/dt * psi * dx
     
     # equation to be minimzed :
     J       = derivative(delta, H, dH)   # temp/density jacobian
@@ -133,24 +133,25 @@ class Enthalpy(object):
     Hsp   = firn.Hsp
     index = firn.index
     g     = firn.g
+    cpi   = firn.cpi
 
     # find vector of T, rho :
     Hp       = firn.H.vector().array()
-    Tp       = Hp / firn.cp
     omegap   = firn.omega.vector().array()
     omegap_1 = firn.omega_1.vector().array()
 
     # update coefficients used by enthalpy :
     Hhigh            = where(Hp > Hsp)[0]
     Hlow             = where(Hp < Hsp)[0]
+    
     KcoefNew         = ones(n)
-  
     KcoefNew[Hhigh]  = 1.0/2.0
     KcoefNew[Hlow]   = 1.0
-    Tp[Hhigh]        = Tw
+    
+    Tp         = Hp / cpi
+    Tp[Hhigh]  = Tw
   
-    # update water content and density :
-    domega           = omegap - omegap_1    # water content chg.
+    domega = omegap - omegap_1    # water content change
 
     # update the dolfin vectors :
     firn.assign_variable(firn.T,       Tp)
@@ -484,7 +485,8 @@ class Age(object):
               - 0.5 * (w - w_1) * a_mid.dx(0) * xi * dx \
               + w**2 * dt/2 * inner(a_mid.dx(0), xi.dx(0)) * dx \
               - w * w.dx(0) * dt/2 * a_mid.dx(0) * xi * dx
-    J       = derivative(f, a, da) # age jacobian
+    
+    J       = derivative(f, a, da)
 
     self.f = f
     self.J = J

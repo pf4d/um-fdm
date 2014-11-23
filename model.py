@@ -53,7 +53,7 @@ Tin   = Tavg
 adoti = adot
 
 cp    = 152.5 + 7.122*Tavg     # heat capacity of ice ........... J/(kg K)
-cp    = cpi                    # heat capacity of ice ........... J/(kg K)
+#cp    = cpi                    # heat capacity of ice ........... J/(kg K)
 zs    = 0.                     # surface start .................. m
 zb    = -100.0                 # depth .......................... m
 dt1   = 10.0*spy               # time-step ...................... s
@@ -65,7 +65,6 @@ bp    = int(sys.argv[2])       # plot or not .................... bool
 tm    = 500.0 * spy
   
 # enthalpy BC :
-#code  = '(152.5 + 7.122*Tavg)*(Tavg + 5.0*(sin(2*omega*t) + 5*sin(4*omega*t)))'
 code  = 'cp*(Tavg + 5*(sin(2*omega*t) + 5*sin(4*omega*t)))'
 H_exp = Expression(code, cp=cpi, Tavg=Tavg, omega=pi/spy, t=t0)
 

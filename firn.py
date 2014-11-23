@@ -309,8 +309,8 @@ class Firn(object):
     self.drhodtp = self.drhodt.vector().array()[index]
     self.ap      = self.a.vector().array()[index]
     self.wp      = self.w.vector().array()[index]
-    self.kp      = ki*ones(n)
-    self.cp      = cpi*ones(n)
+    self.kp      = 2.1*(self.rhoin / rhoi)**2 * ones(n)
+    self.cp      = cpi * ones(n)
     self.rp      = self.r_i.vector().array()[index]
     self.rhoinp  = self.rhop
     self.agep    = zeros(n)
@@ -420,7 +420,6 @@ class Firn(object):
     Q            = self.Q
     adot         = self.adot
     index        = self.index
-
     self.Hp      = self.H.vector().array()[index]
     self.rhop    = self.rho.vector().array()[index]
     self.wp      = self.w.vector().array()[index]
@@ -431,9 +430,7 @@ class Firn(object):
     self.pp      = self.p.vector().array()[index]
     self.up      = self.u.vector().array()[index]
     self.Smip    = self.Smi.vector().array()[index]
-    
-    self.Ts     = self.Hp[-1] / self.cp[-1]
-    self.A      = self.rhoi/self.rhow * 1e3 * adot
+    self.Ts      = self.Hp[-1] / self.cp[-1]
   
   def vert_integrate(self, u):
     """
