@@ -34,7 +34,6 @@ from scipy.io           import loadmat
 import sys
 import time
 
-
 #===============================================================================
 # constants :
 
@@ -87,9 +86,9 @@ firn.set_geometry(zs, zb)
 firn.generate_uniform_mesh(n)
 #firn.refine_mesh(divs=3, i=1/3., k=1/20.)
 firn.refine_mesh(divs=2, i=1/3.,  k=1/4.)
-firn.refine_mesh(divs=2, i=1/3.,  k=1/4.)
-firn.refine_mesh(divs=2, i=1/3.,  k=1/4.)
-firn.refine_mesh(divs=2, i=1/3.,  k=1/4.)
+#firn.refine_mesh(divs=2, i=1/3.,  k=1/4.)
+#firn.refine_mesh(divs=2, i=1/3.,  k=1/4.)
+#firn.refine_mesh(divs=2, i=1/3.,  k=1/4.)
 firn.calculate_boundaries()
 firn.set_parameters(FirnParameters())
 firn.set_boundary_conditions(H_exp, rho_exp, w_exp, r_exp)
@@ -140,8 +139,8 @@ config = { 'mode'                  : 'transient',
            'plot' :
            {
              'on'                  : bp,
-             'zMin'                : -20,
-             'zMax'                : 2.0,
+             'zMin'                : -100,
+             'zMax'                : 20.0,
              'wMin'                : -30,
              'wMax'                : 5,
              'uMin'                : -1500,

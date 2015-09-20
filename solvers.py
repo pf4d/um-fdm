@@ -1,7 +1,7 @@
-from pylab     import plt, linspace, ones, hstack
 from physics   import Enthalpy, Density, FullDensity, Velocity, Age
 from plot      import Plot
 from termcolor import colored, cprint
+from pylab     import plt, linspace, ones, hstack
 
 
 class TransientSolver(object):
@@ -21,9 +21,9 @@ class TransientSolver(object):
       self.fa = Age(firn, config)
 
     if config['plot']['on']:
-      plt.ion()
+      #plt.ion()
       self.plot = Plot(firn, config)
-      plt.draw()
+      #plt.show()
 
   def solve(self):
     """
@@ -106,15 +106,16 @@ class TransientSolver(object):
       # update the plotting parameters :
       if config['plot']['on']:
         self.plot.update_plot()
-        plt.draw()
+        #plt.draw()
         
       s = '>>> Time: %i yr <<<'
       text = colored(s, 'red', attrs=['bold'])
       print text % (t / firn.spy)
     
     if config['plot']['on']:
-      plt.ioff()
-      plt.show()
+      pass
+      #plt.ioff()
+      #plt.show()
 
 
 

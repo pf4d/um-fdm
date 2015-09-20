@@ -21,8 +21,8 @@ Evan Cummings
 Plotting for enthalby Firn Densification Model.
 
 """
-from pylab import *
 from matplotlib.ticker import ScalarFormatter, FormatStrFormatter
+from pylab import *
 
 mpl.rcParams['font.family'] = 'serif'
 mpl.rcParams['legend.fontsize'] = 'medium'
@@ -91,13 +91,13 @@ class Plot():
     Smi    = firn.Smip
     r      = sqrt(firn.rp) * 1000
     Ts     = firn.Ts - 273.15
-    rhos   = rho[-1]
+    rhos   = rho[0]
     adot   = firn.w_S.adot
 
     # y-value :
     z      = firn.z
-    zs     = z[-1]
-    zb     = z[0]
+    zs     = z[0]
+    zb     = z[-1]
     
     # original surface height :
     zo     = firn.zo
@@ -111,80 +111,144 @@ class Plot():
     figx = 4.0 * sum(blist)
     i    = 1
     pur = '#880cbc'
-    self.fig   = figure(figsize=(figx,6))
+    plt.ion()
+    self.fig   = plt.figure(figsize=(figx,6))
     if Tb:
+      # temperature axis :
       self.Tax   = self.fig.add_subplot(totb + i)
       self.Tax.axis([Tmin, Tmax, zMin, zMax])
-      self.Tax.grid()
-      self.Tsurf    = self.Tax.text(Th, Tz, r'$T_S$: %.1E $\degree$C' % Ts)
-      self.phT,     = self.Tax.plot(T - 273.15, z, '0.3', lw=1.5,
-                                    drawstyle='steps-post')
-      self.phTs,    = self.Tax.plot([Tmin, Tmax], [zs, zs], 'k-', lw=3)
-      self.phTs_0,  = self.Tax.plot(Th, zo, 'ko')
-      self.phTs_dot,= self.Tax.plot(Ts, zs, 'ro')
-      self.phTsp,   = self.Tax.plot(Th*ones(len(z)), z, 'g+')
       self.Tax.set_xlabel(r'$T\ [\degree \mathrm{C}]$')
       self.Tax.set_ylabel('Depth [m]')
+      self.Tax.grid()
+      
+      # surface temp text :
+      self.Tsurf    = self.Tax.text(Th, Tz, r'$T_S$: %.1E $\degree$C' % Ts)
+
+      # temperature profile :
+      self.phT,     = self.Tax.plot(T - 273.15, z, '0.3', lw=1.5,
+                                    drawstyle='steps-post')
+      
+      # firn surface :
+      self.phTs,    = self.Tax.plot([Tmin, Tmax], [zs, zs], 'k-', lw=3)
+      
+      # original (beginning) surface height :
+      self.phTs_0,  = self.Tax.plot(Th, zo, 'go')
+
+      # temperature surface boundary condition :
+      self.phTs_dot,= self.Tax.plot(Ts, zs, 'ko')
+
+      # grid spacing :
+      self.phTsp,   = self.Tax.plot(Th*ones(len(z)), z, 'g+')
+      
+      # water content axis :
       self.Oax   = self.Tax.twiny()
       self.Oax.axis([omegaMin, omegaMax, zMin, zMax])
-      self.Oax.grid()
-      self.phO,     = self.Oax.plot(omega, z, pur, lw=1.5,
-                                    drawstyle='steps-post')
-      self.phSmi,   = self.Oax.plot(Smi,   z, 'r--',   lw=1.5,
-                                    drawstyle='steps-post')
       self.Oax.set_xlabel(r'$\omega\ [\%]$', color=pur)
+      self.Oax.grid()
       for tl in self.Oax.get_xticklabels():
         tl.set_color(pur)
-      i += 1
-    if rhob:
-      self.rhoax = self.fig.add_subplot(totb + i)
-      self.rax   = self.rhoax.twiny()
-      self.rhoax.axis([rhoMin, rhoMax, zMin, zMax])
-      self.rax.axis([rMin, rMax, zMin, zMax])
-      self.rhoax.grid()
-      self.rax.grid()
-      self.rhoax.xaxis.set_major_formatter(FixedOrderFormatter(2))
-      text = r'$\dot{a}$: %.1E i.e.$\frac{\mathrm{m}}{\mathrm{a}}$' % adot
-      self.rhoSurf  = self.rhoax.text(rhoh, Tz, text)
-      self.phrho,   = self.rhoax.plot(rho, z, '0.3', lw=1.5,
-                                      drawstyle='steps-post')
-      self.phr,     = self.rax.plot(r, z, pur, lw=1.5,
+
+      # water content :
+      self.phO,     = self.Oax.plot(omega, z, pur, lw=1.5,
                                     drawstyle='steps-post')
-      for tl in self.rax.get_xticklabels():
-        tl.set_color(pur)
-      self.phrhoS,  = self.rhoax.plot([rhoMin, rhoMax], [zs, zs], 'k-', lw=3)
-      self.phrhoS_dot, = self.rhoax.plot(rho[-1], zs, 'ro')
-      #self.phrhoS_0,= self.rhoax.plot(rhoh, zo, 'ko')
-      #self.phrhoSp, = self.rhoax.plot(rhoh*ones(len(z)), z, 'r+')
-      text = r'$\rho\ \left[\frac{\mathrm{kg}}{\mathrm{m}^3}\right]$'
-      self.rhoax.set_xlabel(text)
-      text = r'$r\ \left[\mathrm{mm}\right]$'
-      self.rax.set_xlabel(text, color=pur)
-      i += 1
-    if wb:
-      self.wax   = self.fig.add_subplot(totb + i)
-      self.uax   = self.wax.twiny()
-      self.wax.axis([wMin, wMax, zMin, zMax])
-      self.uax.axis([uMin, uMax, zMin, zMax])
-      self.wax.grid()
-      self.uax.grid()
-      text = r'$\rho_S$: %.1E $\frac{\mathrm{kg}}{\mathrm{m}^3}$' % rhos
-      self.wSurf    = self.wax.text(wh, Tz, text)
-      self.phw,     = self.wax.plot(w, z, '0.3', lw=1.5,
+
+      # water content surface boundary condition :
+      self.phO_dot, = self.Oax.plot(omega[0], zs, color=pur, marker='o')
+
+      # irreducible water content :
+      self.phSmi,   = self.Oax.plot(Smi,   z, 'r--',   lw=1.5,
                                     drawstyle='steps-post')
-      self.phu,     = self.uax.plot(u, z, pur, lw=1.5,
-                                    drawstyle='steps-post')
-      for tl in self.uax.get_xticklabels():
-        tl.set_color(pur)
-      self.phwS,    = self.wax.plot([wMin, wMax], [zs, zs], 'k-', lw=3)
-      self.wS_dot,  = self.wax.plot(w[-1], zs, 'ro')
-      #self.phws_0,  = self.wax.plot(wh, zo, 'ko')
-      #self.phwsp,   = self.wax.plot(wh*ones(len(z)), z, 'r+')
-      self.wax.set_xlabel(r'$w\ \left[\frac{\mathrm{cm}}{\mathrm{a}}\right]$')
-      text = r'$u\ \left[\frac{\mathrm{cm}}{\mathrm{a}}\right]$'
-      self.uax.set_xlabel(text, color = pur)
+
+      # irreducible water content surface boundary condition :
+      self.phSmi_dot, = self.Oax.plot(Smi[0], zs, 'ro')
 
       i += 1
+
+    if rhob:
+      # density axis :
+      self.rhoax = self.fig.add_subplot(totb + i)
+      self.rhoax.axis([rhoMin, rhoMax, zMin, zMax])
+      self.rhoax.xaxis.set_major_formatter(FixedOrderFormatter(2))
+      text = r'$\rho\ \left[\frac{\mathrm{kg}}{\mathrm{m}^3}\right]$'
+      self.rhoax.set_xlabel(text)
+      self.rhoax.grid()
+
+      # surface density text :
+      text = r'$\dot{a}$: %.1E i.e.$\frac{\mathrm{m}}{\mathrm{a}}$' % adot
+      self.rhoSurf  = self.rhoax.text(rhoh, Tz, text)
+
+      # density profile :
+      self.phrho,   = self.rhoax.plot(rho, z, '0.3', lw=1.5,
+                                      drawstyle='steps-post')
+
+      # surface height :
+      self.phrhoS,  = self.rhoax.plot([rhoMin, rhoMax], [zs, zs], 'k-', lw=3)
+
+      # density surface boundary condition :
+      self.phrhoS_dot, = self.rhoax.plot(rho[0], zs, 'ko')
+
+      #self.phrhoS_0,= self.rhoax.plot(rhoh, zo, 'ko')
+      #self.phrhoSp, = self.rhoax.plot(rhoh*ones(len(z)), z, 'r+')
+      
+      # grain-size axis :
+      self.rax   = self.rhoax.twiny()
+      self.rax.axis([rMin, rMax, zMin, zMax])
+      text = r'$r\ \left[\mathrm{mm}\right]$'
+      self.rax.set_xlabel(text, color=pur)
+      self.rax.grid()
+      for tl in self.rax.get_xticklabels():
+        tl.set_color(pur)
+      
+      # grain-size profile :
+      self.phr,     = self.rax.plot(r, z, pur, lw=1.5,
+                                    drawstyle='steps-post')
+      # grain-size surface boundary condition :
+      self.phr_dot, = self.rax.plot(r[0], zs, color=pur, marker='o')
+
+      i += 1
+
+    if wb:
+      # firn compaction velocity axis :
+      self.wax   = self.fig.add_subplot(totb + i)
+      self.wax.axis([wMin, wMax, zMin, zMax])
+      self.wax.set_xlabel(r'$w\ \left[\frac{\mathrm{cm}}{\mathrm{a}}\right]$')
+      self.wax.grid()
+
+      # surface accumulation text :
+      text = r'$\rho_S$: %.1E $\frac{\mathrm{kg}}{\mathrm{m}^3}$' % rhos
+      self.wSurf    = self.wax.text(wh, Tz, text)
+
+      # compaction velocity profile :
+      self.phw,     = self.wax.plot(w, z, '0.3', lw=1.5,
+                                    drawstyle='steps-post')
+      
+      # compaction velocity surface boundary condition :
+      self.wS_dot,  = self.wax.plot(w[0], zs, 'ko')
+
+      # surface height :
+      self.phwS,    = self.wax.plot([wMin, wMax], [zs, zs], 'k-', lw=3)
+
+      #self.phws_0,  = self.wax.plot(wh, zo, 'ko')
+      #self.phwsp,   = self.wax.plot(wh*ones(len(z)), z, 'r+')
+      
+      # water velocity axis :
+      self.uax   = self.wax.twiny()
+      self.uax.axis([uMin, uMax, zMin, zMax])
+      text = r'$u\ \left[\frac{\mathrm{cm}}{\mathrm{a}}\right]$'
+      self.uax.set_xlabel(text, color = pur)
+      self.uax.grid()
+      for tl in self.uax.get_xticklabels():
+        tl.set_color(pur)
+      
+      # water velocity profile :
+      self.phu,     = self.uax.plot(u, z, pur, lw=1.5,
+                                    drawstyle='steps-post')
+
+      # water velocity surface boundary condition :
+      self.uS_dot,  = self.uax.plot(u[0], zs, color=pur, marker='o')
+
+      i += 1
+
     if ageb:
       self.aax   = self.fig.add_subplot(totb + i)
       self.aax.axis([ageMin, ageMax, zMin, zMax])
@@ -202,8 +266,8 @@ class Plot():
 
     # formatting :
     self.fig.canvas.set_window_title('Time = 0.0 yr')
-    tight_layout()
-    
+    plt.tight_layout()
+    plt.show()
 
   def update_plot(self):
     """
@@ -223,6 +287,7 @@ class Plot():
     r      = sqrt(firn.rp) * 1000
     z      = firn.z
     zo     = firn.zo
+    zs     = firn.z[0]
     Ts     = firn.Ts - Tw
     t      = firn.t / firn.spy
     
@@ -235,15 +300,19 @@ class Plot():
       self.Tsurf.set_text(r'$T_S$: %.1E $\degree$C' % Ts)
       self.phT.set_xdata(T - Tw)
       self.phT.set_ydata(z)
-      self.phTs.set_ydata(z[-1])
+      self.phTs.set_ydata(zs)
       self.phTs_0.set_ydata(zo)
       self.phTsp.set_ydata(z)
       self.phTs_dot.set_xdata(Ts)
-      self.phTs_dot.set_ydata(z[-1])
+      self.phTs_dot.set_ydata(zs)
       self.phO.set_xdata(omega)
       self.phO.set_ydata(z)
+      self.phO_dot.set_xdata(omega[0])
+      self.phO_dot.set_ydata(zs)
       self.phSmi.set_xdata(Smi)
       self.phSmi.set_ydata(z)
+      self.phSmi_dot.set_xdata(Smi[0])
+      self.phSmi_dot.set_ydata(zs)
       
     if config['density']['plot']: 
       text = r'$\rho_S$: %.1E $\frac{\mathrm{kg}}{\mathrm{m}^3}$' % rho[-1]
@@ -252,9 +321,11 @@ class Plot():
       self.phrho.set_ydata(z)
       self.phr.set_xdata(r)
       self.phr.set_ydata(z)
-      self.phrhoS.set_ydata(z[-1])
-      self.phrhoS_dot.set_xdata(rho[-1])
-      self.phrhoS_dot.set_ydata(z[-1])
+      self.phrhoS.set_ydata(zs)
+      self.phrhoS_dot.set_xdata(rho[0])
+      self.phrhoS_dot.set_ydata(zs)
+      self.phr_dot.set_xdata(r[0])
+      self.phr_dot.set_ydata(zs)
       
     if config['velocity']['plot']: 
       text = r'$\dot{a}$: %.1E i.e.$\frac{\mathrm{m}}{\mathrm{a}}$'
@@ -263,14 +334,19 @@ class Plot():
       self.phw.set_ydata(z)
       self.phu.set_xdata(u)
       self.phu.set_ydata(z)
-      self.phwS.set_ydata(z[-1])
-      self.wS_dot.set_xdata(w[-1])
-      self.wS_dot.set_ydata(z[-1])
+      self.phwS.set_ydata(zs)
+      self.wS_dot.set_xdata(w[0])
+      self.wS_dot.set_ydata(zs)
+      self.uS_dot.set_xdata(u[0])
+      self.uS_dot.set_ydata(zs)
      
     if config['age']['plot']: 
       self.pha.set_xdata(a)
       self.pha.set_ydata(z)
-      self.phaS.set_ydata(z[-1])
+      self.phaS.set_ydata(zs)
+
+    plt.draw()
+    plt.pause(0.00000001)
     
 
   def plot_all(self, firns, titles, colors):

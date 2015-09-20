@@ -49,7 +49,7 @@ class Firn(object):
     index = argsort(z)                           # ordered z-coord index
     
     self.mesh  = mesh
-    self.z     = z[index]
+    self.z     = z#[index]
     self.index = index
 
   def set_parameters(self, params):
@@ -164,7 +164,6 @@ class Firn(object):
     B.mark(self.ff, 1)
 
     self.ds = ds[self.ff]
-      
 
   def refine_mesh(self, divs, i, k,  m=1):
     """
@@ -200,7 +199,7 @@ class Firn(object):
     by the individually created model.
     """
     self.z     = self.mesh.coordinates()[:,0]
-    self.index = argsort(self.z)
+    self.index = argsort(self.z)[::-1]
     self.z     = self.z[self.index]
     self.l     = np.diff(self.z)
     self.n     = len(self.z)
@@ -302,16 +301,16 @@ class Firn(object):
     self.Q       = Q
     self.dt_v    = Constant(self.dt)
     
-    self.Hp      = self.H.vector().array()[index]
-    self.Tp      = self.T.vector().array()[index]
-    self.omegap  = self.omega.vector().array()[index] 
-    self.rhop    = self.rho.vector().array()[index]
-    self.drhodtp = self.drhodt.vector().array()[index]
-    self.ap      = self.a.vector().array()[index]
-    self.wp      = self.w.vector().array()[index]
+    self.Hp      = self.H.vector().array()
+    self.Tp      = self.T.vector().array()
+    self.omegap  = self.omega.vector().array()
+    self.rhop    = self.rho.vector().array()
+    self.drhodtp = self.drhodt.vector().array()
+    self.ap      = self.a.vector().array()
+    self.wp      = self.w.vector().array()
     self.kp      = 2.1*(self.rhoin / rhoi)**2 * ones(n)
     self.cp      = cpi * ones(n)
-    self.rp      = self.r_i.vector().array()[index]
+    self.rp      = self.r_i.vector().array()
     self.rhoinp  = self.rhop
     self.agep    = zeros(n)
     self.pp      = zeros(n)
@@ -322,7 +321,7 @@ class Firn(object):
     self.zo      = self.S                    # z-coordinate of initial surface
     self.ht      = [self.S]                  # list of surface heights
     self.origHt  = [self.zo]                 # list of initial surface heights
-    self.Ts      = self.Hp[-1] / self.cp[-1] # temperature of surface
+    self.Ts      = self.Hp[0] / self.cp[0]   # temperature of surface
   
   def assign_variable(self, u, var):
     """
@@ -373,17 +372,17 @@ class Firn(object):
     Adjust the enthalpy at the surface.
     """
     self.H_S.t = self.t
-    self.H_S.c = self.cp[-1]
+    self.H_S.c = self.cp[0]
   
  
   def update_omegaBc(self): 
     """
     Adjust the water-content at the surface.
     """
-    self.omega_S.Hs  = self.Hp[-1]
-    self.omega_S.cps = self.cp[-1]
-    self.omega_S.rs   = self.rp[-1]
-    self.omega_S.rhos = self.rhop[-1]
+    self.omega_S.Hs  = self.Hp[0]
+    self.omega_S.cps = self.cp[0]
+    self.omega_S.rs   = self.rp[0]
+    self.omega_S.rhos = self.rhop[0]
   
       
   def update_wBc(self):
@@ -391,7 +390,7 @@ class Firn(object):
     Adjust the velocity at the surface.
     """
     self.w_S.t    = self.t
-    self.w_S.rhos = self.rhop[-1]
+    self.w_S.rhos = self.rhop[0]
     bdotNew       = (self.w_S.adot * self.rhoi) / self.spy
     self.assign_variable(self.bdot, bdotNew)
 
@@ -420,17 +419,17 @@ class Firn(object):
     Q            = self.Q
     adot         = self.adot
     index        = self.index
-    self.Hp      = self.H.vector().array()[index]
-    self.rhop    = self.rho.vector().array()[index]
-    self.wp      = self.w.vector().array()[index]
-    self.ap      = self.a.vector().array()[index]
-    self.Tp      = self.T.vector().array()[index]
-    self.omegap  = self.omega.vector().array()[index]
-    self.rp      = self.r.vector().array()[index]
-    self.pp      = self.p.vector().array()[index]
-    self.up      = self.u.vector().array()[index]
-    self.Smip    = self.Smi.vector().array()[index]
-    self.Ts      = self.Hp[-1] / self.cp[-1]
+    self.Hp      = self.H.vector().array()
+    self.rhop    = self.rho.vector().array()
+    self.wp      = self.w.vector().array()
+    self.ap      = self.a.vector().array()
+    self.Tp      = self.T.vector().array()
+    self.omegap  = self.omega.vector().array()
+    self.rp      = self.r.vector().array()
+    self.pp      = self.p.vector().array()
+    self.up      = self.u.vector().array()
+    self.Smip    = self.Smi.vector().array()
+    self.Ts      = self.Hp[0] / self.cp[0]
   
   def vert_integrate(self, u):
     """
@@ -466,8 +465,8 @@ class Firn(object):
                        fill_value=self.wp[0])
     wzo     = interp(self.zo)
     dt      = self.dt
-    zs      = self.z[-1]
-    zb      = self.z[0]
+    zs      = self.z[0]
+    zb      = self.z[-1]
     zs_1    = self.S_1
     zo      = self.zo
     #self.zo = zo * (zs - zb) / (zs_1 - zb) + wzo * dt
@@ -478,7 +477,7 @@ class Firn(object):
       self.origHt.append(self.zo)
     
     # update the previous time steps' surface height :
-    self.S_1  = self.z[-1]
+    self.S_1  = self.z[0]
 
   def update_height(self):
     """
@@ -499,7 +498,8 @@ class Firn(object):
     
     self.assign_variable(self.m_1, self.m)
     self.assign_variable(self.m,   self.mp)
-    self.mesh.coordinates()[:,0][self.index] = self.z  # update the mesh coord.
+    #self.mesh.coordinates()[:,0][self.index] = self.z  # update the mesh coord.
+    self.mesh.coordinates()[:,0] = self.z  # update the mesh coord.
     self.mesh.bounding_box_tree().build(self.mesh)     # rebuild the mesh tree
 
   def set_ini_conv(self, ex):
@@ -516,11 +516,11 @@ class Firn(object):
     self.H     = genfromtxt("data/fmic/initial/initial" + ex + "/H.txt")
     self.lin   = genfromtxt("data/fmic/initial/initial" + ex + "/l.txt")
     
-    self.S_1    = self.z[-1]                # previous time-step surface  
-    self.zo     = self.z[-1]                # z-coordinate of initial surface
-    self.ht     = [self.z[-1]]              # list of surface heights
-    self.origHt = [self.z[-1]]              # list of initial surface heights
-    self.Ts     = self.H[-1] / self.c[-1]   # temperature of surface
+    self.S_1    = self.z[0]                # previous time-step surface  
+    self.zo     = self.z[0]                # z-coordinate of initial surface
+    self.ht     = [self.z[0]]              # list of surface heights
+    self.origHt = [self.z[0]]              # list of initial surface heights
+    self.Ts     = self.H[0] / self.c[0]    # temperature of surface
   
     self.assign_variable(self.rho_i, self.rho)
     self.assign_variable(self.H_i,   self.H)
